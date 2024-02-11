@@ -271,7 +271,21 @@ class Account():
         # 'vote_average': 7.138, 
         # 'vote_count': 2120}
 
+# image path: https://image.tmdb.org/t/p/original{"poster_path"}
 
+# trailer path: https://www.youtube.com/watch?v={"key"}
+    # {
+    #   "iso_639_1": "en",
+    #   "iso_3166_1": "US",
+    #   "name": "#TBT Trailer",
+    #   "key": "BdJKm16Co6M",
+    #   "site": "YouTube",
+    #   "size": 1080,
+    #   "type": "Trailer",
+    #   "official": true,
+    #   "published_at": "2014-10-02T19:20:22.000Z",
+    #   "id": "5c9294240e0a267cd516835f"
+    # }
 
 if __name__ == "__main__":
     authenticator = Authentication()
