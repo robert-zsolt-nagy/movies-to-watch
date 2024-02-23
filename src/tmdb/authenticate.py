@@ -31,7 +31,31 @@ class Authentication():
             self.__SECRETS = secrets
         self.__BEARER_TOKEN = self.__SECRETS['tmdb']['bearer_token']
         self.__last_request_token = None
-        self.__last_session = None
+        try:
+            self.__last_session = self.__SECRETS['tmdb']['session_id']
+        except KeyError:
+            self.__last_session = None    
+        self.__account_data = None
+
+    @classmethod
+    def from_dict(secrets: dict):
+        """ Creates an Authentication object from the secrets dictionary.
+        
+        Parameters
+        ----------
+            secrets: the dictionary containing the secrets necessary for authentication. 
+
+        Secrets format
+        --------------
+        ```
+        {
+            'tmdb':{
+                'bearer_token':your_API_Read_Access_Token
+            }
+        }
+        ```
+        """
+        return Authentication(secrets=secrets)    
 
     @property
     def secrets(self):
@@ -159,8 +183,19 @@ class Authentication():
         #     "username":""
         # }
         response = response.json()
+        self.__account_data = response
         return response
-
+    
+    def create_account(self):
+        """ Returns a new Account object instance 
+        based on the Authentication details."""
+        new_account = Account(
+            token=self.__BEARER_TOKEN, 
+            session_id=self.__last_session,
+            **self.__account_data
+            )
+        return new_account
+    
 
 class Account():
     """ Account relevant requests."""
@@ -270,42 +305,3 @@ class Account():
         # 'video': False, 
         # 'vote_average': 7.138, 
         # 'vote_count': 2120}
-
-# image path: https://image.tmdb.org/t/p/original{"poster_path"}
-
-# trailer path: https://www.youtube.com/watch?v={"key"}
-    # {
-    #   "iso_639_1": "en",
-    #   "iso_3166_1": "US",
-    #   "name": "#TBT Trailer",
-    #   "key": "BdJKm16Co6M",
-    #   "site": "YouTube",
-    #   "size": 1080,
-    #   "type": "Trailer",
-    #   "official": true,
-    #   "published_at": "2014-10-02T19:20:22.000Z",
-    #   "id": "5c9294240e0a267cd516835f"
-    # }
-
-if __name__ == "__main__":
-    authenticator = Authentication()
-
-    # payload = authenticator.create_request_token()
-    # print(authenticator.ask_user_permission())
-    # permit = input("Permitted?")
-    # if permit == "y":
-    #     new_session = authenticator.create_session_id(payload=payload)
-    #     print(f"session_id:{new_session}")
-    
-    SESSION_ID = authenticator.secrets['tmdb']['session_id']
-    TOKEN = authenticator.secrets['tmdb']['bearer_token']
-    account_data = authenticator.get_account_data(session_id=SESSION_ID)
-    my_account = Account(token=TOKEN, session_id=SESSION_ID, **account_data)
-    my_lists = my_account.get_lists()
-    print("My lists:")
-    for elem in my_lists:
-        print(elem['name'])
-    watchlist = my_account.get_watchlist_movie()
-    print("Watchlist movies:")
-    for movie in watchlist:
-        print(movie['original_title'])
