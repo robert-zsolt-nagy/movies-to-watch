@@ -3,6 +3,45 @@ import requests
 import webbrowser
 from typing import Optional
 
+class SecretManager():
+    """ Reads and manages the external secrets."""
+
+    def __init__(self, secret_storage: str='secrets.toml') -> None:
+        """ Open the secret storage and read the secrets."""
+        with open(secret_storage, mode="rb") as vault:
+            self.__SECRETS = tomllib.load(vault)
+
+    @property
+    def token(self) -> str:
+        """ All of the secrets."""
+        return self.__SECRETS
+    
+    @property
+    def token(self) -> str:
+        """ The bearer token for authentication"""
+        return self.__SECRETS['tmdb']['auth']['bearer_token']
+    
+    @property
+    def session(self) -> str:
+        """ The session ID for authentication"""
+        return self.__SECRETS['tmdb']['auth']['session_id']
+    
+    @property
+    def tmdb_API(self) -> str:
+        """ The base URL for the tmdb API."""
+        return self.__SECRETS['tmdb']['URLs']['API_base_URL']
+    
+    @property
+    def tmdb_home(self) -> str:
+        """ The home URL for the tmdb."""
+        return self.__SECRETS['tmdb']['URLs']['home_URL']
+    
+    @property
+    def tmdb_image(self) -> str:
+        """ The base URL for the tmdb image storage."""
+        return self.__SECRETS['tmdb']['URLs']['image_URL']
+        
+
 class Authentication():
     """ Handles the authentication with TMDB"""
 
@@ -273,7 +312,7 @@ class Account():
         # "total_pages":1,
         # "total_results":2}
 
-    def get_watchlist_movie(self) -> list:
+    def get_watchlist_movie(self) -> list[dict]:
         """ Get data about the movies watchlist of the account.
         
         Returns

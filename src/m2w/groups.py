@@ -19,7 +19,7 @@ class watch_group():
         self.__members = memebers
 
     @property
-    def members(self) -> list:
+    def members(self) -> list[Account]:
         return self.__members
     
     @members.setter
@@ -29,7 +29,7 @@ class watch_group():
     def get_grouplist_union(self) -> list:
         """ Gather the watchlist from every member.
         
-        Build a table based on the union of all lists. 
+        Build a list based on the union of all lists. 
         
         Returns
         -------
