@@ -12,17 +12,17 @@ class SecretManager():
             self.__SECRETS = tomllib.load(vault)
 
     @property
-    def token(self) -> str:
+    def secrets(self) -> str:
         """ All of the secrets."""
         return self.__SECRETS
     
     @property
-    def token(self) -> str:
+    def tmdb_token(self) -> str:
         """ The bearer token for authentication"""
         return self.__SECRETS['tmdb']['auth']['bearer_token']
     
     @property
-    def session(self) -> str:
+    def tmdb_session(self) -> str:
         """ The session ID for authentication"""
         return self.__SECRETS['tmdb']['auth']['session_id']
     
@@ -40,6 +40,16 @@ class SecretManager():
     def tmdb_image(self) -> str:
         """ The base URL for the tmdb image storage."""
         return self.__SECRETS['tmdb']['URLs']['image_URL']
+    
+    @property
+    def firebase_cert(self) -> str:
+        """ The path to the firebase certificate."""
+        return self.__SECRETS['firebase']['certificate']
+    
+    @property
+    def firebase_config(self) -> str:
+        """ The path to the firebase configuration."""
+        return self.__SECRETS['firebase']['config']
         
 
 class Authentication():

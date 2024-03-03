@@ -7,6 +7,18 @@
 </head>
 <body>
   <h1>Movies-to-watch Index Page</h1>
+  {% if user_data %}
+  <div>
+    <p> Current user: {{ user_data }}</p><br><br>
+    <p> Current infos: {{ info }}</p><br><br>
+    <a href="/logout">Log out</a>
+  </div>  
+  {% else %}
+  <div>
+    <p> You are not logged in. </p><br><br>
+    <a href="/login">Log in</a>
+  </div> 
+  {% endif %}
   <p>Made by Narogi</p>
 </body>
 </html>

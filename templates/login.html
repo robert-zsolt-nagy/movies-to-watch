@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <title>Movies-to-watch</title>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Sign in to Movies-to-watch</h1>
+  {% if error %}
+  <div>
+    <p> The following error occured:</p>
+    {% if error == "INVALID_EMAIL" %}
+    <p> Email is not valid! </p>
+    {% elif error == "MISSING_PASSWORD" %}
+    <p> Password is missing! </p>
+    {% elif error == "INVALID_LOGIN_CREDENTIALS" %}
+    <p> Email or password is incorrect! </p>
+    {% else %}
+    <p> Unspecified </p>
+    {% endif %}
+  </div>
+  {% endif %}
+  <form action="/login", method="post">
+    Email: <input type="text" name="email"><br><br>
+    Password: <input type="password" name="password"><br><br>
+    <input type="submit">
+  </form>
+  <div>
+    <p>Not a member?</p>
+    <p>Register an account <a href="/signup">here</a> !</p>
+  </div>
+  <p>Made by Narogi</p>
+</body>
+</html>
