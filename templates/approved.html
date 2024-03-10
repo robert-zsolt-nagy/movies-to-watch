@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+  <title>Movies-to-watch</title>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Movies-to-watch Approved Page</h1>
+  {% if success %}
+  <div>
+    <p>Congratulations, your Movies-to-watch account is successfully linked with your TMDB account!</p>
+  </div>  
+  {% else %}
+  <div>
+    <p>Something went wrong!</p>
+  </div> 
+  {% endif %}
+  <p>Back to <a href="/">home</a></p>
+  <p>Made by Narogi</p>
+</body>
+</html>

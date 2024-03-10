@@ -6,16 +6,18 @@
   <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>Movies-to-watch Index Page</h1>
-  {% if user_data %}
+  <h1>Movies-to-watch Profile Page</h1>
+  {% if profile_data %}
   <div>
-    <p> Current user: {{ user_data }}</p><br>
-    <p> Current infos</p><br>
-    {% for key, value in session.items() %}
-    <p>{{key}}: {{value}}</p>
+    <p> Profile infos</p><br>
+    {% for key, value in profile_data.items() %}
+    <p>{{key}}: {{value}}</p><br>
     {% endfor %}
+    {% if profile_data['tmdb_session'] == None %}
+        <a href="/link-to-tmdb">Link with TMDB account</a><br>
+    {% endif %}
     <a href="/logout">Log out</a><br>
-    <a href="/profile">My Profile page</a><br>
+    <a href="/">Back to Home</a>
   </div>  
   {% else %}
   <div>

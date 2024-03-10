@@ -16,6 +16,10 @@
     <p> Password is missing! </p>
     {% elif error == "INVALID_LOGIN_CREDENTIALS" %}
     <p> Email or password is incorrect! </p>
+    {% elif error == "EMAIL_EXISTS" %}
+    <p> Email already exists! </p>
+    {% elif error == "WEAK_PASSWORD : Password should be at least 6 characters" %}
+    <p> Password should be at least 6 characters! </p>
     {% else %}
     <p> {{ error }} </p>
     {% endif %}
@@ -28,10 +32,14 @@
   </div>
   {% else %}
   <form action="/signup", method="post">
-    Email: <input type="text" name="email"><br><br>
-    Password: <input type="password" name="password"><br><br>
-    <input type="submit">
+    *Email: <input type="email" name="email" value={{ email }}><br><br>
+    *Confirm Email: <input type="email" name="email_confirm" value={{ email_c }}><br><br>
+    *Password: <input type="password" name="password" value={{ password }}><br><br>
+    *Confirm Password: <input type="password" name="password_confirm" value={{ password_c }}><br><br>
+    Nickname: <input type="text" name="nickname" value={{ nickname }}><br><br>
+    <input type="submit" value="Register">
   </form>
+  <p>Back to <a href="/">home</a></p>
   {% endif %}
   <p>Made by Narogi</p>
 </body>

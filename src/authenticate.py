@@ -2,6 +2,22 @@ import tomllib
 import requests
 import webbrowser
 from typing import Optional
+from random import randint
+import json
+
+def generate_id(length: int = 8) -> str:
+    """Generate a random alphanumeric id with a given length.
+    
+    Parameters
+    ----------
+    length: the length of the id
+    """
+    seed = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    id = []
+    for _ in range(length):
+        ix = randint(0, len(seed)-1)
+        id.append(seed[ix])
+    return ''.join(id)    
 
 class SecretManager():
     """ Reads and manages the external secrets."""
@@ -78,13 +94,14 @@ class Authentication():
                 self.__SECRETS = tomllib.load(vault)
         else:
             self.__SECRETS = secrets
-        self.__BEARER_TOKEN = self.__SECRETS['tmdb']['bearer_token']
+        self.__BEARER_TOKEN = self.__SECRETS['tmdb']['auth']['bearer_token']
         self.__last_request_token = None
         try:
-            self.__last_session = self.__SECRETS['tmdb']['session_id']
+            self.__last_session = self.__SECRETS['tmdb']['auth']['session_id']
         except KeyError:
             self.__last_session = None    
         self.__account_data = None
+        self.__approve_id = None
 
     @classmethod
     def from_dict(secrets: dict):
@@ -109,6 +126,18 @@ class Authentication():
     @property
     def secrets(self):
         return self.__SECRETS
+    
+    @property
+    def session(self):
+        return self.__last_session
+    
+    @property
+    def approve_id(self):
+        return self.__approve_id
+    
+    @property
+    def request_token(self):
+        return self.__last_request_token
 
     def create_request_token(self, token: Optional[str] = None) -> dict:
         """ Request a new request token.
@@ -158,7 +187,8 @@ class Authentication():
         """
         if token is None:
             token = self.__last_request_token
-        url=f"https://www.themoviedb.org/authenticate/{token}"
+        self.__approve_id = generate_id()
+        url=f"https://www.themoviedb.org/authenticate/{token}?redirect_to={self.secrets['m2w']['base_URL']}/approved/{self.__approve_id}"
         if _open:
             webbrowser.open_new_tab(url=url)
         return url

@@ -22,9 +22,9 @@
   </div>
   {% endif %}
   <form action="/login", method="post">
-    Email: <input type="text" name="email"><br><br>
-    Password: <input type="password" name="password"><br><br>
-    <input type="submit">
+    Email: <input type="email" name="email" value={{ email }}><br><br>
+    Password: <input type="password" name="password" value={{ password }}><br><br>
+    <input type="submit" value="Sign in">
   </form>
   <div>
     <p>Not a member?</p>
