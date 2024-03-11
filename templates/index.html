@@ -6,17 +6,45 @@
   <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>Movies-to-watch Index Page</h1>
-  {% if user_data %}
+  <h1>Movies-to-watch Home</h1>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div>
+        {% for message in messages %}  
+            <p>{{ message }}</p><br>
+        {% endfor %}
+        </div>
+    {% endif %}
+  {% endwith %}
+  {% if logged_on %}
   <div>
-    <p> Current user: {{ user_data }}</p><br>
-    <p> Current infos</p><br>
-    {% for key, value in session.items() %}
-    <p>{{key}}: {{value}}</p>
-    {% endfor %}
-    <a href="/logout">Log out</a><br>
-    <a href="/profile">My Profile page</a><br>
-  </div>  
+    <p> Current user: {{ logged_on }}</p>
+    <!-- <p> Verified: {{verified}}</p>
+    <p> TMDB Linked: {{tmdb_linked}}</p> -->
+  </div>
+    {% if verified %}
+      {% if tmdb_linked == None%}
+        <div>
+          <p>Please link your TMDB Account to access all features of Movies-to-watch!</p>
+          <p>You can link your account from <a href="/profile">your Profile</a> page.</p>
+        </div>
+      {% else %}
+        <div>
+          <p> Current infos</p><br>
+          {% for key, value in display.items() %}
+          <p>{{key}}: {{value}}</p>
+          {% endfor %}
+          <a href="/profile">My Profile</a><br>
+        </div> 
+      {% endif %}
+    {% else%}
+    <div>
+      <p>Your email is not verified.</p>
+      <p>Please verify your email to access all features of Movies-to-watch!</p>
+      <p><a href="/resend-verification">Resend verfication email.</a></p>
+    </div>
+    {% endif%} 
+  <a href="/logout">Log out</a><br>
   {% else %}
   <div>
     <p> You are not logged in. </p><br><br>

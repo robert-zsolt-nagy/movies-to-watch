@@ -17,11 +17,11 @@
     {% elif error == "INVALID_LOGIN_CREDENTIALS" %}
     <p> Email or password is incorrect! </p>
     {% else %}
-    <p> Unspecified </p>
+    <p> {{error}} </p>
     {% endif %}
   </div>
   {% endif %}
-  <form action="/login", method="post">
+  <form action="/login?redirect={{target}}", method="post">
     Email: <input type="email" name="email" value={{ email }}><br><br>
     Password: <input type="password" name="password" value={{ password }}><br><br>
     <input type="submit" value="Sign in">

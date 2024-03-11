@@ -66,6 +66,16 @@ class SecretManager():
     def firebase_config(self) -> str:
         """ The path to the firebase configuration."""
         return self.__SECRETS['firebase']['config']
+    
+    @property
+    def firestore_cert(self) -> str:
+        """ The path to the firebase certificate."""
+        return self.__SECRETS['firestore']['certificate']
+    
+    @property
+    def firestore_project(self) -> str:
+        """ The path to the firebase certificate."""
+        return self.__SECRETS['firestore']['project']
         
 
 class Authentication():

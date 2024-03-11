@@ -6,15 +6,17 @@
   <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h1>Movies-to-watch Profile Page</h1>
+  <h1>My Movies-to-watch Profile</h1>
   {% if profile_data %}
   <div>
-    <p> Profile infos</p><br>
-    {% for key, value in profile_data.items() %}
-    <p>{{key}}: {{value}}</p><br>
-    {% endfor %}
+    <p> Email: {{profile_data['email']}}</p>
+    <p> Nickname: {{profile_data['nickname']}}</p>
     {% if profile_data['tmdb_session'] == None %}
-        <a href="/link-to-tmdb">Link with TMDB account</a><br>
+      <a href="/link-to-tmdb">Link with TMDB account</a><br>
+    {% else %}
+      <p>Your linked TMDB Account: </p>
+      <p>TMDB ID : {{profile_data['tmdb_user']['id']}}</p>
+      <p>TMDB Username : {{profile_data['tmdb_user']['username']}}</p>
     {% endif %}
     <a href="/logout">Log out</a><br>
     <a href="/">Back to Home</a>
@@ -22,7 +24,7 @@
   {% else %}
   <div>
     <p> You are not logged in. </p><br><br>
-    <a href="/login">Log in</a>
+    <a href="/login?redirect=/profile">Log in</a>
   </div> 
   {% endif %}
   <p>Made by Narogi</p>

@@ -1,7 +1,6 @@
 from flask import Flask, render_template, session, redirect, request, flash, url_for
-import firebase_admin
-from firebase_admin import credentials
-from src.authenticate import SecretManager, Authentication
+from google.oauth2 import service_account
+from src.authenticate import SecretManager, Authentication, Account
 import pyrebase
 from requests.exceptions import HTTPError
 import json
@@ -12,7 +11,8 @@ from datetime import datetime, timedelta
 secrets = SecretManager()
 
 # conenct to database
-db = firestore.Client(project=secrets.secrets['firestore']['project'])
+db_cert = service_account.Credentials.from_service_account_file(secrets.firestore_cert)
+db = firestore.Client(project=secrets.firestore_project, credentials=db_cert)
 
 # setting upo tmdb
 tmdb_auth = Authentication(secrets=secrets.secrets)
@@ -33,11 +33,24 @@ firebase_auth = firebase_app.auth()
 def root():
     if 'user' in session:
         logged_on = session['user']
-        # info = session['info']
-        # info = session['user_str']
-        return render_template("index.html", user_data=logged_on, session=session)
+        user_ref = db.collection("users").document(logged_on)
+        user_data = user_ref.get().to_dict()
+        display = user_data
+        if user_data["tmdb_session"] is not None:
+            user_acc = Account(
+                token=secrets.tmdb_token,
+                session_id=user_data["tmdb_session"],
+                **user_data["tmdb_user"]
+            )
+            display = {"movies": user_acc.get_watchlist_movie()}
+        return render_template(
+            "index.html", 
+            logged_on=logged_on, 
+            verified=session['emailVerified'],
+            tmdb_linked=user_data['tmdb_session'],
+            display=display
+            )
     else:
-        # return render_template("index.html")
         return redirect("/login")
     
         
@@ -56,6 +69,7 @@ def logout():
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
+    target = request.args.get("redirect", default="/")
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -75,18 +89,33 @@ def login():
             session['nextRefreshAt'] = datetime.fromisoformat(session['lastRefreshAt']) + timedelta(seconds=int(int(session['expiresIn'])*0.9))
 
             session['approve_id'] = None
+
+            user_data = db.collection("users").document(email).get().to_dict()
+            if user_data['tmdb_session'] is not None:
+                try:
+                    fresh_data = tmdb_auth.get_account_data(session_id=user_data['tmdb_session'])
+                except:
+                    pass
+                else:
+                    data = {
+                        "tmdb_user":fresh_data
+                    }
+                    db.collection("users").document(email).set(
+                        data,
+                        merge=True
+                    )
         except HTTPError as he:
             msg = get_firebase_error(he)
             return render_template("login.html", error=msg)
         except Exception as e:
             return render_template("login.html", error=e)
         else:
-            return redirect("/")
+            return redirect(target)
     else:
         if 'user' in session:
-            return redirect("/")
+            return redirect(target)
         else:
-            return render_template("login.html")
+            return render_template("login.html", target=target)
 
 
 @app.route("/signup", methods=['POST', 'GET'])
@@ -173,15 +202,15 @@ def approved(approve_id):
                 tmdb_session = tmdb_auth.create_session_id(payload=payload)
                 user_data = tmdb_auth.get_account_data(tmdb_session)
                 db.collection("users").document(session['user']).set(
-                    {"tmdb_session": tmdb_session, "tmdb_user": user_data['username']}, 
+                    {"tmdb_session": tmdb_session, "tmdb_user": user_data}, 
                     merge=True
                     )
-            except:
-                return render_template("approved.html", success=False)
+            except Exception as err:
+                return render_template("approved.html", success=False, error=err)
             else:
                 return render_template("approved.html", success=True)
         else:
-            return render_template("approved.html", success=False)
+            return render_template("approved.html", success=False, error="Session not approved or invalid.")
     except Exception:
         return redirect(url_for('login'))
 
@@ -193,7 +222,7 @@ def profile():
         user_data = user_ref.get()
         return render_template('profile.html', profile_data=user_data.to_dict())
     else:
-        return redirect(url_for('login'))
+        return redirect("/login?redirect=/profile")
     
 @app.route("/link-to-tmdb")
 def link_to_tmdb():
@@ -209,7 +238,24 @@ def link_to_tmdb():
         else:
             return redirect(ask_URL)
     else:
-        return redirect(url_for('login'))
+        return redirect("/login?redirect=/link-to-tmdb")
+    
+
+@app.route("/resend-verification")
+def resend_verification():
+    if 'user' in session:
+        if session['emailVerified'] == False:
+            try:
+                firebase_auth.send_email_verification(id_token=session['idToken'])
+            except Exception as e:
+                flash(f"The following error occured: {e}")
+            else:
+                flash("Please check your mailbox you should receive a verification email shortly!")
+            return redirect("/")
+        else:
+            return redirect("/")
+    else:
+        return redirect("/login?redirect=/resend-verification")
 
 
 if __name__ == "__main__":

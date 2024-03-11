@@ -3,5 +3,4 @@
 .gitignore
 connection_test.py
 README.md
-secrets.toml
 drawio
