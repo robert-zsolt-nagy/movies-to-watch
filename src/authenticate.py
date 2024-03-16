@@ -298,6 +298,8 @@ class Account():
     name = None
     include_adult = False
     username = None
+    blocklist = []
+    m2w_id = None
 
     def __init__(
             self, 
@@ -310,6 +312,8 @@ class Account():
             name: Optional[str] = None,
             include_adult: bool = False,
             username: Optional[str] = None,
+            blocklist: list = [],
+            m2w_id: Optional[str] = None
             ) -> None:
         """ Bundles the account related requests. 
         
@@ -329,6 +333,8 @@ class Account():
         self.name = name
         self.include_adult = include_adult
         self.username = username
+        self.blocklist = blocklist
+        self.m2w_id = m2w_id
 
     def get_lists(self) -> list:
         """ Gets data about the lists of the account.
@@ -394,3 +400,76 @@ class Account():
         # 'video': False, 
         # 'vote_average': 7.138, 
         # 'vote_count': 2120}
+    
+    def __str__(self) -> str:
+        return f"<TMDB Account ID:{self.id} Name:{self.username}>"
+    
+    def __edit_movie_watchlist(
+            self,
+            movie_id: int,
+            add: bool
+            ) -> dict:
+        """Adds a movie to or removes a movie from the movie watchlist.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in TMDB
+        add: if True adds the movie, otherwise removes the movie
+
+        Returns
+        --------
+        The response as a json.
+        
+        """
+        movie_id = int(movie_id)
+        url = f"https://api.themoviedb.org/3/account/{self.id}/watchlist?session_id={self.__session_id}"
+
+        payload = {
+            'media_type': 'movie', 
+            'media_id': movie_id, 
+            'watchlist': add
+        }
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "Authorization": f"Bearer {self.__token}"
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+        return response.json()
+    
+    def add_movie_to_watchlist(
+            self,
+            movie_id: int,
+            ) -> dict:
+        """Adds a movie to the movie watchlist.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in TMDB
+
+        Returns
+        --------
+        The response as a json.
+        
+        """
+        response = self.__edit_movie_watchlist(movie_id=movie_id, add=True)
+        return response
+    
+    def remove_movie_from_watchlist(
+            self,
+            movie_id: int,
+            ) -> dict:
+        """Remove a movie from the movie watchlist.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in TMDB
+
+        Returns
+        --------
+        The response as a json.
+        
+        """
+        response = self.__edit_movie_watchlist(movie_id=movie_id, add=False)
+        return response

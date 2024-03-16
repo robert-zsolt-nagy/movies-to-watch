@@ -3,6 +3,7 @@
 <head>
   <title>Movies-to-watch</title>
   <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
   <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -32,7 +33,34 @@
         <div>
           <p> Current infos</p><br>
           {% for key, value in display.items() %}
-          <p>{{key}}: {{value}}</p>
+          <div id="movie-{{value['id']}}">
+            <h2>{{value['title']}}</h2>
+            <p><image src={{value['poster']}} width="300" height="450"></image></p>
+            <p>{{value['overview']}}</p>
+            <p>Genres: {{value['genres']}}</p>
+            <p>Runtime: {{value['runtime']}} Minutes</p>
+            <p>Release date: {{value['release_date']}}</p>
+            <p><a href={{value['trailer']}} target="_blank">Watch the trailer</a></p>
+            <div>
+              <p>Stream: </p>
+              {% for elem in value['providers']['stream'] %}
+              <image src={{elem['logo_path']}} title="{{elem['provider_name']}}"></image>
+              {% endfor %}
+            </div>
+            <div>
+              <p>Rent: </p>
+              {% for elem in value['providers']['rent'] %}
+              <image src={{elem['logo_path']}} title="{{elem['provider_name']}}"></image>
+              {% endfor %}
+            </div>
+            <div>
+              <p>Buy: </p>
+              {% for elem in value['providers']['buy'] %}
+              <image src={{elem['logo_path']}} title="{{elem['provider_name']}}"></image>
+              {% endfor %}
+            </div>
+            <p>You voted: {{value['vote']}}</p>
+          </div>
           {% endfor %}
           <a href="/profile">My Profile</a><br>
         </div> 

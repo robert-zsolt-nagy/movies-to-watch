@@ -1,6 +1,8 @@
 from flask import Flask, render_template, session, redirect, request, flash, url_for
 from google.oauth2 import service_account
 from src.authenticate import SecretManager, Authentication, Account
+from src.movies import Movie
+from src.groups import fsWatchGroup
 import pyrebase
 from requests.exceptions import HTTPError
 import json
@@ -36,16 +38,33 @@ def root():
         user_ref = db.collection("users").document(logged_on)
         user_data = user_ref.get().to_dict()
         display = user_data
-        if user_data["tmdb_session"] is not None:
-            user_acc = Account(
-                token=secrets.tmdb_token,
-                session_id=user_data["tmdb_session"],
-                **user_data["tmdb_user"]
+        if user_data["primary_group"] is not None:
+            group = fsWatchGroup(
+                id=user_data["primary_group"],
+                database=db,
+                tmdb_token=secrets.tmdb_token
             )
-            display = {"movies": user_acc.get_watchlist_movie()}
+            movie_watchlist = group.get_movie_grouplist_union()
+            user_blocklist = group.get_user_blocklist(member=logged_on)
+            my_user = group.get_member(m2w_id=logged_on)
+            my_watchlist = my_user.get_watchlist_movie()
+            display = {}
+            for movie in movie_watchlist:
+                mov = Movie(
+                    id=movie['id'],
+                    token=secrets.tmdb_token
+                )
+                if movie['id'] in user_blocklist:
+                    mov.vote = 'blocked'
+                else:
+                    for my_mov in my_watchlist:
+                        if my_mov['id'] == movie['id']:
+                            mov.vote = 'liked'
+                            break
+                display[mov.id] = mov.get_datasheet_for_locale(locale=user_data['locale'])
         return render_template(
             "index.html", 
-            logged_on=logged_on, 
+            logged_on=session['nickname'], 
             verified=session['emailVerified'],
             tmdb_linked=user_data['tmdb_session'],
             display=display
@@ -78,7 +97,9 @@ def login():
                 email=email,
                 password=password
             )
-            session['user'] = email
+            session['user'] = user['localId']
+            session['email'] = user['email']
+            session['nickname'] = user['displayName']
             session['idToken'] = user['idToken']
             session['refreshToken'] = user['refreshToken']
             session['expiresIn'] = user['expiresIn']
@@ -90,7 +111,7 @@ def login():
 
             session['approve_id'] = None
 
-            user_data = db.collection("users").document(email).get().to_dict()
+            user_data = db.collection("users").document(session['user']).get().to_dict()
             if user_data['tmdb_session'] is not None:
                 try:
                     fresh_data = tmdb_auth.get_account_data(session_id=user_data['tmdb_session'])
@@ -100,7 +121,7 @@ def login():
                     data = {
                         "tmdb_user":fresh_data
                     }
-                    db.collection("users").document(email).set(
+                    db.collection("users").document(session['user']).set(
                         data,
                         merge=True
                     )
@@ -161,9 +182,10 @@ def signup():
                     "email": email, 
                     "nickname": nickname, 
                     "tmdb_user": None,
-                    "tmdb_session": None
+                    "tmdb_session": None,
+                    "locale": "HU"
                     }
-                db.collection("users").document(email).set(data)
+                db.collection("users").document(my_user['localId']).set(data)
             except HTTPError as he:
                 msg = get_firebase_error(he)
                 return render_template(
@@ -230,7 +252,7 @@ def link_to_tmdb():
         try:
             response = tmdb_auth.create_request_token()
             session['request_payload'] = json.dumps(response)
-            print(session['request_payload'])
+            # print(session['request_payload'])
             ask_URL = tmdb_auth.ask_user_permission()
             session['approve_id'] = tmdb_auth.approve_id
         except Exception:

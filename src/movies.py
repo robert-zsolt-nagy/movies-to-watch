@@ -1,5 +1,5 @@
 import requests
-from typing import Optional
+from typing import Optional, Literal
 
 class Movie():
     """ Movie relevant requests."""
@@ -8,7 +8,8 @@ class Movie():
             self, 
             id: int, 
             token: str,
-            details: Optional[dict] = None
+            details: Optional[dict] = None,
+            vote: Optional[str] = None
             ) -> None:
         """ Bundles the movie related requests.
         
@@ -20,6 +21,7 @@ class Movie():
         """
         self.__id = id
         self.__token = token
+        self.vote = vote
         if details is None:
             self.__details = self.get_details()
             self.__details['official_trailer'] = self.get_trailer()
@@ -83,6 +85,43 @@ class Movie():
     @property
     def watch_providers(self) -> list:
         return self.__details['local_providers']
+    
+    def get_providers_for_locale(
+            self, 
+            locale: str
+            ) -> dict:
+        """Return the watch providers for the given locale."""
+        provider = self.watch_providers[locale].copy()
+        empty = []
+        stream = provider.pop('flatrate', empty)
+        rent = provider.pop('rent', empty)
+        buy = provider.pop('buy', empty)
+        provider = {
+            'stream': stream,
+            'rent': rent,
+            'buy': buy
+        }
+        for cat, prov in provider.items():
+            for elem in prov:
+                elem['logo_path'] = f"https://image.tmdb.org/t/p/original{elem['logo_path']}"
+        return provider
+    
+    def get_datasheet_for_locale(self, locale: str) -> dict:
+        """Return the movie datasheet for the given locale. """
+        sheet = {
+            "id": self.id,
+            "title": self.title,
+            "overview": self.overview,
+            "genres": self.genres,
+            "runtime": self.runtime,
+            "trailer": self.trailer,
+            "poster": self.poster_path,
+            "release_date": self.release_date,
+            "status": self.status,
+            "providers": self.get_providers_for_locale(locale=locale),
+            "vote": self.vote
+        }
+        return sheet
     
     def get_details(self) -> dict:
         """ Get details for the movie.
