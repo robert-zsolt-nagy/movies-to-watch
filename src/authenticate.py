@@ -2,6 +2,96 @@ import tomllib
 import requests
 import webbrowser
 from typing import Optional
+from random import randint
+import json
+
+def generate_id(length: int = 8) -> str:
+    """Generate a random alphanumeric id with a given length.
+    
+    Parameters
+    ----------
+    length: the length of the id
+    """
+    seed = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    id = []
+    for _ in range(length):
+        ix = randint(0, len(seed)-1)
+        id.append(seed[ix])
+    return ''.join(id)    
+
+class SecretManager():
+    """ Reads and manages the external secrets."""
+
+    def __init__(self, secret_storage: str='secrets.toml') -> None:
+        """ Open the secret storage and read the secrets."""
+        with open(secret_storage, mode="rb") as vault:
+            self.__SECRETS = tomllib.load(vault)
+
+    @property
+    def secrets(self) -> str:
+        """ All of the secrets."""
+        return self.__SECRETS
+    
+    @property
+    def tmdb_rate_limit(self) -> str:
+        """ The rate limit for tmdb requests."""
+        return self.__SECRETS['tmdb']['rate_limit']
+    
+    @property
+    def tmdb_token(self) -> str:
+        """ The bearer token for authentication"""
+        return self.__SECRETS['tmdb']['auth']['bearer_token']
+    
+    @property
+    def tmdb_session(self) -> str:
+        """ The session ID for authentication"""
+        return self.__SECRETS['tmdb']['auth']['session_id']
+    
+    @property
+    def tmdb_API(self) -> str:
+        """ The base URL for the tmdb API."""
+        return self.__SECRETS['tmdb']['URLs']['API_base_URL']
+    
+    @property
+    def tmdb_home(self) -> str:
+        """ The home URL for the tmdb."""
+        return self.__SECRETS['tmdb']['URLs']['home_URL']
+    
+    @property
+    def tmdb_image(self) -> str:
+        """ The base URL for the tmdb image storage."""
+        return self.__SECRETS['tmdb']['URLs']['image_URL']
+    
+    @property
+    def firebase_cert(self) -> str:
+        """ The path to the firebase certificate."""
+        return self.__SECRETS['firebase']['certificate']
+    
+    @property
+    def firebase_config(self) -> str:
+        """ The path to the firebase configuration."""
+        return self.__SECRETS['firebase']['config']
+    
+    @property
+    def firestore_cert(self) -> str:
+        """ The path to the firebase certificate."""
+        return self.__SECRETS['firestore']['certificate']
+    
+    @property
+    def firestore_project(self) -> str:
+        """ The path to the firebase certificate."""
+        return self.__SECRETS['firestore']['project']
+    
+    @property
+    def m2w_base_URL(self) -> str:
+        """ The base movies-to-watch URL."""
+        return self.__SECRETS['m2w']['base_URL']
+    
+    @property
+    def m2w_movie_retention(self) -> str:
+        """ The base movies-to-watch URL."""
+        return self.__SECRETS['m2w']['movie_retention']
+        
 
 class Authentication():
     """ Handles the authentication with TMDB"""
@@ -29,13 +119,50 @@ class Authentication():
                 self.__SECRETS = tomllib.load(vault)
         else:
             self.__SECRETS = secrets
-        self.__BEARER_TOKEN = self.__SECRETS['tmdb']['bearer_token']
+        self.__BEARER_TOKEN = self.__SECRETS['tmdb']['auth']['bearer_token']
         self.__last_request_token = None
-        self.__last_session = None
+        try:
+            self.__last_session = self.__SECRETS['tmdb']['auth']['session_id']
+        except KeyError:
+            self.__last_session = None    
+        self.__account_data = None
+        self.__approve_id = None
+
+    @classmethod
+    def from_dict(secrets: dict):
+        """ Creates an Authentication object from the secrets dictionary.
+        
+        Parameters
+        ----------
+            secrets: the dictionary containing the secrets necessary for authentication. 
+
+        Secrets format
+        --------------
+        ```
+        {
+            'tmdb':{
+                'bearer_token':your_API_Read_Access_Token
+            }
+        }
+        ```
+        """
+        return Authentication(secrets=secrets)    
 
     @property
     def secrets(self):
         return self.__SECRETS
+    
+    @property
+    def session(self):
+        return self.__last_session
+    
+    @property
+    def approve_id(self):
+        return self.__approve_id
+    
+    @property
+    def request_token(self):
+        return self.__last_request_token
 
     def create_request_token(self, token: Optional[str] = None) -> dict:
         """ Request a new request token.
@@ -85,7 +212,8 @@ class Authentication():
         """
         if token is None:
             token = self.__last_request_token
-        url=f"https://www.themoviedb.org/authenticate/{token}"
+        self.__approve_id = generate_id()
+        url=f"https://www.themoviedb.org/authenticate/{token}?redirect_to={self.__SECRETS['m2w']['base_URL']}/approved/{self.__approve_id}"
         if _open:
             webbrowser.open_new_tab(url=url)
         return url
@@ -159,8 +287,19 @@ class Authentication():
         #     "username":""
         # }
         response = response.json()
+        self.__account_data = response
         return response
-
+    
+    def create_account(self):
+        """ Returns a new Account object instance 
+        based on the Authentication details."""
+        new_account = Account(
+            token=self.__BEARER_TOKEN, 
+            session_id=self.__last_session,
+            **self.__account_data
+            )
+        return new_account
+    
 
 class Account():
     """ Account relevant requests."""
@@ -174,6 +313,11 @@ class Account():
     name = None
     include_adult = False
     username = None
+    blocklist = []
+    watchlist_movie = []
+    m2w_id = None
+    m2w_nick = None
+    m2w_email = None
 
     def __init__(
             self, 
@@ -186,6 +330,10 @@ class Account():
             name: Optional[str] = None,
             include_adult: bool = False,
             username: Optional[str] = None,
+            blocklist: list = [],
+            m2w_id: Optional[str] = None,
+            m2w_nick: Optional[str] = None,
+            m2w_email: Optional[str] = None
             ) -> None:
         """ Bundles the account related requests. 
         
@@ -205,6 +353,10 @@ class Account():
         self.name = name
         self.include_adult = include_adult
         self.username = username
+        self.blocklist = blocklist
+        self.m2w_id = m2w_id
+        self.m2w_nick = m2w_nick
+        self.m2w_email = m2w_email
 
     def get_lists(self) -> list:
         """ Gets data about the lists of the account.
@@ -238,7 +390,7 @@ class Account():
         # "total_pages":1,
         # "total_results":2}
 
-    def get_watchlist_movie(self) -> list:
+    def get_watchlist_movie(self) -> list[dict]:
         """ Get data about the movies watchlist of the account.
         
         Returns
@@ -270,42 +422,76 @@ class Account():
         # 'video': False, 
         # 'vote_average': 7.138, 
         # 'vote_count': 2120}
-
-# image path: https://image.tmdb.org/t/p/original{"poster_path"}
-
-# trailer path: https://www.youtube.com/watch?v={"key"}
-    # {
-    #   "iso_639_1": "en",
-    #   "iso_3166_1": "US",
-    #   "name": "#TBT Trailer",
-    #   "key": "BdJKm16Co6M",
-    #   "site": "YouTube",
-    #   "size": 1080,
-    #   "type": "Trailer",
-    #   "official": true,
-    #   "published_at": "2014-10-02T19:20:22.000Z",
-    #   "id": "5c9294240e0a267cd516835f"
-    # }
-
-if __name__ == "__main__":
-    authenticator = Authentication()
-
-    # payload = authenticator.create_request_token()
-    # print(authenticator.ask_user_permission())
-    # permit = input("Permitted?")
-    # if permit == "y":
-    #     new_session = authenticator.create_session_id(payload=payload)
-    #     print(f"session_id:{new_session}")
     
-    SESSION_ID = authenticator.secrets['tmdb']['session_id']
-    TOKEN = authenticator.secrets['tmdb']['bearer_token']
-    account_data = authenticator.get_account_data(session_id=SESSION_ID)
-    my_account = Account(token=TOKEN, session_id=SESSION_ID, **account_data)
-    my_lists = my_account.get_lists()
-    print("My lists:")
-    for elem in my_lists:
-        print(elem['name'])
-    watchlist = my_account.get_watchlist_movie()
-    print("Watchlist movies:")
-    for movie in watchlist:
-        print(movie['original_title'])
+    def __str__(self) -> str:
+        return f"<TMDB Account ID:{self.id} Name:{self.username}>"
+    
+    def __edit_movie_watchlist(
+            self,
+            movie_id: int,
+            add: bool
+            ) -> dict:
+        """Adds a movie to or removes a movie from the movie watchlist.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in TMDB
+        add: if True adds the movie, otherwise removes the movie
+
+        Returns
+        --------
+        The response as a json.
+        
+        """
+        movie_id = int(movie_id)
+        url = f"https://api.themoviedb.org/3/account/{self.id}/watchlist?session_id={self.__session_id}"
+
+        payload = {
+            'media_type': 'movie', 
+            'media_id': movie_id, 
+            'watchlist': add
+        }
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "Authorization": f"Bearer {self.__token}"
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+        return response.json()
+    
+    def add_movie_to_watchlist(
+            self,
+            movie_id: int,
+            ) -> dict:
+        """Adds a movie to the movie watchlist.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in TMDB
+
+        Returns
+        --------
+        The response as a json.
+        
+        """
+        response = self.__edit_movie_watchlist(movie_id=movie_id, add=True)
+        return response
+    
+    def remove_movie_from_watchlist(
+            self,
+            movie_id: int,
+            ) -> dict:
+        """Remove a movie from the movie watchlist.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in TMDB
+
+        Returns
+        --------
+        The response as a json.
+        
+        """
+        response = self.__edit_movie_watchlist(movie_id=movie_id, add=False)
+        return response

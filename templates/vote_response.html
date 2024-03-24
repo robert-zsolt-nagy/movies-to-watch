@@ -1,0 +1,23 @@
+{% if vote == "liked" %}
+    <div id="my_vote{{movie_id}}">
+    <image data-feather="check" title="wants to watch"></image>
+    <button hx-get="/api/vote/{{movie_id}}/block" hx-trigger="click" hx-target="#my_vote{{movie_id}}" hx-indicator="#indicator{{movie_id}}">Not interested</button>
+    <img class="htmx-indicator" id="indicator{{movie_id}}" src="{{ url_for('static', filename='three-dots.svg') }}" height="15">
+    </div>
+{% elif vote == "blocked" %}
+    <div id="my_vote{{movie_id}}">
+    <image data-feather="x" title="not interested"></image>
+    <button hx-get="/api/vote/{{movie_id}}/like" hx-trigger="click" hx-target="#my_vote{{movie_id}}" hx-indicator="#indicator{{movie_id}}">Want to watch</button>
+    <img class="htmx-indicator" id="indicator{{movie_id}}" src="{{ url_for('static', filename='three-dots.svg') }}" height="15">
+    </div>
+{% else %}
+    <div id="my_vote{{movie_id}}">
+    <image data-feather="minus" title="not voted"></image>
+    <button hx-get="/api/vote/{{movie_id}}/block" hx-trigger="click" hx-target="#my_vote{{movie_id}}" hx-indicator="#indicator{{movie_id}}">Not interested</button>
+    <button hx-get="/api/vote/{{movie_id}}/like" hx-trigger="click" hx-target="#my_vote{{movie_id}}" hx-indicator="#indicator{{movie_id}}">Want to watch</a>
+    <img class="htmx-indicator" id="indicator{{movie_id}}" src="{{ url_for('static', filename='three-dots.svg') }}" height="15">
+    </div>
+{% endif %}
+<script>
+    feather.replace();
+</script>

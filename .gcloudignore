@@ -1,0 +1,6 @@
+.venv
+.git
+.gitignore
+connection_test.py
+README.md
+drawio
