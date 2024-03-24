@@ -8,6 +8,8 @@ from requests.exceptions import HTTPError
 import json
 from google.cloud import firestore
 from datetime import datetime, timedelta
+import time
+from flask_apscheduler import APScheduler
 
 # reading the secrets
 secrets = SecretManager()
@@ -28,46 +30,55 @@ def get_firebase_error(error: HTTPError) -> str:
 app = Flask(__name__)
 app.secret_key = secrets.secrets['flask']['secret_key']
 
+# setting up firebase authentication
 firebase_app = pyrebase.initialize_app(config=secrets.firebase_config)
 firebase_auth = firebase_app.auth()
 
+# setting up scheduler and jobs
+scheduler = APScheduler()
+
+@scheduler.task('cron', id="update_movies", hour='*', minute='*/15')
+def update_movies():
+    """Updates the movies cache hourly."""
+    try:
+        # get the users
+        users = db.collection('users').stream()
+        for user in users:
+            user_data = user.to_dict()
+            # build users movie list
+            movie_list = Account(
+                token=secrets.tmdb_token,
+                session_id=user_data["tmdb_session"],
+                # blocklist=fsWatchGroup.get_user_blocklist(member=user.id),
+                # m2w_id=user.id,
+                # m2w_nick=user_data["nickname"],
+                **user_data["tmdb_user"]
+            ).get_watchlist_movie()
+            # check and update cache
+            for movie in movie_list:
+                mov = Movie(
+                    id_=movie['id'],
+                    token=secrets.tmdb_token,
+                    db=db
+                )
+    except:
+        pass
+
+
+#setting up requests and endpoints
 @app.route("/", methods=['POST', 'GET'])
 def root():
     if 'user' in session:
         logged_on = session['user']
         user_ref = db.collection("users").document(logged_on)
         user_data = user_ref.get().to_dict()
-        display = user_data
-        if user_data["primary_group"] is not None:
-            group = fsWatchGroup(
-                id=user_data["primary_group"],
-                database=db,
-                tmdb_token=secrets.tmdb_token
-            )
-            movie_watchlist = group.get_movie_grouplist_union()
-            user_blocklist = group.get_user_blocklist(member=logged_on)
-            my_user = group.get_member(m2w_id=logged_on)
-            my_watchlist = my_user.get_watchlist_movie()
-            display = {}
-            for movie in movie_watchlist:
-                mov = Movie(
-                    id=movie['id'],
-                    token=secrets.tmdb_token
-                )
-                if movie['id'] in user_blocklist:
-                    mov.vote = 'blocked'
-                else:
-                    for my_mov in my_watchlist:
-                        if my_mov['id'] == movie['id']:
-                            mov.vote = 'liked'
-                            break
-                display[mov.id] = mov.get_datasheet_for_locale(locale=user_data['locale'])
+        group = user_data["primary_group"]
         return render_template(
             "index.html", 
             logged_on=session['nickname'], 
             verified=session['emailVerified'],
             tmdb_linked=user_data['tmdb_session'],
-            display=display
+            group=group
             )
     else:
         return redirect("/login")
@@ -127,9 +138,9 @@ def login():
                     )
         except HTTPError as he:
             msg = get_firebase_error(he)
-            return render_template("login.html", error=msg)
+            return render_template("login.html", error=msg, target=target)
         except Exception as e:
-            return render_template("login.html", error=e)
+            return render_template("login.html", error=e, target=target)
         else:
             return redirect(target)
     else:
@@ -183,7 +194,8 @@ def signup():
                     "nickname": nickname, 
                     "tmdb_user": None,
                     "tmdb_session": None,
-                    "locale": "HU"
+                    "locale": "HU",
+                    "primary_group": None
                     }
                 db.collection("users").document(my_user['localId']).set(data)
             except HTTPError as he:
@@ -278,6 +290,66 @@ def resend_verification():
             return redirect("/")
     else:
         return redirect("/login?redirect=/resend-verification")
+    
+@app.route("/api/group/<group>")
+def group_content(group):
+    if 'user' in session:
+        logged_on = session['user']
+        w_group = fsWatchGroup(
+            id=group,
+            database=db,
+            tmdb_token=secrets.tmdb_token,
+            primary_member=logged_on
+        )
+        movie_watchlist = w_group.get_movie_grouplist_union()
+        display = {}
+        for movie in movie_watchlist:
+            mov = Movie(
+                id_=movie['id'],
+                token=secrets.tmdb_token,
+                db=db
+            )
+            votes = {}
+            for key, value in movie['votes'].items():
+                member = w_group.get_member(key)
+                votes[key] = {
+                    "nickname": member.m2w_nick,
+                    "email": member.m2w_email,
+                    "vote": value
+                }
+            votes[logged_on]["nickname"] = "You"
+            display[mov.id] = mov.get_datasheet_for_locale(locale=w_group.locale)
+            display[mov.id]['votes'] = votes
+            display[mov.id]['your_vote'] = votes[logged_on]['vote']
+        return render_template("group_content.html", movies=display)
+    else:
+        target = f"/login?redirect=/api/group/{group}"
+        return redirect(target)
+    
+@app.route("/api/vote/<movie>/<vote>")
+def vote_for_movie(movie, vote):
+    if 'user' in session:
+        logged_on = session['user']
+        user_data = db.collection('users').document(logged_on).get().to_dict()
+        user = Account(
+            token=secrets.tmdb_token,
+            session_id=user_data["tmdb_session"],
+            **user_data["tmdb_user"],
+            m2w_email=user_data["email"],
+            m2w_id=logged_on,
+            m2w_nick=user_data["nickname"]
+        )
+        if vote == "like":
+            pass
+        elif vote == "block":
+            pass    
+    else:
+        target = f"/login?redirect=/api/vote/{movie}/{vote}"
+        return redirect(target)
+
+#starting scheduler    
+scheduler.init_app(app)
+scheduler.start()
 
 
 if __name__ == "__main__":
@@ -288,4 +360,6 @@ if __name__ == "__main__":
     # the "static" directory. See:
     # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
     # App Engine itself will serve those files as configured in app.yaml.
+    # scheduler.init_app(app)
+    # scheduler.start()
     app.run(host="127.0.0.1", port=8080, debug=True)

@@ -16,7 +16,8 @@ class fsWatchGroup():
             tmdb_token: str,
             name: Optional[str] = None,
             locale: Optional[str] = None,
-            members: Optional[list] = None
+            members: Optional[list] = None,
+            primary_member: Optional[str] = None
             ) -> None:
         """Represents a watch group.
         
@@ -28,11 +29,14 @@ class fsWatchGroup():
         name: the name of the group
         locale: the locale code of the group
         members: the list of the group members as Accounts.
+        primary_member: the member currently logged on. 
+        If omitted uses the first member on the list.
         
         """
         self.id = id
         self.db = database
         self.__tmdb_token = tmdb_token
+        self.primary_member = primary_member
         if (name and locale and members) is not None:
             self.name = name
             self.locale = locale
@@ -56,9 +60,13 @@ class fsWatchGroup():
                 session_id=user_data["tmdb_session"],
                 blocklist=self.get_user_blocklist(member=member.id),
                 m2w_id=member.id,
+                m2w_nick=user_data["nickname"],
+                m2w_email=user_data["email"],
                 **user_data["tmdb_user"]
             )
             self.members.append(user_acc)
+            if self.primary_member is None:
+                self.primary_member = member.id
 
     def get_user_blocklist(self, member: str) -> list[int]:
         """Return the blocklist of a user."""
@@ -82,7 +90,7 @@ class fsWatchGroup():
         Parameters
         ----------
         member: ID of the memeber in m2w users
-        movie_is: ID of the movie in TMDB
+        movie_id: ID of the movie in TMDB
 
         Returns
         -------
@@ -92,6 +100,29 @@ class fsWatchGroup():
         try:
             user_ref = self.db.collection("users").document(member)
             user_ref.collection("blocklist").document(movie_id).delete()
+        except:
+            return False
+        else:
+            return True
+        
+    def add_to_blocklist(self, member: str, movie_id: str, movie_title: str) -> None:
+        """Adds a movie to the blocklist of the member.
+        
+        Parameters
+        ----------
+        member: ID of the memeber in m2w users
+        movie_id: ID of the movie in TMDB
+        movie_title: the title of the movie in TMDB
+
+        Returns
+        -------
+        True if successfull, False otherwise.
+        """
+        movie_id = str(movie_id)
+        data = {"title":movie_title}
+        try:
+            user_ref = self.db.collection("users").document(member)
+            user_ref.collection("blocklist").document(movie_id).set(data)
         except:
             return False
         else:
@@ -107,9 +138,15 @@ class fsWatchGroup():
             A list with every movie.
         """
         movies = {}
+        votes = {}
         for member in self.members:
             watchlist = member.get_watchlist_movie()
             for mov in watchlist:
+                if votes.get(mov['id'], False):
+                    votes[mov['id']][member.m2w_id] = "liked"
+                else:
+                    votes[mov['id']] = {}
+                    votes[mov['id']][member.m2w_id] = "liked"
                 movies[mov['id']] = mov
                 if mov['id'] in member.blocklist:
                     self.remove_from_blocklist(
@@ -117,27 +154,37 @@ class fsWatchGroup():
                         movie_id=mov['id']
                     )
                     member.blocklist.remove(mov['id'])
+            for mov in member.blocklist:
+                if votes.get(mov, False):
+                    votes[mov][member.m2w_id] = "blocked"
+                else:
+                    votes[mov] = {}
+                    votes[mov][member.m2w_id] = "blocked"
         result = []
         for mov in movies.values():
+            vote = {}
+            for member in self.members:
+                vote[member.m2w_id] = votes[mov['id']].get(member.m2w_id, "none")
+            mov["votes"] = vote
             result.append(mov)
         return result
 
 
-if __name__ == "__main__":
-    from authenticate import SecretManager
-    from google.oauth2 import service_account
+# if __name__ == "__main__":
+#     from authenticate import SecretManager
+#     from google.oauth2 import service_account
 
-    secrets = SecretManager()
-    db_cert = service_account.Credentials.from_service_account_file(secrets.firestore_cert)
-    db = fsClient(project=secrets.firestore_project, credentials=db_cert)
+#     secrets = SecretManager()
+#     db_cert = service_account.Credentials.from_service_account_file(secrets.firestore_cert)
+#     db = fsClient(project=secrets.firestore_project, credentials=db_cert)
 
-    my_group = fsWatchGroup(
-        id="cf1lfA0B9k919oMaurS0",
-        database=db,
-        tmdb_token=secrets.tmdb_token
-    )
-    print(my_group.get_movie_grouplist_union())
-    my_group.members[0].add_movie_to_watchlist(movie_id=550)
-    print(my_group.get_movie_grouplist_union())
-    my_group.members[0].remove_movie_from_watchlist(movie_id=550)
-    print(my_group.get_movie_grouplist_union())
+#     my_group = fsWatchGroup(
+#         id="cf1lfA0B9k919oMaurS0",
+#         database=db,
+#         tmdb_token=secrets.tmdb_token
+#     )
+#     print(my_group.get_movie_grouplist_union())
+#     my_group.members[0].add_movie_to_watchlist(movie_id=550)
+#     print(my_group.get_movie_grouplist_union())
+#     my_group.members[0].remove_movie_from_watchlist(movie_id=550)
+#     print(my_group.get_movie_grouplist_union())

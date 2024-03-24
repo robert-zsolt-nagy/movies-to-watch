@@ -1,34 +1,74 @@
 import requests
 from typing import Optional, Literal
+from google.cloud import firestore
+from datetime import datetime, timedelta, UTC
+import time
+from src.authenticate import SecretManager
+
+SECRETS = SecretManager()
 
 class Movie():
     """ Movie relevant requests."""
     
     def __init__(
             self, 
-            id: int, 
+            id_: int, 
             token: str,
-            details: Optional[dict] = None,
-            vote: Optional[str] = None
+            db: firestore.Client,
+            retention: int = SECRETS.m2w_movie_retention,
+            details: Optional[dict] = None
             ) -> None:
         """ Bundles the movie related requests.
         
         Parameters
         ----------
-            id: the ID of the movie.
+            id_: the TMDB ID of the movie.
             token: the bearer token of the user.
+            db: the firestore DB Client.
+            retention: the cache retention period in seconds.
             details: the details of the movie from TMDB.
         """
-        self.__id = id
+        self.__id = id_
         self.__token = token
-        self.vote = vote
+        self.db = db
+        self.retention = retention
         if details is None:
-            self.__details = self.get_details()
-            self.__details['official_trailer'] = self.get_trailer()
-            self.__details['local_providers'] = self.get_watch_providers()
+            self.__init_details()
         else:
             self.__details = details
 
+    def __init_details(self) -> None:
+        """Populates the details attribute."""
+        movie = self.db.collection('movies').document(str(self.id)).get()
+        if movie.exists:
+            movie_data = movie.to_dict()
+            age = datetime.now(UTC) - movie_data['refreshed_at']
+            if age.seconds >= self.retention:
+                refresh = True
+            else:
+                refresh = False
+        else:
+            refresh = True
+        
+        if refresh:
+            self.__details = self.__wait(self.get_details)
+            self.__details['official_trailer'] = self.__wait(self.get_trailer)
+            self.__details['local_providers'] = self.__wait(self.get_watch_providers)
+            self.__details['refreshed_at'] = datetime.now(UTC)
+            self.db.collection('movies').document(str(self.id)).set(document_data=self.details)
+        else:
+            self.__details = self.db.collection('movies').document(str(self.id)).get().to_dict()
+
+    def __wait(self, func, limit: int = SECRETS.tmdb_rate_limit):
+        """Waits until limit ms passed if func finished faster."""
+        start = datetime.now()
+        result = func()
+        duration = datetime.now() - start
+        wait = limit - duration.microseconds
+        if wait > 0:
+            time.sleep(wait/1000)
+        return result
+    
     def __str__(self) -> str:
         return f'Movie({self.id}): {self.title}'
     
@@ -86,24 +126,36 @@ class Movie():
     def watch_providers(self) -> list:
         return self.__details['local_providers']
     
+    @property
+    def tmdb_link(self) -> str:
+        return f'{SECRETS.tmdb_home}movie/{self.id}'
+    
     def get_providers_for_locale(
             self, 
             locale: str
             ) -> dict:
         """Return the watch providers for the given locale."""
-        provider = self.watch_providers[locale].copy()
-        empty = []
-        stream = provider.pop('flatrate', empty)
-        rent = provider.pop('rent', empty)
-        buy = provider.pop('buy', empty)
-        provider = {
-            'stream': stream,
-            'rent': rent,
-            'buy': buy
-        }
-        for cat, prov in provider.items():
-            for elem in prov:
-                elem['logo_path'] = f"https://image.tmdb.org/t/p/original{elem['logo_path']}"
+        try:
+            provider = self.watch_providers[locale].copy()
+        except KeyError:
+            provider = {
+                'stream': [],
+                'rent': [],
+                'buy': []
+            } 
+        else:
+            empty = []
+            stream = provider.pop('flatrate', empty)
+            rent = provider.pop('rent', empty)
+            buy = provider.pop('buy', empty)
+            provider = {
+                'stream': stream,
+                'rent': rent,
+                'buy': buy
+            }
+            for cat, prov in provider.items():
+                for elem in prov:
+                    elem['logo_path'] = f"https://image.tmdb.org/t/p/original{elem['logo_path']}"
         return provider
     
     def get_datasheet_for_locale(self, locale: str) -> dict:
@@ -119,7 +171,7 @@ class Movie():
             "release_date": self.release_date,
             "status": self.status,
             "providers": self.get_providers_for_locale(locale=locale),
-            "vote": self.vote
+            "tmdb": self.tmdb_link
         }
         return sheet
     

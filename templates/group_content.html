@@ -1,0 +1,59 @@
+<div>
+    <h2>Your Movies</h2>
+    {% for key, value in movies.items() %}
+    <div id="movie-{{value['id']}}">
+      <h2>{{value['title']}}</h2>
+      <p><image src={{value['poster']}} width="300" height="450"></image></p>
+      <p>{{value['overview']}}</p>
+      <p>Genres: {{value['genres']}}</p>
+      <p>Runtime: {{value['runtime']}} Minutes</p>
+      <p>Release date: {{value['release_date']}}</p>
+      <p><a href={{value['trailer']}} target="_blank">Watch the trailer</a></p>
+      <p><a href={{value['tmdb']}} target="_blank">Go to TMDB</a></p>
+      <div>
+        <p>Stream: </p>
+        {% for elem in value['providers']['stream'] %}
+        <image src={{elem['logo_path']}} title="{{elem['provider_name']}}" width="75" height="75"></image>
+        {% endfor %}
+      </div>
+      <div>
+        <p>Rent: </p>
+        {% for elem in value['providers']['rent'] %}
+        <image src={{elem['logo_path']}} title="{{elem['provider_name']}}" width="75" height="75"></image>
+        {% endfor %}
+      </div>
+      <div>
+        <p>Buy: </p>
+        {% for elem in value['providers']['buy'] %}
+        <image src={{elem['logo_path']}} title="{{elem['provider_name']}}" width="75" height="75"></image>
+        {% endfor %}
+      </div>
+      <div>
+        <p>Votes:</p>
+        {% for vote in value['votes'].values() %}
+          <p value="{{vote['email']}}">{{vote['nickname']}} 
+            {% if vote['vote'] == "liked" %}
+              <image data-feather="check" title="wants to watch"></image>
+            {% elif vote['vote'] == "blocked" %}
+              <image data-feather="x" title="not interested"></image>
+            {% else %}
+              <image data-feather="minus" title="not voted"></image>
+            {% endif %}
+          </p>
+        {% endfor %}
+        {% if value['your_vote'] == "liked" %}
+          <a href="">Not interested</a>
+        {% elif value['your_vote'] == "blocked" %}
+          <a href="">Want to watch</a>
+        {% else %}
+          <a href="">Not interested</a><br>
+          <a href="">Want to watch</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    <a href="/profile">My Profile</a><br>
+    <script>
+      feather.replace();
+    </script>
+</div> 

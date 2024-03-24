@@ -33,6 +33,11 @@ class SecretManager():
         return self.__SECRETS
     
     @property
+    def tmdb_rate_limit(self) -> str:
+        """ The rate limit for tmdb requests."""
+        return self.__SECRETS['tmdb']['rate_limit']
+    
+    @property
     def tmdb_token(self) -> str:
         """ The bearer token for authentication"""
         return self.__SECRETS['tmdb']['auth']['bearer_token']
@@ -76,6 +81,16 @@ class SecretManager():
     def firestore_project(self) -> str:
         """ The path to the firebase certificate."""
         return self.__SECRETS['firestore']['project']
+    
+    @property
+    def m2w_base_URL(self) -> str:
+        """ The base movies-to-watch URL."""
+        return self.__SECRETS['m2w']['base_URL']
+    
+    @property
+    def m2w_movie_retention(self) -> str:
+        """ The base movies-to-watch URL."""
+        return self.__SECRETS['m2w']['movie_retention']
         
 
 class Authentication():
@@ -299,7 +314,10 @@ class Account():
     include_adult = False
     username = None
     blocklist = []
+    watchlist_movie = []
     m2w_id = None
+    m2w_nick = None
+    m2w_email = None
 
     def __init__(
             self, 
@@ -313,7 +331,9 @@ class Account():
             include_adult: bool = False,
             username: Optional[str] = None,
             blocklist: list = [],
-            m2w_id: Optional[str] = None
+            m2w_id: Optional[str] = None,
+            m2w_nick: Optional[str] = None,
+            m2w_email: Optional[str] = None
             ) -> None:
         """ Bundles the account related requests. 
         
@@ -335,6 +355,8 @@ class Account():
         self.username = username
         self.blocklist = blocklist
         self.m2w_id = m2w_id
+        self.m2w_nick = m2w_nick
+        self.m2w_email = m2w_email
 
     def get_lists(self) -> list:
         """ Gets data about the lists of the account.
