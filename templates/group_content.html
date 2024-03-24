@@ -31,24 +31,47 @@
       <div>
         <p>Votes:</p>
         {% for vote in value['votes'].values() %}
-          <p value="{{vote['email']}}">{{vote['nickname']}} 
+          <div>{{vote['nickname']}} 
             {% if vote['vote'] == "liked" %}
-              <image data-feather="check" title="wants to watch"></image>
+              {% if vote['nickname'] == "You" %}
+              <div id="my_vote{{value['id']}}">
+                <image data-feather="check" title="wants to watch"></image>
+                <button hx-get="/api/vote/{{value['id']}}/block" hx-trigger="click" hx-target="#my_vote{{value['id']}}" hx-indicator="#indicator{{value['id']}}">Not interested</button>
+                <img class="htmx-indicator" id="indicator{{value['id']}}" src="{{ url_for('static', filename='three-dots.svg') }}" height="15">
+              </div>
+              {% else %}
+              <div>
+                <image data-feather="check" title="wants to watch"></image>
+              </div>
+              {% endif %}
             {% elif vote['vote'] == "blocked" %}
-              <image data-feather="x" title="not interested"></image>
+              {% if vote['nickname'] == "You" %}
+              <div id="my_vote{{value['id']}}">
+                <image data-feather="x" title="not interested"></image>
+                <button hx-get="/api/vote/{{value['id']}}/like" hx-trigger="click" hx-target="#my_vote{{value['id']}}" hx-indicator="#indicator{{value['id']}}">Want to watch</button>
+                <img class="htmx-indicator" id="indicator{{value['id']}}" src="{{ url_for('static', filename='three-dots.svg') }}" height="15">
+              </div>
+              {% else %}
+              <div>
+                <image data-feather="x" title="not interested"></image>
+              </div>
+              {% endif %}
             {% else %}
-              <image data-feather="minus" title="not voted"></image>
+              {% if vote['nickname'] == "You" %}
+              <div id="my_vote{{value['id']}}">
+                <image data-feather="minus" title="not voted"></image>
+                <button hx-get="/api/vote/{{value['id']}}/block" hx-trigger="click" hx-target="#my_vote{{value['id']}}" hx-indicator="#indicator{{value['id']}}">Not interested</button>
+                <button hx-get="/api/vote/{{value['id']}}/like" hx-trigger="click" hx-target="#my_vote{{value['id']}}" hx-indicator="#indicator{{value['id']}}">Want to watch</a>
+                <img class="htmx-indicator" id="indicator{{value['id']}}" src="{{ url_for('static', filename='three-dots.svg') }}" height="15">
+              </div>
+              {% else%}
+              <div>
+                <image data-feather="minus" title="not voted"></image>
+              </div>
+              {% endif %}
             {% endif %}
-          </p>
+          </div>
         {% endfor %}
-        {% if value['your_vote'] == "liked" %}
-          <a href="">Not interested</a>
-        {% elif value['your_vote'] == "blocked" %}
-          <a href="">Want to watch</a>
-        {% else %}
-          <a href="">Not interested</a><br>
-          <a href="">Want to watch</a>
-        {% endif %}
       </div>
     </div>
     {% endfor %}

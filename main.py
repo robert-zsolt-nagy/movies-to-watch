@@ -2,7 +2,7 @@ from flask import Flask, render_template, session, redirect, request, flash, url
 from google.oauth2 import service_account
 from src.authenticate import SecretManager, Authentication, Account
 from src.movies import Movie
-from src.groups import fsWatchGroup
+from src.groups import fsWatchGroup, add_to_blocklist, remove_from_blocklist
 import pyrebase
 from requests.exceptions import HTTPError
 import json
@@ -320,7 +320,7 @@ def group_content(group):
             votes[logged_on]["nickname"] = "You"
             display[mov.id] = mov.get_datasheet_for_locale(locale=w_group.locale)
             display[mov.id]['votes'] = votes
-            display[mov.id]['your_vote'] = votes[logged_on]['vote']
+            # display[mov.id]['your_vote'] = votes[logged_on]['vote']
         return render_template("group_content.html", movies=display)
     else:
         target = f"/login?redirect=/api/group/{group}"
@@ -340,9 +340,23 @@ def vote_for_movie(movie, vote):
             m2w_nick=user_data["nickname"]
         )
         if vote == "like":
-            pass
+            user.add_movie_to_watchlist(int(movie))
+            remove_from_blocklist(
+                db=db,
+                member=logged_on,
+                movie_id=movie
+                )
+            # return f"liking {movie}"
+            return render_template("vote_response.html", vote="liked", movie_id=movie)
         elif vote == "block":
-            pass    
+            user.remove_movie_from_watchlist(int(movie))
+            add_to_blocklist(
+                db=db,
+                member=logged_on,
+                movie_id=movie
+            )
+            # return f"blocking {movie}"
+            return render_template("vote_response.html", vote="blocked", movie_id=movie)
     else:
         target = f"/login?redirect=/api/vote/{movie}/{vote}"
         return redirect(target)

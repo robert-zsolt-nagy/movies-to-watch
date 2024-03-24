@@ -213,7 +213,7 @@ class Authentication():
         if token is None:
             token = self.__last_request_token
         self.__approve_id = generate_id()
-        url=f"https://www.themoviedb.org/authenticate/{token}?redirect_to={self.secrets['m2w']['base_URL']}/approved/{self.__approve_id}"
+        url=f"https://www.themoviedb.org/authenticate/{token}?redirect_to={self.__SECRETS['m2w']['base_URL']}/approved/{self.__approve_id}"
         if _open:
             webbrowser.open_new_tab(url=url)
         return url

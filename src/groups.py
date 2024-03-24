@@ -6,6 +6,60 @@ from src.movies import Movie
 from google.cloud.firestore import Client as fsClient
 
 
+def add_to_blocklist(db: fsClient, member: str, movie_id: str, movie_title: Optional[str] = None) -> None:
+        """Adds a movie to the blocklist of the member.
+        
+        Parameters
+        ----------
+        db: the firestore client for the m2w database
+        member: ID of the memeber in m2w users
+        movie_id: ID of the movie in TMDB
+        movie_title: the title of the movie in TMDB
+
+        Returns
+        -------
+        True if successfull, False otherwise.
+        """
+        movie_id = str(movie_id)
+        if movie_title is None:
+            mov_ref = db.collection('movies').document(movie_id).get()
+            if mov_ref.exists:
+                mov_data = mov_ref.to_dict()
+                movie_title = mov_data['title']
+        data = {"title":movie_title}
+        try:
+            user_ref = db.collection("users").document(member)
+            user_ref.collection("blocklist").document(movie_id).set(data)
+        except:
+            return False
+        else:
+            return True
+        
+def remove_from_blocklist(db: fsClient, member: str, movie_id: str) -> None:
+        """Removes the movie from the blocklist of the member.
+        
+        Parameters
+        ----------
+        db: the firestore client for the m2w database
+        member: ID of the memeber in m2w users
+        movie_id: ID of the movie in TMDB
+
+        Returns
+        -------
+        True if successfull, False otherwise.
+        """
+        movie_id = str(movie_id)
+        try:
+            user_ref = db.collection("users").document(member)
+            mov_ref = user_ref.collection("blocklist").document(movie_id).get()
+            if mov_ref.exists:
+                user_ref.collection("blocklist").document(movie_id).delete()
+        except:
+            return False
+        else:
+            return True
+
+
 class fsWatchGroup():
     """Bundles the watchgroup specific methods."""
 
@@ -96,14 +150,11 @@ class fsWatchGroup():
         -------
         True if successfull, False otherwise.
         """
-        movie_id = str(movie_id)
-        try:
-            user_ref = self.db.collection("users").document(member)
-            user_ref.collection("blocklist").document(movie_id).delete()
-        except:
-            return False
-        else:
-            return True
+        return remove_from_blocklist(
+            db=self.db,
+            member=member,
+            movie_id=movie_id
+        )
         
     def add_to_blocklist(self, member: str, movie_id: str, movie_title: str) -> None:
         """Adds a movie to the blocklist of the member.
@@ -118,15 +169,12 @@ class fsWatchGroup():
         -------
         True if successfull, False otherwise.
         """
-        movie_id = str(movie_id)
-        data = {"title":movie_title}
-        try:
-            user_ref = self.db.collection("users").document(member)
-            user_ref.collection("blocklist").document(movie_id).set(data)
-        except:
-            return False
-        else:
-            return True
+        return add_to_blocklist(
+            db=self.db,
+            member=member,
+            movie_id=movie_id,
+            movie_title=movie_title
+        )
 
     def get_movie_grouplist_union(self) -> list:
         """ Gather the watchlist from every member.

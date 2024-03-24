@@ -19,9 +19,6 @@
     {% endif %}
   {% endwith %}
   {% if logged_on %}
-  <div>
-    <p> Current user: {{ logged_on }}</p>
-  </div>
     {% if verified %}
       {% if tmdb_linked == None%}
         <div>
