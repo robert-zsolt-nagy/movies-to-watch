@@ -390,6 +390,7 @@ class Account():
         # "total_pages":1,
         # "total_results":2}
 
+    
     def get_watchlist_movie(self) -> list[dict]:
         """ Get data about the movies watchlist of the account.
         
@@ -397,7 +398,28 @@ class Account():
         -------
             A list containing all movies on the accounts watchlist.
         """
-        url = f"https://api.themoviedb.org/3/account/{self.id}/watchlist/movies?language=en-US&page=1&session_id={self.__session_id}&sort_by=created_at.desc"
+        movies = []
+        results, total_pages = self.get_watchlist_movie_on_page(page=1)
+        if total_pages == 1:
+            return results
+        else:
+            for res in results:
+                movies.append(res)
+            for page in range(2, total_pages+1):
+                results, total_p = self.get_watchlist_movie_on_page(page=page)
+                for res in results:
+                    movies.append(res)
+            return movies
+    
+    
+    def get_watchlist_movie_on_page(self, page: int) -> tuple[list[dict], int]:
+        """ Get data about the movies watchlist of the account.
+        
+        Returns
+        -------
+            A list containing all movies on the given page of the accounts watchlist.
+        """
+        url = f"https://api.themoviedb.org/3/account/{self.id}/watchlist/movies?language=en-US&page={page}&session_id={self.__session_id}&sort_by=created_at.desc"
 
         headers = {
             "accept": "application/json",
@@ -407,7 +429,12 @@ class Account():
         response = requests.get(url, headers=headers)
         response = response.json()
         results = response["results"]
-        return results
+        return results, response["total_pages"]
+        # "page": 1,
+        # "results": [],
+        # "total_pages": 2,
+        # "total_results": 27
+
         # {'adult': False, 
         # 'backdrop_path': '/kjQBrc00fB2RjHZB3PGR4w9ibpz.jpg', 
         # 'genre_ids': [28, 12, 878], 
