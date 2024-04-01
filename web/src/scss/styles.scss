@@ -55,6 +55,11 @@
       @extend .small;
     }
 
+    .text-body {
+      @extend .text-body-secondary;
+      min-height: 12em;
+    }
+
     .minor-details:not(:first-of-type) {
       @extend .border-start;
       @extend .border-dark-subtle;
@@ -94,17 +99,46 @@
   }
 
   .refs-and-status {
-    @extend .row;
-    @extend .p-2;
 
     .ext-ref-buttons {
-      div {
+      @extend .row;
+      @extend .p-2;
+
+      .ext-button {
+        @extend .col-3;
         @extend .p-1;
 
         a {
-          @extend .btn ;
-          @extend .btn-outline-info ;
+          @extend .btn;
+          @extend .btn-outline-primary;
           @extend .w-100;
+
+          min-height: 4em;
+          font-size: $small-font-size;
+        }
+      }
+
+      .trailer {
+        @extend .ext-button;
+      }
+
+      .tmdb {
+        @extend .ext-button;
+      }
+
+      .watched-alone {
+        @extend .ext-button;
+
+        a {
+          @extend .btn-outline-dark;
+        }
+      }
+
+      .watched-together {
+        @extend .ext-button;
+
+        a {
+          @extend .btn-outline-dark;
         }
       }
     }
@@ -112,6 +146,7 @@
 
   .providers {
     @extend .row;
+    min-height: 6em;
 
     .section:not(:first-of-type) {
       @extend .border-start;
@@ -174,6 +209,7 @@
           @extend .row;
           @extend .p-0;
           @extend .m-0;
+          min-height: 6em;
 
           .badge {
             @extend .col-2;
