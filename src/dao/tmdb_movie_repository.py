@@ -3,7 +3,9 @@ from src.dao.movie_repository import MovieRepository
 from src.dao.tmdb_http_client import TmdbHttpClient
 
 class NoTrailerDataException(Exception):
+    """Exception that occures if a trailer is not found by TmdbMovieRepository"""
     def __init__(self, message: str):
+        """Exception that occures if a trailer is not found by TmdbMovieRepository"""
         super().__init__(message)
 
 

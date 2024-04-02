@@ -6,7 +6,9 @@ import time
 
 
 class TmdbHttpClientException(Exception):
+    """Base class for Exceptions of TmdbHttpClient"""
     def __init__(self, message: str):
+        """Base class for Exceptions of TmdbHttpClient"""
         super().__init__(message)
 
 
@@ -51,17 +53,21 @@ def _process_response(response: requests.Response) -> Any:
 
 class TmdbHttpClient:
     """Handle the requests with the TMDB API"""
-    def __init__(self, token: str, base_url: str = "https://api.themoviedb.org/3"):
+    def __init__(self, token: str, base_url: str = "https://api.themoviedb.org/3", session: Optional[requests.Session] = None):
         """Bundle all requests to the TMDB API
         
         Parameters
         ----------
-        token: the bearer token for accessing the TMDB API
-        base_url: the base URL of the TMDB API
+        token: the bearer token for accessing the TMDB API.
+        base_url: the base URL of the TMDB API.
+        session: the session object used for connection pooling.
         """
         self.__base_url = base_url
         self.__token = token
-        self.__session = requests.Session()
+        if session is None:
+            self.__session = requests.Session()
+        else:
+            self.__session = session
 
     def get(self, path: str, params: Optional[dict] = None, additional_headers: Optional[dict] = None) -> Any:
         """Sends a GET request.

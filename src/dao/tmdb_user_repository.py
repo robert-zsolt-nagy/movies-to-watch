@@ -3,10 +3,25 @@ from src.dao.tmdb_http_client import TmdbHttpClient
 from datetime import datetime, UTC
 
 class TmdbUserRepositoryException(Exception):
+    """Base class for Exceptions of TmdbUserRepository"""
     def __init__(self, message: str):
+        """Base class for Exceptions of TmdbUserRepository"""
         super().__init__(message)
 
-class tmdbUserRepository():
+def is_expired(expires_at: str) -> bool:
+    """Returns `True` if the current time is not before `expires_at` time."""
+    try:
+        exp = datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=UTC)
+        validity = exp - datetime.now(UTC)
+    except:
+        return True
+    else:
+        if validity.seconds > 0:
+            return False
+        else:
+            return True
+
+class TmdbUserRepository():
     """Bundle of user related TMDB requests."""
     def __init__(self, tmdb_http_client: TmdbHttpClient) -> None:
         """Bundle of user related TMDB requests.
@@ -36,7 +51,7 @@ class tmdbUserRepository():
             expires_at: str,
             redirect_to: Optional[str] = None, 
             tmdb_url: str = "https://www.themoviedb.org",
-            **kwargs
+            **kwargs # to adress the 'success' key in the response
             ) -> str:
         """ Ask the user for permission by an authentication URL.
         
@@ -51,9 +66,7 @@ class tmdbUserRepository():
         -------
             The relevant URL.
         """
-        exp = datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=UTC)
-        validity = exp - datetime.now(UTC)
-        if validity.seconds <= 0:
+        if is_expired(expires_at=expires_at):
             raise TmdbUserRepositoryException("Request token is expired.")
         elif redirect_to is None:
             url = f"{tmdb_url}/authenticate/{request_token}"
@@ -75,6 +88,8 @@ class tmdbUserRepository():
         -------
             The created session ID.
         """
+        if is_expired(expires_at=request_token['expires_at']):
+            raise TmdbUserRepositoryException("Request token is expired.")
         response = self.__client.post(
             path="/authentication/session/new",
             content_type="application/json",
