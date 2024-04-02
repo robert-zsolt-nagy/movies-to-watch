@@ -1,10 +1,33 @@
 import json
 from typing import Any, Optional
 import requests
+from datetime import datetime
+import time
+
 
 class TmdbHttpClientException(Exception):
     def __init__(self, message: str):
         super().__init__(message)
+
+
+def limit_request_rate(func, limit: float=1.000):
+    """Wait for `limit` seconds or until `func()` returns, 
+    whichever lasts longer.
+    """
+    def wrap_func(*args, **kwargs): 
+        start = datetime.now()
+        # print(f'start:{start}')
+        result = func(*args, **kwargs) 
+        end = datetime.now()
+        # print(f'end:{end}')
+        duration = end - start
+        wait = limit * 1_000_000 - duration.microseconds
+        if wait > 0:
+            time.sleep(wait/1_000_000)
+        # print(f'after wait:{datetime.now()}')
+        # print(f'Function {func.__name__!r} executed in {(duration.microseconds):.4f}ms') 
+        return result 
+    return wrap_func
 
 
 def _process_response(response: requests.Response) -> Any:
@@ -38,6 +61,7 @@ class TmdbHttpClient:
         """
         self.__base_url = base_url
         self.__token = token
+        self.__session = requests.Session()
 
     def get(self, path: str, params: Optional[dict] = None, additional_headers: Optional[dict] = None) -> Any:
         """Sends a GET request.
@@ -58,10 +82,17 @@ class TmdbHttpClient:
             headers = {**default_headers, **additional_headers}
 
         url = self.__base_url + path
-        response = requests.get(url=url, params=params, headers=headers)
+        response = self.__session.get(url=url, params=params, headers=headers)
         return _process_response(response)
 
-    def post(self, path: str, content_type: str, payload: dict, additional_headers: Optional[dict] = None) -> Any:
+    def post(
+            self, 
+            path: str, 
+            content_type: str, 
+            payload: dict, 
+            additional_headers: Optional[dict] = None, 
+            params: Optional[dict] = None
+            ) -> Any:
         """Sends a POST request.
         
         Parameters
@@ -70,6 +101,7 @@ class TmdbHttpClient:
         content_type: the content type of the request.
         payload: the payload delivered by the request.
         additional_headers: the additional headers of the request.
+        params: the parameters of the request
 
         Returns:
         The response decoded as json.
@@ -82,10 +114,16 @@ class TmdbHttpClient:
             headers = {**default_headers, **additional_headers}
 
         url = self.__base_url + path
-        response = requests.post(url=url, json=payload, headers=headers)
+        response = self.__session.post(url=url, json=payload, headers=headers, params=params)
         return _process_response(response)
 
-    def put(self, path: str, content_type: str, payload: dict, additional_headers: Optional[dict] = None) -> Any:
+    def put(
+            self, 
+            path: str, 
+            content_type: str, 
+            payload: dict, 
+            additional_headers: Optional[dict] = None
+            ) -> Any:
         """Sends a PUT request.
         
         Parameters
@@ -106,7 +144,7 @@ class TmdbHttpClient:
             headers = {**default_headers, **additional_headers}
 
         url = self.__base_url + path
-        response = requests.put(url=url, json=payload, headers=headers)
+        response = self.__session.put(url=url, json=payload, headers=headers)
         return _process_response(response)
 
     def delete(self, path: str, params: Optional[dict] = None, additional_headers: Optional[dict] = None) -> Any:
@@ -128,7 +166,7 @@ class TmdbHttpClient:
             headers = {**default_headers, **additional_headers}
 
         url = self.__base_url + path
-        response = requests.delete(url=url, params=params, headers=headers)
+        response = self.__session.delete(url=url, params=params, headers=headers)
         return _process_response(response)
 
     def __get_default_headers(self) -> dict:
