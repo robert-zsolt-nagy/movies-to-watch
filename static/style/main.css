@@ -315,7 +315,7 @@ b, strong {
     font-weight: bolder
 }
 
-small, .small, .movie-card .providers .section p, .movie-card .movie-header .minor-details, .movie-card .movie-header .runtime, .movie-card .movie-header .genre, .movie-card .movie-header .released {
+small, .small, .movie-card .providers .section p, .movie-card .movie-header .minor-details-row .minor-details, .movie-card .movie-header .minor-details-row .runtime, .movie-card .movie-header .minor-details-row .genre, .movie-card .movie-header .minor-details-row .released {
     font-size: 0.875em
 }
 
@@ -753,7 +753,7 @@ progress {
     --bs-breakpoint-xxl: 1400px
 }
 
-.row, .movie-card .votes .your-vote, .movie-card .votes .tally .cast .badges, .movie-card .votes .tally .cast-no .badges, .movie-card .votes .tally .cast-yes .badges, .movie-card .votes .tally, .movie-card .votes, .movie-card .providers .section .items, .movie-card .providers, .movie-card .refs-and-status .ext-ref-buttons, .movie-card .movie-header {
+.row, .movie-card .votes .your-vote, .movie-card .votes .tally .cast .badges, .movie-card .votes .tally .cast-no .badges, .movie-card .votes .tally .cast-yes .badges, .movie-card .votes .tally, .movie-card .votes, .movie-card .providers .section .items, .movie-card .providers, .movie-card .refs-and-status .ext-ref-buttons, .movie-card .movie-header .minor-details-row, .movie-card .movie-header {
     --bs-gutter-x: 1.5rem;
     --bs-gutter-y: 0;
     display: flex;
@@ -763,7 +763,7 @@ progress {
     margin-left: calc(-0.5 * var(--bs-gutter-x))
 }
 
-.row > *, .movie-card .votes .your-vote > *, .movie-card .votes .tally .cast .badges > *, .movie-card .votes .tally .cast-no .badges > *, .movie-card .votes .tally .cast-yes .badges > *, .movie-card .votes .tally > *, .movie-card .votes > *, .movie-card .providers .section .items > *, .movie-card .providers > *, .movie-card .refs-and-status .ext-ref-buttons > *, .movie-card .movie-header > * {
+.row > *, .movie-card .votes .your-vote > *, .movie-card .votes .tally .cast .badges > *, .movie-card .votes .tally .cast-no .badges > *, .movie-card .votes .tally .cast-yes .badges > *, .movie-card .votes .tally > *, .movie-card .votes > *, .movie-card .providers .section .items > *, .movie-card .providers > *, .movie-card .refs-and-status .ext-ref-buttons > *, .movie-card .movie-header .minor-details-row > *, .movie-card .movie-header > * {
     flex-shrink: 0;
     width: 100%;
     max-width: 100%;
@@ -772,7 +772,7 @@ progress {
     margin-top: var(--bs-gutter-y)
 }
 
-.col, .movie-card .votes .your-vote .buttons, .movie-card .votes .your-vote .no, .movie-card .votes .your-vote .yes, .movie-card .votes .tally .cast, .movie-card .votes .tally .cast-no, .movie-card .votes .tally .cast-yes, .movie-card .movie-header .minor-details, .movie-card .movie-header .runtime, .movie-card .movie-header .genre, .movie-card .movie-header .released {
+.col, .movie-card .votes .your-vote .buttons, .movie-card .votes .your-vote .no, .movie-card .votes .your-vote .yes, .movie-card .votes .tally .cast, .movie-card .votes .tally .cast-no, .movie-card .votes .tally .cast-yes, .movie-card .movie-header .minor-details-row .minor-details, .movie-card .movie-header .minor-details-row .runtime, .movie-card .movie-header .minor-details-row .genre, .movie-card .movie-header .minor-details-row .released {
     flex: 1 0 0%
 }
 
@@ -826,17 +826,17 @@ progress {
     width: 16.66666667%
 }
 
-.col-3, .movie-card .providers .section .items .badge, .movie-card .refs-and-status .ext-ref-buttons .ext-button, .movie-card .refs-and-status .ext-ref-buttons .watched-together, .movie-card .refs-and-status .ext-ref-buttons .watched-alone, .movie-card .refs-and-status .ext-ref-buttons .tmdb, .movie-card .refs-and-status .ext-ref-buttons .trailer, .movie-card .movie-header .runtime, .movie-card .first-col {
+.col-3, .movie-card .providers .section .items .badge, .movie-card .refs-and-status .ext-ref-buttons .ext-button, .movie-card .refs-and-status .ext-ref-buttons .watched-together, .movie-card .refs-and-status .ext-ref-buttons .watched-alone, .movie-card .refs-and-status .ext-ref-buttons .tmdb, .movie-card .refs-and-status .ext-ref-buttons .trailer, .movie-card .movie-header .minor-details-row .runtime, .movie-card .first-col {
     flex: 0 0 auto;
     width: 25%
 }
 
-.col-4, .movie-card .movie-header .released {
+.col-4, .movie-card .movie-header .minor-details-row .released {
     flex: 0 0 auto;
     width: 33.33333333%
 }
 
-.col-5, .movie-card .movie-header .genre {
+.col-5, .movie-card .movie-header .minor-details-row .genre {
     flex: 0 0 auto;
     width: 41.66666667%
 }
@@ -7972,7 +7972,7 @@ textarea.form-control-lg {
     border-bottom: 0 !important
 }
 
-.border-start, .movie-card .votes .tally .cast-no, .movie-card .providers .section:not(:first-of-type), .movie-card .movie-header .minor-details:not(:first-of-type), .movie-card .movie-header .runtime:not(:first-of-type), .movie-card .movie-header .genre:not(:first-of-type), .movie-card .movie-header .released:not(:first-of-type) {
+.border-start, .movie-card .votes .tally .cast-no, .movie-card .providers .section:not(:first-of-type), .movie-card .movie-header .minor-details-row .minor-details:not(:first-of-type), .movie-card .movie-header .minor-details-row .runtime:not(:first-of-type), .movie-card .movie-header .minor-details-row .genre:not(:first-of-type), .movie-card .movie-header .minor-details-row .released:not(:first-of-type) {
     border-left: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color) !important
 }
 
@@ -8058,11 +8058,11 @@ textarea.form-control-lg {
     border-color: var(--bs-light-border-subtle) !important
 }
 
-.border-dark-subtle, .movie-card .votes .tally .cast-no, .movie-card .providers .section:not(:first-of-type), .movie-card .movie-header .minor-details:not(:first-of-type), .movie-card .movie-header .runtime:not(:first-of-type), .movie-card .movie-header .genre:not(:first-of-type), .movie-card .movie-header .released:not(:first-of-type) {
+.border-dark-subtle, .movie-card .votes .tally .cast-no, .movie-card .providers .section:not(:first-of-type), .movie-card .movie-header .minor-details-row .minor-details:not(:first-of-type), .movie-card .movie-header .minor-details-row .runtime:not(:first-of-type), .movie-card .movie-header .minor-details-row .genre:not(:first-of-type), .movie-card .movie-header .minor-details-row .released:not(:first-of-type) {
     border-color: var(--bs-dark-border-subtle) !important
 }
 
-.border-1, .movie-card .votes .tally .cast-no, .movie-card .providers .section:not(:first-of-type), .movie-card .movie-header .minor-details:not(:first-of-type), .movie-card .movie-header .runtime:not(:first-of-type), .movie-card .movie-header .genre:not(:first-of-type), .movie-card .movie-header .released:not(:first-of-type), .img-badge, .movie-card .votes .tally .cast .badges .badge img, .movie-card .votes .tally .cast-no .badges .badge img, .movie-card .votes .tally .cast-yes .badges .badge img, .movie-card .providers .section .items .badge img {
+.border-1, .movie-card .votes .tally .cast-no, .movie-card .providers .section:not(:first-of-type), .movie-card .movie-header .minor-details-row .minor-details:not(:first-of-type), .movie-card .movie-header .minor-details-row .runtime:not(:first-of-type), .movie-card .movie-header .minor-details-row .genre:not(:first-of-type), .movie-card .movie-header .minor-details-row .released:not(:first-of-type), .img-badge, .movie-card .votes .tally .cast .badges .badge img, .movie-card .votes .tally .cast-no .badges .badge img, .movie-card .votes .tally .cast-yes .badges .badge img, .movie-card .providers .section .items .badge img {
     border-width: 1px !important
 }
 
@@ -8504,7 +8504,7 @@ textarea.form-control-lg {
     margin-bottom: .5rem !important
 }
 
-.mb-3 {
+.mb-3, .movie-card .movie-header .minor-details-row {
     margin-bottom: 1rem !important
 }
 
@@ -8664,7 +8664,7 @@ textarea.form-control-lg {
     padding-right: .25rem !important
 }
 
-.pe-2, .movie-card .movie-header .minor-details:not(:last-of-type), .movie-card .movie-header .runtime:not(:last-of-type), .movie-card .movie-header .genre:not(:last-of-type), .movie-card .movie-header .released:not(:last-of-type) {
+.pe-2, .movie-card .movie-header .minor-details-row .minor-details:not(:last-of-type), .movie-card .movie-header .minor-details-row .runtime:not(:last-of-type), .movie-card .movie-header .minor-details-row .genre:not(:last-of-type), .movie-card .movie-header .minor-details-row .released:not(:last-of-type) {
     padding-right: .5rem !important
 }
 
@@ -8712,7 +8712,7 @@ textarea.form-control-lg {
     padding-left: .25rem !important
 }
 
-.ps-2, .movie-card .providers .section p, .movie-card .poster img, .movie-card .movie-header .minor-details:not(:first-of-type), .movie-card .movie-header .runtime:not(:first-of-type), .movie-card .movie-header .genre:not(:first-of-type), .movie-card .movie-header .released:not(:first-of-type), .movie-card .first-col {
+.ps-2, .movie-card .providers .section p, .movie-card .poster img, .movie-card .movie-header .minor-details-row .minor-details:not(:first-of-type), .movie-card .movie-header .minor-details-row .runtime:not(:first-of-type), .movie-card .movie-header .minor-details-row .genre:not(:first-of-type), .movie-card .movie-header .minor-details-row .released:not(:first-of-type), .movie-card .first-col {
     padding-left: .5rem !important
 }
 
@@ -13365,6 +13365,10 @@ textarea.form-control-lg {
     }
 }
 
+.movie-card .movie-header .minor-details-row {
+    min-height: 3em
+}
+
 .movie-card .movie-header .text-body {
     min-height: 12em
 }
@@ -13375,9 +13379,14 @@ textarea.form-control-lg {
 }
 
 .movie-card .providers {
-    min-height: 6em
+    min-height: 6em;
+    max-height: 6em
+}
+
+.movie-card .providers .section .items .badge img {
+    max-height: 5em
 }
 
 .movie-card .votes .tally .cast .badges, .movie-card .votes .tally .cast-no .badges, .movie-card .votes .tally .cast-yes .badges {
-    min-height: 6em
+    min-height: 7em
 }

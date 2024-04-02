@@ -50,9 +50,41 @@
       @extend .text-primary-emphasis;
     }
 
-    .minor-details {
-      @extend .col;
-      @extend .small;
+    .minor-details-row {
+      @extend .row;
+      @extend .mb-3;
+      min-height: 3em;
+
+      .minor-details {
+        @extend .col;
+        @extend .small;
+      }
+
+      .minor-details:not(:first-of-type) {
+        @extend .border-start;
+        @extend .border-dark-subtle;
+        @extend .border-1;
+        @extend .ps-2;
+      }
+
+      .minor-details:not(:last-of-type) {
+        @extend .pe-2;
+      }
+
+      .released {
+        @extend .minor-details;
+        @extend .col-4;
+      }
+
+      .genre {
+        @extend .minor-details;
+        @extend .col-5;
+      }
+
+      .runtime {
+        @extend .minor-details;
+        @extend .col-3;
+      }
     }
 
     .text-body {
@@ -60,31 +92,6 @@
       min-height: 12em;
     }
 
-    .minor-details:not(:first-of-type) {
-      @extend .border-start;
-      @extend .border-dark-subtle;
-      @extend .border-1;
-      @extend .ps-2;
-    }
-
-    .minor-details:not(:last-of-type) {
-      @extend .pe-2;
-    }
-
-    .released {
-      @extend .minor-details;
-      @extend .col-4;
-    }
-
-    .genre {
-      @extend .minor-details;
-      @extend .col-5;
-    }
-
-    .runtime {
-      @extend .minor-details;
-      @extend .col-3;
-    }
   }
 
   .poster {
@@ -147,6 +154,7 @@
   .providers {
     @extend .row;
     min-height: 6em;
+    max-height: 6em;
 
     .section:not(:first-of-type) {
       @extend .border-start;
@@ -179,6 +187,7 @@
 
           img {
             @extend .img-badge;
+            max-height: 5em;
           }
         }
       }
@@ -209,7 +218,7 @@
           @extend .row;
           @extend .p-0;
           @extend .m-0;
-          min-height: 6em;
+          min-height: 7em;
 
           .badge {
             @extend .col-2;
