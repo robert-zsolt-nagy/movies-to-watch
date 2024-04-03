@@ -268,7 +268,7 @@ def link_to_tmdb():
             ask_URL = tmdb_auth.ask_user_permission()
             session['approve_id'] = tmdb_auth.approve_id
         except Exception:
-            return "Something wnet wrong!"
+            return "Something went wrong!"
         else:
             return redirect(ask_URL)
     else:
