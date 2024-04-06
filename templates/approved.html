@@ -1,25 +1,16 @@
-<!doctype html>
-<html>
-<head>
-  <title>Movies-to-watch</title>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
-  <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
-  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <h1>Movies-to-watch Approved Page</h1>
+{% extends 'generic/layout.html' %}
+{% block title %}Approved{% endblock %}
+{% block content %}
+    <h1>Movies-to-watch Approved</h1>
   {% if success %}
-  <div>
+      <div class="alert alert-success" role="alert">
     <p>Congratulations, your Movies-to-watch account is successfully linked with your TMDB account!</p>
   </div>  
   {% else %}
-  <div>
+      <div class="alert alert-danger" role="alert">
     <p>Something went wrong!</p>
-    <p>The following error occured:</p>
+          <p>The following error occurred:</p>
     <p>{{ error }}</p>
   </div> 
   {% endif %}
-  <p>Back to <a href="/">home</a></p>
-  <p>Made by Narogi</p>
-</body>
-</html>
+{% endblock %}

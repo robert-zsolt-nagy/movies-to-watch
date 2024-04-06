@@ -1,16 +1,10 @@
-<!doctype html>
-<html>
-<head>
-  <title>Movies-to-watch</title>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
-  <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
-  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends 'generic/layout.html' %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
   <h1>Sign up for Movies-to-watch</h1>
   {% if error %}
-  <div>
-    <p> The following error occured:</p>
+      <div class="alert alert-danger" role="alert">
+          <p> The following error occurred:</p>
     {% if error == "INVALID_EMAIL" %}
     <p> Email is not valid! </p>
     {% elif error == "MISSING_PASSWORD" %}
@@ -27,21 +21,22 @@
   </div>
   {% endif %}
   {% if success %}
-  <div>
+      <div class="alert alert-success" role="alert">
     <p> Your account is successfully created! </p>
     <p> Your can log in <a href="/login">here</a>. </p>
   </div>
   {% else %}
-  <form action="/signup", method="post">
-    *Email: <input type="email" name="email" value={{ email }}><br><br>
-    *Confirm Email: <input type="email" name="email_confirm" value={{ email_c }}><br><br>
-    *Password: <input type="password" name="password" value={{ password }}><br><br>
-    *Confirm Password: <input type="password" name="password_confirm" value={{ password_c }}><br><br>
-    Nickname: <input type="text" name="nickname" value={{ nickname }}><br><br>
-    <input type="submit" value="Register">
+      <form action="/signup" method="post">
+          <label for="email">*Email:</label><input id="email" type="email" name="email" value={{ email }}><br><br>
+          <label for="email_confirm">*Confirm Email:</label><input id="email_confirm" type="email" name="email_confirm"
+                                                                   value={{ email_c }}><br><br>
+          <label for="password">*Password:</label><input id="password" type="password" name="password"
+                                                         value={{ password }}><br><br>
+          <label for="password_confirm">*Confirm Password:</label><input id="password_confirm" type="password"
+                                                                         name="password_confirm" value={{ password_c }}><br><br>
+          <label for="nickname">Nickname:</label><input id="nickname" type="text" name="nickname"
+                                                        value={{ nickname }}><br><br>
+          <input class="btn btn-outline-primary" type="submit" value="Register">
   </form>
-  <p>Back to <a href="/">home</a></p>
   {% endif %}
-  <p>Made by Narogi</p>
-</body>
-</html>
+{% endblock %}

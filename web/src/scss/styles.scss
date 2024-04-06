@@ -1,0 +1,306 @@
+// Import all of Bootstrap's CSS
+@import "bootstrap/scss/bootstrap";
+
+//generic
+.img-badge {
+  @extend .img-fluid;
+  @extend .m-0;
+  @extend .border-1;
+  @extend .rounded;
+  @extend .border;
+  @extend .border-secondary-subtle;
+}
+
+.movie-container {
+  @extend .col-lg-6;
+  @extend .m-0;
+  @extend .p-0;
+  @extend .ps-1;
+  @extend .pt-1;
+
+}
+
+//movie list
+.movie-card {
+  @extend .card;
+  @extend .m-0;
+  @extend .p-2;
+
+  .first-col {
+    @extend .col-3;
+    @extend .m-0;
+    @extend .p-0;
+    @extend .ps-2;
+  }
+
+  .second-col {
+    @extend .col-9;
+  }
+
+  .movie-header {
+    @extend .row;
+
+    h5 {
+      @extend .h5;
+      @extend .text-primary-emphasis;
+    }
+
+    .movie-title {
+      @extend .h3;
+      @extend .text-primary-emphasis;
+    }
+
+    .minor-details-row {
+      @extend .row;
+      @extend .mb-3;
+      min-height: 3em;
+
+      .minor-details {
+        @extend .col;
+        @extend .small;
+      }
+
+      .minor-details:not(:first-of-type) {
+        @extend .border-start;
+        @extend .border-dark-subtle;
+        @extend .border-1;
+        @extend .ps-2;
+      }
+
+      .minor-details:not(:last-of-type) {
+        @extend .pe-2;
+      }
+
+      .released {
+        @extend .minor-details;
+        @extend .col-4;
+      }
+
+      .genre {
+        @extend .minor-details;
+        @extend .col-5;
+      }
+
+      .runtime {
+        @extend .minor-details;
+        @extend .col-3;
+      }
+    }
+
+    .text-body {
+      @extend .text-body-secondary;
+      min-height: 12em;
+    }
+
+  }
+
+  .poster {
+    @extend .pt-3;
+
+    img {
+      @extend .ps-2;
+      @extend .img-fluid;
+      @extend .m-0;
+      @extend .p-0;
+    }
+  }
+
+  .refs-and-status {
+
+    .ext-ref-buttons {
+      @extend .row;
+      @extend .p-2;
+
+      .ext-button {
+        @extend .col-3;
+        @extend .p-1;
+
+        a {
+          @extend .btn;
+          @extend .btn-outline-primary;
+          @extend .w-100;
+
+          min-height: 4em;
+          font-size: $small-font-size;
+        }
+      }
+
+      .trailer {
+        @extend .ext-button;
+      }
+
+      .tmdb {
+        @extend .ext-button;
+      }
+
+      .watched-alone {
+        @extend .ext-button;
+
+        a {
+          @extend .btn-outline-dark;
+        }
+      }
+
+      .watched-together {
+        @extend .ext-button;
+
+        a {
+          @extend .btn-outline-dark;
+        }
+      }
+    }
+  }
+
+  .providers {
+    @extend .row;
+    min-height: 6em;
+    max-height: 6em;
+
+    .section:not(:first-of-type) {
+      @extend .border-start;
+      @extend .border-dark-subtle;
+      @extend .border-1;
+    }
+
+    .section {
+      @extend .ps-1;
+      @extend .p-0;
+      @extend .col-6;
+
+      p {
+        @extend .small;
+        @extend .text-secondary;
+        @extend .p-0;
+        @extend .ps-2;
+        @extend .m-0;
+      }
+
+      .items {
+        @extend .row;
+        @extend .p-1;
+        @extend .m-0;
+
+        .badge {
+          @extend .col-3;
+          @extend .p-0;
+          @extend .ps-1;
+
+          img {
+            @extend .img-badge;
+            max-height: 5em;
+          }
+        }
+      }
+    }
+  }
+
+  .votes {
+    @extend .row;
+    @extend .p-0;
+    @extend .m-0;
+
+    h5 {
+      @extend .h5;
+      @extend .p-1;
+      @extend .text-primary-emphasis;
+    }
+
+    .tally {
+      @extend .row ;
+      @extend .p-1 ;
+      @extend .m-0;
+
+      .cast {
+        @extend .col;
+        @extend .p-0;
+
+        .badges {
+          @extend .row;
+          @extend .p-0;
+          @extend .m-0;
+          min-height: 7em;
+
+          .badge {
+            @extend .col-2;
+            @extend .p-0;
+            @extend .ps-1;
+            @extend .pt-1;
+            @extend .m-0;
+
+            img {
+              @extend .img-badge;
+            }
+          }
+        }
+      }
+
+      .cast-yes {
+        @extend .cast;
+        @extend .pe-1;
+
+        p {
+          @extend .text-success;
+        }
+      }
+
+      .cast-no {
+        @extend .cast;
+        @extend .border-start ;
+        @extend .border-1 ;
+        @extend .border-dark-subtle;
+
+        p {
+          @extend .text-danger;
+        }
+      }
+    }
+
+    .your-vote {
+      @extend .row;
+      @extend .p-0;
+      @extend .m-0;
+      @extend .mt-2;
+
+      .buttons {
+        @extend .col;
+        @extend .m-0;
+        @extend .p-0;
+      }
+
+      .yes {
+        @extend .buttons;
+        @extend .me-1;
+
+        .button-active {
+          @extend .btn;
+          @extend .btn-outline-success;
+          @extend .w-100;
+        }
+
+        .button-selected {
+          @extend .btn;
+          @extend .btn-success;
+          @extend .w-100;
+          @extend .disabled;
+        }
+      }
+
+      .no {
+        @extend .buttons;
+
+        .button-active {
+          @extend .btn;
+          @extend .btn-outline-danger;
+          @extend .w-100;
+        }
+
+        .button-selected {
+          @extend .btn;
+          @extend .btn-danger;
+          @extend .w-100;
+          @extend .disabled;
+        }
+      }
+    }
+  }
+}
