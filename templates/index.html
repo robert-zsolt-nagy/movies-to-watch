@@ -1,17 +1,10 @@
-<!doctype html>
-<html>
-<head>
-  <title>Movies-to-watch</title>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
-  <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='feather.min.js') }}"></script>
-  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends 'generic/layout.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
   <h1>Movies-to-watch Home</h1>
   {% with messages = get_flashed_messages() %}
     {% if messages %}
-        <div>
+        <div class="alert alert-primary" role="alert">
         {% for message in messages %}  
             <p>{{ message }}</p><br>
         {% endfor %}
@@ -21,34 +14,35 @@
   {% if logged_on %}
     {% if verified %}
       {% if tmdb_linked == None%}
-        <div>
+          <div class="alert alert-warning" role="alert">
           <p>Please link your TMDB Account to access all features of Movies-to-watch!</p>
-          <p>You can link your account from <a href="/profile">your Profile</a> page.</p>
+              <p>You can link your account after heading to the Profile page using the button below.</p>
+              <a class="btn btn-outline-primary" href="/profile">Go to Profile page</a>
         </div>
       {% elif group %}
-        <div hx-get="/api/group/{{group}}" hx-trigger="load" hx-indicator="#indicator">
+          <div hx-get="/api/group/{{ group }}" hx-trigger="load" hx-indicator="#indicator" class="alert alert-light"
+               role="alert">
           <p>Your groups list is loading...</p>
-          <img id="indicator" class="htmx-indicator" src="{{ url_for('static', filename='ball-triangle.svg') }}" width="50">
+              <img alt="Working..." id="indicator" class="htmx-indicator"
+                   src="{{ url_for('static', filename='ball-triangle.svg') }}" width="50">
         </div>
-      {% else %}        
-        <div>
+      {% else %}
+          <div class="alert alert-light" role="alert">
           <p>You belong to no group.</p>
         </div>
       {% endif %}
     {% else%}
-    <div>
-      <p>Your email is not verified.</p>
-      <p>Please verify your email to access all features of Movies-to-watch!</p>
-      <p><a href="/resend-verification">Resend verfication email.</a></p>
-    </div>
+        <div class="alert alert-danger" role="alert">
+            <p>Your email is not verified.</p>
+            <p>Please verify your email to access all features of Movies-to-watch!</p>
+            <p><a class="btn btn-outline-primary" href="/resend-verification">Resend verification email.</a></p>
+        </div>
     {% endif%} 
   <a href="/logout">Log out</a><br>
   {% else %}
-  <div>
+      <div class="alert alert-danger" role="alert">
     <p> You are not logged in. </p><br><br>
-    <a href="/login">Log in</a>
+          <a class="btn btn-outline-primary" href="/login">Log in</a>
   </div> 
   {% endif %}
-  <p>Made by Narogi</p>
-</body>
-</html>
+{% endblock %}

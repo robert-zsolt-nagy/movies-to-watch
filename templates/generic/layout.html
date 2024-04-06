@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Movies-to-watch :: {% block title %}...{% endblock %}</title>
+    <script defer="defer" src="{{ url_for('static/script', filename='main.js') }}"></script>
+    <link href="{{ url_for('static/style', filename='main.css') }}" rel="stylesheet">
+</head>
+<body>
+{% block navbar %}
+    {% include './generic/navbar.html' %}
+{% endblock %}
+<div class="container py-4 px-3 mx-auto">
+    {% block content %}
+        Content goes here
+    {% endblock %}
+</div>
+{% block footer %}
+    {% include './generic/footer.html' %}
+{% endblock %}
+</body>
+</html>

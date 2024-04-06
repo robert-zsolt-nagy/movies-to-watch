@@ -1,15 +1,16 @@
-from flask import Flask, render_template, session, redirect, request, flash, url_for
-from google.oauth2 import service_account
-from src.authenticate import SecretManager, Authentication, Account
-from src.movies import Movie
-from src.groups import fsWatchGroup, add_to_blocklist, remove_from_blocklist
-import pyrebase
-from requests.exceptions import HTTPError
 import json
-from google.cloud import firestore
 from datetime import datetime, timedelta
-import time
+
+import pyrebase
+from flask import Flask, render_template, session, redirect, request, flash, url_for
 from flask_apscheduler import APScheduler
+from google.cloud import firestore
+from google.oauth2 import service_account
+from requests.exceptions import HTTPError
+
+from src.authenticate import SecretManager, Authentication, Account
+from src.groups import fsWatchGroup, add_to_blocklist, remove_from_blocklist
+from src.movies import Movie
 
 # reading the secrets
 secrets = SecretManager()
@@ -312,15 +313,16 @@ def group_content(group):
             votes = {}
             for key, value in movie['votes'].items():
                 member = w_group.get_member(key)
-                votes[key] = {
-                    "nickname": member.m2w_nick,
-                    "email": member.m2w_email,
-                    "vote": value
-                }
-            votes[logged_on]["nickname"] = "You"
+                if key == logged_on:
+                    display[mov.id]['your_vote'] = value
+                else:
+                    votes[key] = {
+                        "nickname": member.m2w_nick,
+                        "email": member.m2w_email,
+                        "vote": value
+                    }
             display[mov.id] = mov.get_datasheet_for_locale(locale=w_group.locale)
             display[mov.id]['votes'] = votes
-            # display[mov.id]['your_vote'] = votes[logged_on]['vote']
         return render_template("group_content.html", movies=display)
     else:
         target = f"/login?redirect=/api/group/{group}"
