@@ -1,6 +1,7 @@
 {% extends 'generic/layout.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
+  <div id="index_content">
   <h1>Movies-to-watch Home</h1>
   {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -20,10 +21,11 @@
               <a class="btn btn-outline-primary" href="/profile">Go to Profile page</a>
         </div>
       {% elif group %}
-          <div hx-get="/api/group/{{ group }}" hx-trigger="load" hx-indicator="#indicator" class="alert alert-light"
+          <div hx-get="/api/group/{{ group }}" hx-trigger="load" hx-indicator="#indicator" hx-target="#index_content"
+          class="alert alert-light"
                role="alert">
           <p>Your groups list is loading...</p>
-          <div id="indicator" class="alert alert-danger" role="alert">
+          <div id="indicator" class="text-center">
             <img alt="Working..." 
                    src="{{ url_for('static', filename='img/ball-triangle.svg') }}" width="50">
           </div>
@@ -47,4 +49,5 @@
           <a class="btn btn-outline-primary" href="/login">Log in</a>
   </div> 
   {% endif %}
+  </div>
 {% endblock %}

@@ -255,7 +255,7 @@ def profile():
     if "user" in session:
         user_ref = db.collection("users").document(session['user'])
         user_data = user_ref.get()
-        return render_template('profile.html', profile_data=user_data.to_dict())
+        return render_template('profile.html', profile_data=user_data.to_dict(), logged_on=session['user'])
     else:
         return redirect("/login?redirect=/profile")
     

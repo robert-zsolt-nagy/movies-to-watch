@@ -98,7 +98,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id="my_vote{{ movie_id }}" class="your-vote">
+                    <div id="my_vote{{ value['id'] }}" class="your-vote">
                         <h5>Your vote</h5>
                         {% if value['your_vote'] == 'liked' %}
                             <div class="yes">
@@ -106,8 +106,8 @@
                             </div>
                         {% else %}
                             <div class="yes">
-                                <button hx-get="/api/vote/{{ movie_id }}/like" hx-trigger="click"
-                                        hx-target="#my_vote{{ movie_id }}" hx-indicator="#indicator{{ movie_id }}"
+                                <button hx-get="/api/vote/{{ value['id'] }}/like" hx-trigger="click"
+                                        hx-target="#my_vote{{ value['id'] }}" hx-indicator="#indicator{{ value['id'] }}"
                                         class="button-active">I'm in!
                                 </button>
                             </div>
@@ -118,13 +118,13 @@
                             </div>
                         {% else %}
                             <div class="no">
-                                <button hx-get="/api/vote/{{ movie_id }}/block" hx-trigger="click"
-                                        hx-target="#my_vote{{ movie_id }}" hx-indicator="#indicator{{ movie_id }}"
+                                <button hx-get="/api/vote/{{ value['id'] }}/block" hx-trigger="click"
+                                        hx-target="#my_vote{{ value['id'] }}" hx-indicator="#indicator{{ value['id'] }}"
                                         class="button-active">I'm out!
                                 </button>
                             </div>
                         {% endif %}
-                        <img alt="Working..." class="htmx-indicator" id="indicator{{ movie_id }}"
+                        <img alt="Working..." class="htmx-indicator" id="indicator{{ value['id'] }}"
                              src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
                     </div>
                 </div>
