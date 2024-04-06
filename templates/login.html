@@ -23,7 +23,7 @@
   </div>
   {% endif %}
   {% if target %}
-  <form action="/login?redirect={{target}}", method="post">
+  <form action="/login?redirect={{target}}" method="post">
     Email: <input type="email" name="email" value={{ email }}><br><br>
     Password: <input type="password" name="password" value={{ password }}><br><br>
     <input type="submit" value="Sign in">

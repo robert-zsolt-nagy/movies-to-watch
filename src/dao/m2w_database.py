@@ -151,3 +151,32 @@ class M2WDatabase():
             return False
         else:
             return True
+
+
+class M2wDocument(firestore.DocumentSnapshot):
+    """An item in the movies-to-watch database."""
+    def __init__(
+            self, 
+            db: firestore.Client,
+            collection: str,
+            document: str
+            ) -> None:
+        """Returns a represantation of a document.
+
+        Parameters
+        ----------
+        db: the client for the firestore API
+        collection: the ID of the collection that contains the document
+        document: the ID of the document. 
+        
+        Raises
+        ------
+        M2WDatabaseException: if the document doesn't exist.
+        """
+        self.__db = db
+        doc_ref = db.collection(collection).document(document)
+        doc = doc_ref.get()
+        if doc.exists:
+            return doc
+        else:
+            raise M2WDatabaseException("Document does not exist.")
