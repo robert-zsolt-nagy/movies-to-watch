@@ -310,6 +310,7 @@ def group_content(group):
                 token=secrets.tmdb_token,
                 db=db
             )
+            display[mov.id] = mov.get_datasheet_for_locale(locale=w_group.locale)
             votes = {}
             for key, value in movie['votes'].items():
                 member = w_group.get_member(key)
@@ -321,8 +322,8 @@ def group_content(group):
                         "email": member.m2w_email,
                         "vote": value
                     }
-            display[mov.id] = mov.get_datasheet_for_locale(locale=w_group.locale)
             display[mov.id]['votes'] = votes
+        print(display[787699]['votes'])
         return render_template("group_content.html", movies=display)
     else:
         target = f"/login?redirect=/api/group/{group}"

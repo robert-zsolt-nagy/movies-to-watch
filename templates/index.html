@@ -23,8 +23,11 @@
           <div hx-get="/api/group/{{ group }}" hx-trigger="load" hx-indicator="#indicator" class="alert alert-light"
                role="alert">
           <p>Your groups list is loading...</p>
-              <img alt="Working..." id="indicator" class="htmx-indicator"
-                   src="{{ url_for('static', filename='ball-triangle.svg') }}" width="50">
+          <div id="indicator" class="alert alert-danger" role="alert">
+            <img alt="Working..." 
+                   src="{{ url_for('static', filename='img/ball-triangle.svg') }}" width="50">
+          </div>
+              
         </div>
       {% else %}
           <div class="alert alert-light" role="alert">
@@ -38,7 +41,6 @@
             <p><a class="btn btn-outline-primary" href="/resend-verification">Resend verification email.</a></p>
         </div>
     {% endif%} 
-  <a href="/logout">Log out</a><br>
   {% else %}
       <div class="alert alert-danger" role="alert">
     <p> You are not logged in. </p><br><br>

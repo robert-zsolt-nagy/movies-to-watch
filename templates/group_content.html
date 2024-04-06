@@ -77,8 +77,8 @@
                                 {% for vote in value['votes'].values() %}
                                     {% if vote['vote'] == "liked" %}
                                         <div class="badge">
-                                            {{ vote['nickname'] }}
-                                            {#                                <img src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">#}
+                                            <img alt="{{vote['nickname']}}" title="{{vote['nickname']}}" 
+                                            src="{{ url_for('static', filename='img/flask-icon.png') }}">
                                         </div>
                                     {% endif %}
                                 {% endfor %}
@@ -90,8 +90,8 @@
                                 {% for vote in value['votes'].values() %}
                                     {% if vote['vote'] == "blocked" %}
                                         <div class="badge">
-                                            {{ vote['nickname'] }}
-                                            {#                                <img src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">#}
+                                            <img alt="{{vote['nickname']}}" title="{{vote['nickname']}}" 
+                                            src="{{ url_for('static', filename='img/flask-icon.png') }}">
                                         </div>
                                     {% endif %}
                                 {% endfor %}
@@ -125,7 +125,7 @@
                             </div>
                         {% endif %}
                         <img alt="Working..." class="htmx-indicator" id="indicator{{ movie_id }}"
-                             src="{{ url_for('static', filename='three-dots.svg') }}" height="15">
+                             src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
                     </div>
                 </div>
             </div>

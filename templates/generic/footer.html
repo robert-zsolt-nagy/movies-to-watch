@@ -3,10 +3,10 @@
         <div class="row justify-content-between">
             <div class="col-lg-2 py-5">
                 <p class="text-light"><img
-                        src="{{ url_for('static/img', filename='m2w-icon.svg') }}" alt="Movies-to-watch"
+                        src="{{ url_for('static', filename='img/m2w-icon.svg') }}" alt="Movies-to-watch"
                         title="Movies-to-watch icon" style="max-width:100%;"></p>
                 <p class="text-light"><a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="nofollow"><img
-                        src="{{ url_for('static/img', filename='license.svg') }}" alt="License: CC BY-SA 4.0"
+                        src="{{ url_for('static', filename='img/license.svg') }}" alt="License: CC BY-SA 4.0"
                         title="Creative Commons Attribution Share Alike 4.0" style="max-width:100%;"></a></p>
                 {% if logged_on %}
                     <p class="text-light"><a href="/" class="text-light" rel="nofollow">Default group</a></p>
@@ -19,7 +19,7 @@
             </div>
             <div class="col-lg-3 py-5 text-nowrap">
                 <p class="text-light"><a href="https://flask.palletsprojects.com/" rel="nofollow">
-                    <img width="32" height="32" src="{{ url_for('static/img', filename='flask-icon.png') }}"
+                    <img width="32" height="32" src="{{ url_for('static', filename='img/flask-icon.png') }}"
                          alt="Powered by Flask"
                          title="Powered by Flask" style="max-width:100%;"></a><span class="ms-1">Powered by Flask</span>
                 </p>
