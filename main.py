@@ -269,7 +269,7 @@ def link_to_tmdb():
             ask_URL = tmdb_auth.ask_user_permission()
             session['approve_id'] = tmdb_auth.approve_id
         except Exception:
-            return "Something wnet wrong!"
+            return "Something went wrong!"
         else:
             return redirect(ask_URL)
     else:
@@ -370,13 +370,4 @@ scheduler.start()
 
 
 if __name__ == "__main__":
-    # This is used when running locally only. When deploying to Google App
-    # Engine, a webserver process such as Gunicorn will serve the app. This
-    # can be configured by adding an `entrypoint` to app.yaml.
-    # Flask's development server will automatically serve static files in
-    # the "static" directory. See:
-    # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
-    # App Engine itself will serve those files as configured in app.yaml.
-    # scheduler.init_app(app)
-    # scheduler.start()
     app.run(host="127.0.0.1", port=8080, debug=True)

@@ -390,6 +390,7 @@ class Account():
         # "total_pages":1,
         # "total_results":2}
 
+    
     def get_watchlist_movie(self) -> list[dict]:
         """ Get data about the movies watchlist of the account.
         

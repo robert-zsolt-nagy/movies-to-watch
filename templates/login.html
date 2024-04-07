@@ -17,11 +17,11 @@
   </div>
   {% endif %}
   {% if target %}
-      <form action="/login?redirect={{ target }}" method="post">
-          <label for="email">Email:</label><input id="email" type="email" name="email" value={{ email }}><br><br>
-          <label for="password">Password:</label><input id="password" type="password" name="password"
-                                                        value={{ password }}><br><br>
-          <input class="btn btn-outline-primary" type="submit" value="Sign in">
+  <form action="/login?redirect={{ target }}" method="post">
+      <label for="email">Email:</label><input id="email" type="email" name="email" value={{ email }}><br><br>
+      <label for="password">Password:</label><input id="password" type="password" name="password"
+                                                    value={{ password }}><br><br>
+      <input class="btn btn-outline-primary" type="submit" value="Sign in">
   </form>
   {% else %}
       <form action="/login" method="post">
