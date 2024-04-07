@@ -430,11 +430,6 @@ class Account():
         response = response.json()
         results = response["results"]
         return results, response["total_pages"]
-        # "page": 1,
-        # "results": [],
-        # "total_pages": 2,
-        # "total_results": 27
-
         # {'adult': False, 
         # 'backdrop_path': '/kjQBrc00fB2RjHZB3PGR4w9ibpz.jpg', 
         # 'genre_ids': [28, 12, 878], 

@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Your movies</title>
+    <script defer="defer" src="../static/script/main.js"></script>
+    <link href="../static/style/main.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <img src="../static/img/flask-icon.png" alt="" width="30" height="24" class="d-inline-block align-text-top">
+            Movies-2-Watch
+        </a>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#default-group">Watchlist</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#profile">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#groups">Groups</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#logout">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container py-4 px-3 mx-auto">
+    <h1>Your movies</h1>
+    <div class="row">
+        <div class="movie-container">
+            <div class="movie-card">
+                <div class="movie-header">
+                    <div class="first-col poster"><img
+                            src="https://media.themoviedb.org/t/p/w300_and_h450_bestv2/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg">
+                    </div>
+                    <div class="second-col"><h3 class="movie-title">Dune: Part Two</h3>
+                        <div class="minor-details-row">
+                            <div class="released">2024-02-29</div>
+                            <div class="genre">Science Fiction, Adventure</div>
+                            <div class="runtime">167 mins</div>
+                        </div>
+                        <h5>Overview</h5>
+                        <div class="text-body">Follow the mythic journey of Paul Atreides as he unites with Chani and
+                            the Fremen while on a path of revenge against the conspirators who destroyed his family.
+                            Facing a choice between the love of his life and the fate of the known universe, Paul
+                            endeavors to prevent a terrible future only he can foresee.
+                        </div>
+                    </div>
+                </div>
+                <div class="refs-and-status">
+                    <div class="ext-ref-buttons">
+                        <div class="trailer"><a href="https://www.youtube.com/watch?v=U2Qp5pL3ovA" target="_blank">Watch<br/>trailer</a>
+                        </div>
+                        <div class="tmdb"><a href="https://www.themoviedb.org/movie/693134-dune-part-two"
+                                             target="_blank">Go to<br/>TMDB</a></div>
+                        <div class="watched-alone"><a href="#">Watched<br/>alone</a></div>
+                        <div class="watched-together"><a href="#">Watched<br/>together</a></div>
+                    </div>
+                    <div class="providers">
+                        <div class="section"><p>Stream</p>
+                            <div class="items">
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="section"><p>Buy or rent</p>
+                            <div class="items">
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/9ghgSC0MA082EL6HLCW3GalykFD.jpg">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/9ghgSC0MA082EL6HLCW3GalykFD.jpg">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="votes"><h5>Votes from others</h5>
+                    <div class="tally">
+                        <div class="cast-yes"><p><i data-feather="check"></i> Yes</p>
+                            <div class="badges">
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cast-no"><p><i data-feather="x"></i> No</p>
+                            <div class="badges">
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="your-vote"><h5>Your vote</h5>
+                        <div class="yes">
+                            <button class="button-active">I'm in!</button>
+                        </div>
+                        <div class="no">
+                            <button class="button-selected">I'm out!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="movie-container">
+            <div class="movie-card">
+                <div class="movie-header">
+                    <div class="first-col poster"><img
+                            src="https://media.themoviedb.org/t/p/w300_and_h450_bestv2/qhb1qOilapbapxWQn9jtRCMwXJF.jpg">
+                    </div>
+                    <div class="second-col"><h3 class="movie-title">Wonka</h3>
+                        <div class="minor-details-row">
+                            <div class="released">2023-12-14</div>
+                            <div class="genre">Comedy, Family, Fantasy</div>
+                            <div class="runtime">117 mins</div>
+                        </div>
+                        <h5>Overview</h5>
+                        <div class="text-body">Willy Wonka – chock-full of ideas and determined to change the world one
+                            delectable bite at a time – is proof that the best things in life begin with a dream, and if
+                            you’re lucky enough to meet Willy Wonka, anything is possible.
+                        </div>
+                    </div>
+                </div>
+                <div class="refs-and-status">
+                    <div class="ext-ref-buttons">
+                        <div class="trailer"><a href="https://www.youtube.com/watch?v=U2Qp5pL3ovA" target="_blank">Watch<br/>trailer</a>
+                        </div>
+                        <div class="tmdb"><a href="https://www.themoviedb.org/movie/693134-dune-part-two"
+                                             target="_blank">Go to<br/>TMDB</a></div>
+                        <div class="watched-alone"><a href="#">Watched<br/>alone</a></div>
+                        <div class="watched-together"><a href="#">Watched<br/>together</a></div>
+                    </div>
+                    <div class="providers">
+                        <div class="section"><p>Stream</p>
+                            <div class="items">
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="votes"><h5>Votes from others</h5>
+                    <div class="tally">
+                        <div class="cast-yes"><p><i data-feather="check"></i> Yes</p>
+                            <div class="badges">
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cast-no"><p><i data-feather="x"></i> No</p>
+                            <div class="badges"></div>
+                        </div>
+                    </div>
+                    <div class="your-vote"><h5>Your vote</h5>
+                        <div class="yes">
+                            <button class="button-active">I'm in!</button>
+                        </div>
+                        <div class="no">
+                            <button class="button-active">I'm out!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="movie-container">
+            <div class="movie-card">
+                <div class="movie-header">
+                    <div class="first-col poster"><img
+                            src="https://media.themoviedb.org/t/p/w300_and_h450_bestv2/a6dSJIEMxZFvQ7XJy4sf9fR0p7f.jpg">
+                    </div>
+                    <div class="second-col"><h3 class="movie-title">Song One</h3>
+                        <div class="minor-details-row">
+                            <div class="released">2014-01-20</div>
+                            <div class="genre">Drama</div>
+                            <div class="runtime">86 mins</div>
+                        </div>
+                        <h5>Overview</h5>
+                        <div class="text-body">Estranged from her family, Franny returns home when an accident leaves
+                            her brother comatose. Retracing his life as an aspiring musician, she tracks down his
+                            favorite musician, James Forester. Against the backdrop of Brooklyn’s music scene, Franny
+                            and James develop an unexpected relationship and face the realities of their lives.
+                        </div>
+                    </div>
+                </div>
+                <div class="refs-and-status">
+                    <div class="ext-ref-buttons">
+                        <div class="trailer"><a href="https://www.youtube.com/watch?v=U2Qp5pL3ovA" target="_blank">Watch<br/>trailer</a>
+                        </div>
+                        <div class="tmdb"><a href="https://www.themoviedb.org/movie/693134-dune-part-two"
+                                             target="_blank">Go to<br/>TMDB</a></div>
+                        <div class="watched-alone"><a href="#">Watched<br/>alone</a></div>
+                        <div class="watched-together"><a href="#">Watched<br/>together</a></div>
+                    </div>
+                    <div class="providers">
+                        <div class="section"><p>Buy or rent</p>
+                            <div class="items">
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/9ghgSC0MA082EL6HLCW3GalykFD.jpg">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/9ghgSC0MA082EL6HLCW3GalykFD.jpg">
+                                </div>
+                                <div class="badge"><img
+                                        src="https://media.themoviedb.org/t/p/original/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="votes"><h5>Votes from others</h5>
+                    <div class="tally">
+                        <div class="cast-yes"><p><i data-feather="check"></i> Yes</p>
+                            <div class="badges"></div>
+                        </div>
+                        <div class="cast-no"><p><i data-feather="x"></i> No</p>
+                            <div class="badges"></div>
+                        </div>
+                    </div>
+                    <div class="your-vote"><h5>Your vote</h5>
+                        <div class="yes">
+                            <button class="button-selected">I'm in!</button>
+                        </div>
+                        <div class="no">
+                            <button class="button-active">I'm out!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="movie-container">
+            <div class="movie-card">
+                <div class="movie-header">
+                    <div class="first-col poster"><img
+                            src="https://media.themoviedb.org/t/p/w300_and_h450_bestv2/kGyxFPZ42UhSXeWRh3RkP0Fiz62.jpg">
+                    </div>
+                    <div class="second-col"><h3 class="movie-title">Dealt</h3>
+                        <div class="minor-details-row">
+                            <div class="released">2017-10-20</div>
+                            <div class="genre">Documentary</div>
+                            <div class="runtime">85 mins</div>
+                        </div>
+                        <h5>Overview</h5>
+                        <div class="text-body">Sixty-two year old Richard Turner is renowned as one of the world’s
+                            greatest card magicians, yet he is completely blind. This is an in-depth look at a complex
+                            character who is one of magic’s greatest hidden treasures.
+                        </div>
+                    </div>
+                </div>
+                <div class="refs-and-status">
+                    <div class="ext-ref-buttons">
+                        <div class="trailer"><a href="https://www.youtube.com/watch?v=U2Qp5pL3ovA" target="_blank">Watch<br/>trailer</a>
+                        </div>
+                        <div class="tmdb"><a href="https://www.themoviedb.org/movie/693134-dune-part-two"
+                                             target="_blank">Go to<br/>TMDB</a></div>
+                        <div class="watched-alone"><a href="#">Watched<br/>alone</a></div>
+                        <div class="watched-together"><a href="#">Watched<br/>together</a></div>
+                    </div>
+                    <div class="providers"></div>
+                </div>
+                <div class="votes"><h5>Votes from others</h5>
+                    <div class="tally">
+                        <div class="cast-yes"><p><i data-feather="check"></i> Yes</p>
+                            <div class="badges"></div>
+                        </div>
+                        <div class="cast-no"><p><i data-feather="x"></i> No</p>
+                            <div class="badges">
+                                <div class="badge"><img
+                                        src="https://www.gravatar.com/avatar/a61825ff4f37a5aa023d749dff8096ed?s=48&d=identicon&r=PG">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="your-vote"><h5>Your vote</h5>
+                        <div class="yes">
+                            <button class="button-selected">I'm in!</button>
+                        </div>
+                        <div class="no">
+                            <button class="button-active">I'm out!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="footer mt-auto py-4 bg-dark">
+    <div class="container col-xxl-8">
+        <div class="row justify-content-between">
+            <div class="col-lg-2 py-5">
+                <p class="text-light">Movies-2-Watch</p>
+                <p class="text-light"><a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="nofollow"><img
+                        src="../static/img/license.svg" alt="License: CC BY-SA 4.0"
+                        title="Creative Commons Attribution Share Alike 4.0" style="max-width:100%;"></a></p>
+                <p class="text-light"><a href="#group" class="text-light" rel="nofollow">Default group</a></p>
+                <p class="text-light"><a href="#profile" class="text-light" rel="nofollow">Profile</a></p>
+                <p class="text-light"><a href="#logout" class="text-light" rel="nofollow">Logout</a></p>
+            </div>
+            <div class="col-lg-3 py-5 text-nowrap">
+                <p class="text-light"><a href="https://flask.palletsprojects.com/" rel="nofollow">
+                    <img width="32" height="32" src="../static/img/flask-icon.png" alt="Powered by Flask"
+                         title="Powered by Flask" style="max-width:100%;"></a><span class="ms-1">Powered by Flask</span>
+                </p>
+                <p class="text-light"><a href="https://getbootstrap.com/" rel="nofollow" class="link-light">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor"
+                         class="bi bi-bootstrap" viewBox="0 0 16 16">
+                        <path d="M5.062 12h3.475c1.804 0 2.888-.908 2.888-2.396 0-1.102-.761-1.916-1.904-2.034v-.1c.832-.14 1.482-.93 1.482-1.816 0-1.3-.955-2.11-2.542-2.11H5.062V12zm1.313-4.875V4.658h1.78c.973 0 1.542.457 1.542 1.237 0 .802-.604 1.23-1.764 1.23H6.375zm0 3.762V8.162h1.822c1.236 0 1.887.463 1.887 1.348 0 .896-.627 1.377-1.811 1.377H6.375z"></path>
+                        <path d="M0 4a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4zm4-3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V4a3 3 0 0 0-3-3H4z"></path>
+                    </svg>
+                </a><span class="ms-1">Powered by Bootsrap 5</span></p>
+            </div>
+        </div>
+    </div>
+</footer>
+</body>
+</html>
