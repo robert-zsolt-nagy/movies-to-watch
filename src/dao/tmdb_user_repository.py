@@ -117,7 +117,36 @@ class TmdbUserRepository():
         )
         return response
     
-    def get_watchlist_movie(self, user_id: int, session_id: str, page: Optional[int]=None) -> tuple[list[dict], int]:
+    def get_watchlist_movie(self, user_id: int, session_id: str) -> list[dict]:
+        """ Get data about the movies watchlist of the account.
+        
+        Parameters
+        ----------
+            user_id: the TMDB ID of the user.
+            session_id: the session id of the user.
+        Returns
+        -------
+            A tuple containing the list of all the movies AND the number of pages.
+        """
+        movies = []
+        results, total_pages = self.get_watchlist_movie_page(
+            user_id=user_id,
+            session_id=session_id
+        )
+        if total_pages == 1:
+            return results
+        else:
+            movies += results
+            for curr_page in range(2, total_pages+1):
+                results, _ = self.get_watchlist_movie_page(
+                    user_id=user_id,
+                    session_id=session_id,
+                    page=curr_page
+                )
+                movies += results
+            return movies
+        
+    def get_watchlist_movie_page(self, user_id: int, session_id: str, page: int=1) -> tuple[list[dict], int]:
         """ Get data about the movies watchlist of the account.
         
         Parameters
@@ -125,41 +154,21 @@ class TmdbUserRepository():
             user_id: the TMDB ID of the user.
             session_id: the session id of the user.
             page: the page of the watchlist that should be returned. 
-            If omitted all pages will be returned in a single list.
         Returns
         -------
-            A tuple containing the list of all the movies AND the number of pages.
+            A tuple containing the list of all movies on the page AND the number of total pages. 
+            ([movies], total_pages)
         """
-        if page is None:
-            movies = []
-            results, total_pages = self.get_watchlist_movie(
-                user_id=user_id,
-                session_id=session_id,
-                page=1
-            )
-            if total_pages == 1:
-                return (results, total_pages)
-            else:
-                movies += results
-                for curr_page in range(2, total_pages+1):
-                    results, _ = self.get_watchlist_movie(
-                        user_id=user_id,
-                        session_id=session_id,
-                        page=curr_page
-                    )
-                    movies += results
-                return (movies, total_pages)
-        else:
-            response = self.__client.get(
-                path=f'/account/{user_id}/watchlist/movies',
-                params={
-                    'language': 'en-US',
-                    'page': page,
-                    'session_id': session_id,
-                    'sort_by': 'created_at.desc'
-                }
-            )
-            return (response["results"], response["total_pages"])
+        response = self.__client.get(
+            path=f'/account/{user_id}/watchlist/movies',
+            params={
+                'language': 'en-US',
+                'page': page,
+                'session_id': session_id,
+                'sort_by': 'created_at.desc'
+            }
+        )
+        return (response["results"], response["total_pages"])
         
     def __edit_movie_watchlist(
             self,
