@@ -8,4 +8,5 @@ import * as bootstrap from 'bootstrap'
 import * as feather from 'feather-icons'
 import * as htmx from 'htmx.org'
 
-feather.replace();
+window.feather = feather;
+window.htmx = htmx;
