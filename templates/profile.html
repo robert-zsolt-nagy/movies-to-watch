@@ -2,17 +2,25 @@
 {% block title %}Profile{% endblock %}
 {% block content %}
   <h1>My Movies-to-watch Profile</h1>
-  {% if profile_data %}
-  <div>
-    <p> Email: {{profile_data['email']}}</p>
-    <p> Nickname: {{profile_data['nickname']}}</p>
-    {% if profile_data['tmdb_session'] == None %}
-        <a class="btn btn-outline-primary" href="/link-to-tmdb">Link with TMDB account</a><br>
-    {% else %}
-      <p>Your linked TMDB Account: </p>
-      <p>TMDB ID : {{profile_data['tmdb_user']['id']}}</p>
-      <p>TMDB Username : {{profile_data['tmdb_user']['username']}}</p>
-    {% endif %}
+  <div class="row row-cols-lg mt-5">
+    <div class="col-lg-3">
+    </div>
+    <div class="col-lg-6 card bg-light">
+      {% if profile_data %}
+        <div>
+          <p> Email: {{ profile_data['email'] }}</p>
+          <p> Nickname: {{ profile_data['nickname'] }}</p>
+          {% if profile_data['tmdb_session'] == None %}
+            <a class="btn btn-outline-primary" href="/link-to-tmdb">Link with TMDB account</a><br>
+          {% else %}
+            <p>Your linked TMDB Account: </p>
+            <p>TMDB ID : {{ profile_data['tmdb_user']['id'] }}</p>
+            <p>TMDB Username : {{ profile_data['tmdb_user']['username'] }}</p>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="col-lg-3">
+    </div>
   </div>
-  {% endif %}
 {% endblock %}

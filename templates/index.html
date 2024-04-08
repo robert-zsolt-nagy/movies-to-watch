@@ -2,52 +2,52 @@
 {% block title %}Home{% endblock %}
 {% block content %}
   <div id="index_content">
-  <h1>Movies-to-watch Home</h1>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
+    <h1>Movies-to-watch Home</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
         <div class="alert alert-primary" role="alert">
-        {% for message in messages %}  
+          {% for message in messages %}
             <p>{{ message }}</p><br>
-        {% endfor %}
-        </div>
-    {% endif %}
-  {% endwith %}
-  {% if logged_on %}
-    {% if verified %}
-      {% if tmdb_linked == None%}
-          <div class="alert alert-warning" role="alert">
-          <p>Please link your TMDB Account to access all features of Movies-to-watch!</p>
-              <p>You can link your account after heading to the Profile page using the button below.</p>
-              <a class="btn btn-outline-primary" href="/profile">Go to Profile page</a>
-        </div>
-      {% elif group %}
-          <div hx-get="/api/group/{{ group }}" hx-trigger="load" hx-indicator="#indicator" hx-target="#index_content"
-          class="alert alert-light"
-               role="alert">
-          <p>Your groups list is loading...</p>
-          <div id="indicator" class="text-center">
-            <img alt="Working..." 
-                   src="{{ url_for('static', filename='img/ball-triangle.svg') }}" width="50">
-          </div>
-              
-        </div>
-      {% else %}
-          <div class="alert alert-light" role="alert">
-          <p>You belong to no group.</p>
+          {% endfor %}
         </div>
       {% endif %}
-    {% else%}
+    {% endwith %}
+    {% if logged_on %}
+      {% if verified %}
+        {% if tmdb_linked == None %}
+          <div class="alert alert-warning" role="alert">
+            <p>Please link your TMDB Account to access all features of Movies-to-watch!</p>
+            <p>You can link your account after heading to the Profile page using the button below.</p>
+            <a class="btn btn-outline-primary" href="/profile">Go to Profile page</a>
+          </div>
+        {% elif group %}
+          <div hx-get="/api/group/{{ group }}" hx-trigger="load" hx-indicator="#indicator" hx-target="#index_content"
+               class="alert alert-light" role="alert">
+            <div id="indicator" class="text-center">
+              <p>Your groups list is loading...</p>
+              <img alt="Working..." src="{{ url_for('static', filename='img/ball-triangle.svg') }}" width="50">
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-light" role="alert">
+            <p>You belong to no group.</p>
+          </div>
+        {% endif %}
+      {% else %}
         <div class="alert alert-danger" role="alert">
-            <p>Your email is not verified.</p>
-            <p>Please verify your email to access all features of Movies-to-watch!</p>
-            <p><a class="btn btn-outline-primary" href="/resend-verification">Resend verification email.</a></p>
+          <p class="text-dark-emphasis fw-bolder">Error</p>
+          <p>Your email is not verified.</p>
+          <p>Please verify your email to access all features of Movies-to-watch!</p>
+          <p><a class="btn btn-outline-primary" href="/resend-verification">Resend verification email.</a></p>
         </div>
-    {% endif%} 
-  {% else %}
+      {% endif %}
+    {% else %}
       <div class="alert alert-danger" role="alert">
-    <p> You are not logged in. </p><br><br>
-          <a class="btn btn-outline-primary" href="/login">Log in</a>
-  </div> 
-  {% endif %}
+        <p class="text-dark-emphasis fw-bolder">Error</p>
+        <p>You need to be authenticated to view this page.</p>
+        <p>Please log in using hte button below!</p>
+        <a class="btn btn-outline-primary" href="/login">Log in</a>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}

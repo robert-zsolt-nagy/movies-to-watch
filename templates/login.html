@@ -2,37 +2,56 @@
 {% block title %}Sign in{% endblock %}
 {% block content %}
   <h1>Sign in to Movies-to-watch</h1>
-  {% if error %}
-      <div class="alert alert-danger" role="alert">
+  <div class="row row-cols-lg mt-5">
+    <div class="col-lg-3">
+    </div>
+    <div class="col-lg-6 card bg-light">
+      {% if error %}
+        <div class="alert alert-danger" role="alert">
           <p> The following error occurred:</p>
-    {% if error == "INVALID_EMAIL" %}
-    <p> Email is not valid! </p>
-    {% elif error == "MISSING_PASSWORD" %}
-    <p> Password is missing! </p>
-    {% elif error == "INVALID_LOGIN_CREDENTIALS" %}
-    <p> Email or password is incorrect! </p>
-    {% else %}
-    <p> {{error}} </p>
-    {% endif %}
-  </div>
-  {% endif %}
-  {% if target %}
-  <form action="/login?redirect={{ target }}" method="post">
-      <label for="email">Email:</label><input id="email" type="email" name="email" value={{ email }}><br><br>
-      <label for="password">Password:</label><input id="password" type="password" name="password"
-                                                    value={{ password }}><br><br>
-      <input class="btn btn-outline-primary" type="submit" value="Sign in">
-  </form>
-  {% else %}
+          {% if error == "INVALID_EMAIL" %}
+            <p> Email is not valid! </p>
+          {% elif error == "MISSING_PASSWORD" %}
+            <p> Password is missing! </p>
+          {% elif error == "INVALID_LOGIN_CREDENTIALS" %}
+            <p> Email or password is incorrect! </p>
+          {% else %}
+            <p> {{ error }} </p>
+          {% endif %}
+        </div>
+      {% endif %}
       <form action="/login" method="post">
-          <label for="email">Email:</label><input id="email" type="email" name="email" value={{ email }}><br><br>
-          <label for="password">Password:</label><input id="password" type="password" name="password"
-                                                        value={{ password }}><br><br>
-          <input class="btn btn-outline-primary" type="submit" value="Sign in">
-  </form>
-  {% endif %}
-    <div class="alert alert-primary" role="alert">
-    <p>Not a member?</p>
-    <p>Register an account <a href="/signup">here</a> !</p>
+        {% if target %}
+          <input type="hidden" name="redirect" value="{{ target }}">
+        {% endif %}
+        <div class="row">
+          <div class="col-form-label">
+            <label class="form-label pt-2" for="email">Email:</label>
+          </div>
+          <div class="col">
+            <input class="form-text w-100" id="email" type="email" name="email" value={{ email }}>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-form-label">
+            <label class="form-label pt-2" for="password">Password:</label>
+          </div>
+          <div class="col">
+            <input class="form-text w-100" id="password" type="password" name="password" value={{ password }}>
+          </div>
+        </div>
+        <div class="row pt-3">
+          <div class="col">
+            <input class="btn btn-outline-primary w-100" type="submit" value="Sign in">
+          </div>
+        </div>
+      </form>
+      <div class="pt-3">
+        <p class="text-dark-emphasis fw-bolder">Not a member?</p>
+        <p>Register an account <a href="/signup">here</a> !</p>
+      </div>
+    </div>
+    <div class="col-lg-3">
+    </div>
   </div>
 {% endblock %}

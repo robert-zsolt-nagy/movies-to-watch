@@ -21,7 +21,8 @@ module.exports = {
         hot: true
     },
     plugins: [
-        new HtmlWebpackPlugin({template: './src/index.html'}),
+        new HtmlWebpackPlugin({template: './src/index.html', filename: 'index.html'}),
+        new HtmlWebpackPlugin({template: './src/login.html', filename: 'login.html'}),
         new MiniCssExtractPlugin({
             filename: '[name].css',
             chunkFilename: '[id].css'
