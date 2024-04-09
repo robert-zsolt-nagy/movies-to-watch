@@ -4,3 +4,5 @@
 connection_test.py
 README.md
 drawio
+tests/
+__pycache__/
