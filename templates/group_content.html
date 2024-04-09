@@ -1,138 +1,138 @@
 <h1>Your movies</h1>
 <div class="row">
-    {% for key, value in movies.items() %}
-        <div id="movie-{{ value['id'] }}" class="movie-container">
-            <div class="movie-card">
-                <div class="movie-header">
-                    <div class="first-col poster">
-                        <img alt="Poster of {{ value['title'] }}" src="{{ value['poster'] }}">
-                    </div>
-                    <div class="second-col">
-                        <h3 class="movie-title">{{ value['title'] }}</h3>
-                        <div class="minor-details-row">
-                            <div class="released">{{ value['release_date'] }}</div>
-                            <div class="genre">{{ value['genres'] }}</div>
-                            <div class="runtime">{{ value['runtime'] }} mins</div>
-                        </div>
-                        <h5>Overview</h5>
-                        <div class="text-body">{{ value['overview'] }}</div>
-                    </div>
-                </div>
-                <div class="refs-and-status">
-                    <div class="ext-ref-buttons">
-                        <div class="trailer">
-                            <a href="{{ value['trailer'] }}" target="_blank">Watch<br/>trailer</a>
-                        </div>
-                        <div class="tmdb">
-                            <a href="{{ value['tmdb'] }}" target="_blank">Go to<br/>TMDB</a>
-                        </div>
-                        <div class="watched-alone">
-                            <a href="#">Watched<br/>alone</a>
-                        </div>
-                        <div class="watched-together">
-                            <a href="#">Watched<br/>together</a>
-                        </div>
-                    </div>
-                    <div class="providers">
-                        {% if value['providers']['stream']|length > 0 %}
-                            <div class="section">
-                                <p>Stream</p>
-                                <div class="items">
-                                    {% for elem in value['providers']['stream'] %}
-                                        <div class="badge">
-                                            <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
-                                                 title="{{ elem['provider_name'] }}">
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
-                        {% if value['providers']['buy']|length + value['providers']['rent']|length > 0 %}
-                            <div class="section">
-                                <p>Buy or rent</p>
-                                <div class="items">
-                                    {% for elem in value['providers']['buy'] %}
-                                        <div class="badge">
-                                            <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
-                                                 title="{{ elem['provider_name'] }}">
-                                        </div>
-                                    {% endfor %}
-                                    {% for elem in value['providers']['rent'] %}
-                                        <div class="badge">
-                                            <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
-                                                 title="{{ elem['provider_name'] }}">
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="votes">
-                    <h5>Votes from others</h5>
-                    <div class="tally">
-                        <div class="cast-yes">
-                            <p><i data-feather="check"></i> Yes</p>
-                            <div class="badges">
-                                {% for vote in value['votes'].values() %}
-                                    {% if vote['vote'] == "liked" %}
-                                        <div class="badge">
-                                            <img alt="{{vote['nickname']}}" title="{{vote['nickname']}}" 
-                                            src="{{ url_for('static', filename='img/flask-icon.png') }}">
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div class="cast-no">
-                            <p><i data-feather="x"></i> No</p>
-                            <div class="badges">
-                                {% for vote in value['votes'].values() %}
-                                    {% if vote['vote'] == "blocked" %}
-                                        <div class="badge">
-                                            <img alt="{{vote['nickname']}}" title="{{vote['nickname']}}" 
-                                            src="{{ url_for('static', filename='img/flask-icon.png') }}">
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    <div id="my_vote{{ value['id'] }}" class="your-vote">
-                        <h5>Your vote</h5>
-                        {% if value['your_vote'] == 'liked' %}
-                            <div class="yes">
-                                <button class="button-selected">I'm in!</button>
-                            </div>
-                        {% else %}
-                            <div class="yes">
-                                <button hx-get="/api/vote/{{ value['id'] }}/like" hx-trigger="click"
-                                        hx-target="#my_vote{{ value['id'] }}" hx-indicator="#indicator{{ value['id'] }}"
-                                        class="button-active">I'm in!
-                                </button>
-                            </div>
-                        {% endif %}
-                        {% if value['your_vote'] == "blocked" %}
-                            <div class="no">
-                                <button class="button-selected">I'm out!</button>
-                            </div>
-                        {% else %}
-                            <div class="no">
-                                <button hx-get="/api/vote/{{ value['id'] }}/block" hx-trigger="click"
-                                        hx-target="#my_vote{{ value['id'] }}" hx-indicator="#indicator{{ value['id'] }}"
-                                        class="button-active">I'm out!
-                                </button>
-                            </div>
-                        {% endif %}
-                        <img alt="Working..." class="htmx-indicator" id="indicator{{ value['id'] }}"
-                             src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
-                    </div>
-                </div>
+  {% for key, value in movies.items() %}
+    <div id="movie-{{ value['id'] }}" class="movie-container">
+      <div class="movie-card">
+        <div class="movie-header">
+          <div class="first-col poster">
+            <img alt="Poster of {{ value['title'] }}" src="{{ value['poster'] }}">
+          </div>
+          <div class="second-col">
+            <h3 class="movie-title">{{ value['title'] }}</h3>
+            <div class="minor-details-row">
+              <div class="released">{{ value['release_date'] }}</div>
+              <div class="genre">{{ value['genres'] }}</div>
+              <div class="runtime">{{ value['runtime'] }} mins</div>
             </div>
+            <h5>Overview</h5>
+            <div class="text-body">{{ value['overview'] }}</div>
+          </div>
+        </div>
+        <div class="refs-and-status">
+          <div class="ext-ref-buttons">
+            <div class="trailer">
+              <a href="{{ value['trailer'] }}" target="_blank">Watch<br/>trailer</a>
+            </div>
+            <div class="tmdb">
+              <a href="{{ value['tmdb'] }}" target="_blank">Go to<br/>TMDB</a>
+            </div>
+            <div class="watched-alone">
+              <a href="#">Watched<br/>alone</a>
+            </div>
+            <div class="watched-together">
+              <a href="#">Watched<br/>together</a>
+            </div>
+          </div>
+          <div class="providers">
+            {% if value['providers']['stream']|length > 0 %}
+              <div class="section">
+                <p>Stream</p>
+                <div class="items">
+                  {% for elem in value['providers']['stream'] %}
+                    <div class="badge">
+                      <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
+                           title="{{ elem['provider_name'] }}">
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+            {% if value['providers']['buy']|length + value['providers']['rent']|length > 0 %}
+              <div class="section">
+                <p>Buy or rent</p>
+                <div class="items">
+                  {% for elem in value['providers']['buy'] %}
+                    <div class="badge">
+                      <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
+                           title="{{ elem['provider_name'] }}">
+                    </div>
+                  {% endfor %}
+                  {% for elem in value['providers']['rent'] %}
+                    <div class="badge">
+                      <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
+                           title="{{ elem['provider_name'] }}">
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="votes">
+          <h5>Votes from others</h5>
+          <div class="tally">
+            <div class="cast-yes">
+              <p><i data-feather="check"></i> Yes</p>
+              <div class="badges">
+                {% for vote in value['votes'].values() %}
+                  {% if vote['vote'] == "liked" %}
+                    <div class="badge">
+                      <img alt="{{ vote['nickname'] }}" title="{{ vote['nickname'] }}"
+                           src="{{ url_for('static', filename='img/flask-icon.png') }}">
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+            <div class="cast-no">
+              <p><i data-feather="x"></i> No</p>
+              <div class="badges">
+                {% for vote in value['votes'].values() %}
+                  {% if vote['vote'] == "blocked" %}
+                    <div class="badge">
+                      <img alt="{{ vote['nickname'] }}" title="{{ vote['nickname'] }}"
+                           src="{{ url_for('static', filename='img/flask-icon.png') }}">
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div id="my_vote{{ value['id'] }}" class="your-vote">
+            <h5>Your vote</h5>
+            {% if value['your_vote'] == 'liked' %}
+              <div class="yes">
+                <button class="button-selected">I'm in!</button>
+              </div>
+            {% else %}
+              <div class="yes">
+                <button hx-get="/api/vote/{{ value['id'] }}/like" hx-trigger="click"
+                        hx-target="#my_vote{{ value['id'] }}" hx-indicator="#indicator{{ value['id'] }}"
+                        class="button-active">I'm in!
+                </button>
+              </div>
+            {% endif %}
+            {% if value['your_vote'] == "blocked" %}
+              <div class="no">
+                <button class="button-selected">I'm out!</button>
+              </div>
+            {% else %}
+              <div class="no">
+                <button hx-get="/api/vote/{{ value['id'] }}/block" hx-trigger="click"
+                        hx-target="#my_vote{{ value['id'] }}" hx-indicator="#indicator{{ value['id'] }}"
+                        class="button-active">I'm out!
+                </button>
+              </div>
+            {% endif %}
+            <img alt="Working..." class="htmx-indicator" id="indicator{{ value['id'] }}"
+                 src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
+          </div>
+        </div>
+      </div>
     </div>
-    {% endfor %}
-    <!--suppress JSUnresolvedReference -->
-    <script>
+  {% endfor %}
+  <!--suppress JSUnresolvedReference -->
+  <script>
       feather.replace();
-    </script>
+  </script>
 </div>

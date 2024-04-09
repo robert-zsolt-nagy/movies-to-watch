@@ -1,16 +1,25 @@
 {% extends 'generic/layout.html' %}
 {% block title %}Approved{% endblock %}
 {% block content %}
-    <h1>Movies-to-watch Approved</h1>
-  {% if success %}
-      <div class="alert alert-success" role="alert">
-    <p>Congratulations, your Movies-to-watch account is successfully linked with your TMDB account!</p>
-  </div>  
-  {% else %}
-      <div class="alert alert-danger" role="alert">
-    <p>Something went wrong!</p>
+  <h1>Movies-to-watch Approved</h1>
+  <div class="row row-cols-lg mt-5">
+    <div class="col-lg-3">
+    </div>
+    <div class="col-lg-6 card bg-light">
+      {% if success %}
+        <div class="alert alert-success" role="alert">
+          <p class="text-success-emphasis fw-bolder">Congratulations!</p>
+          <p>Your Movies-to-watch account is successfully linked with your TMDB account.</p>
+        </div>
+      {% else %}
+        <div class="alert alert-danger" role="alert">
+          <p class="text-danger-emphasis fw-bolder">Something went wrong!</p>
           <p>The following error occurred:</p>
-    <p>{{ error }}</p>
-  </div> 
-  {% endif %}
+          <p>{{ error }}</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="col-lg-3">
+    </div>
+  </div>
 {% endblock %}
