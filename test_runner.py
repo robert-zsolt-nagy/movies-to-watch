@@ -1,0 +1,1 @@
+from tests.dao.test_tmdb_movie_repository import TestTmdbMovieRepository
