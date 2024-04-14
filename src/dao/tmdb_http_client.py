@@ -30,7 +30,7 @@ def limit_request_rate(func, limit: float=1.000):
 
 def _process_response(response: requests.Response) -> Any:
     """Process the response and pass it on if everything is OK."""
-    if response.status_code >= 200 & response.status_code < 300:
+    if (response.status_code >= 200) and (response.status_code < 300):
         try:
             return response.json()
         except json.decoder.JSONDecodeError as error:

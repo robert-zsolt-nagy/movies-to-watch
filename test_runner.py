@@ -1,2 +1,0 @@
-from tests.dao.test_tmdb_movie_repository import TestTmdbMovieRepository
-from tests.dao.test_tmdb_http_client import TestTmdbHttpClient

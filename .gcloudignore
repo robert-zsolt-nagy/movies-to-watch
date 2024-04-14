@@ -1,6 +1,7 @@
 .venv
 .git
 .gitignore
+.vscode
 connection_test.py
 README.md
 drawio
