@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from src.dao.tmdb_http_client import TmdbHttpClient, TmdbHttpClientException
-from src.dao.tmdb_movie_repository import TmdbMovieRepository
+from src.dao.tmdb_movie_repository import TmdbMovieRepository, NoTrailerDataException
 
 
 class TestTmdbMovieRepository(TestCase):
@@ -181,5 +181,117 @@ class TestTmdbMovieRepository(TestCase):
         # then exception was raised
         client.get.assert_called_with(path=f"/movie/1/videos", params={"language": "en-US"})
 
-    # def test_get_watch_providers(self):
-    #     self.fail()
+    def test_get_trailer_should_raise_error_when_video_list_is_empty(self):
+        # given
+        movie_id = 1
+        client = TmdbHttpClient(token="ignore", base_url="ignore")
+        client.get = MagicMock(return_value={
+            "results": [
+            ]
+        })
+        under_test = TmdbMovieRepository(client)
+
+        # when
+        self.assertRaises(NoTrailerDataException, lambda: under_test.get_trailer(movie_id))
+
+        # then exception was raised
+        client.get.assert_called_with(path=f"/movie/1/videos", params={"language": "en-US"})
+
+    def test_get_watch_providers_should_only_return_results(self):
+        # given
+        movie_id = 1
+        client = TmdbHttpClient(token="ignore", base_url="ignore")
+        client.get = MagicMock(
+            return_value={
+                "id": 1,
+                "results": {
+                    "HU": {
+                    "link": "https://www.themoviedb.org/movie/1-test-movie/watch?locale=HU",
+                    "flatrate": [
+                        {
+                        "logo_path": "/emthp39XA2YScoYL1p0sdbAH2WA.jpg",
+                        "provider_id": 119,
+                        "provider_name": "Amazon Prime Video",
+                        "display_priority": 12
+                        }
+                    ],
+                    "rent": [
+                        {
+                        "logo_path": "/peURlLlr8jggOwK53fJ5wdQl05y.jpg",
+                        "provider_id": 2,
+                        "provider_name": "Apple TV",
+                        "display_priority": 1
+                        },
+                        {
+                        "logo_path": "/tbEdFQDwx5LEVr8WpSeXQSIirVq.jpg",
+                        "provider_id": 3,
+                        "provider_name": "Google Play Movies",
+                        "display_priority": 3
+                        }
+                    ],
+                    "buy": [
+                        {
+                        "logo_path": "/peURlLlr8jggOwK53fJ5wdQl05y.jpg",
+                        "provider_id": 2,
+                        "provider_name": "Apple TV",
+                        "display_priority": 1
+                        },
+                        {
+                        "logo_path": "/tbEdFQDwx5LEVr8WpSeXQSIirVq.jpg",
+                        "provider_id": 3,
+                        "provider_name": "Google Play Movies",
+                        "display_priority": 3
+                        }
+                    ]
+                    }
+                }    
+            }
+        )
+        under_test = TmdbMovieRepository(client)
+
+        # when
+        result = under_test.get_watch_providers(movie_id=movie_id)
+
+        # then
+        self.assertEqual(result, {
+                    "HU": {
+                    "link": "https://www.themoviedb.org/movie/1-test-movie/watch?locale=HU",
+                    "flatrate": [
+                        {
+                        "logo_path": "/emthp39XA2YScoYL1p0sdbAH2WA.jpg",
+                        "provider_id": 119,
+                        "provider_name": "Amazon Prime Video",
+                        "display_priority": 12
+                        }
+                    ],
+                    "rent": [
+                        {
+                        "logo_path": "/peURlLlr8jggOwK53fJ5wdQl05y.jpg",
+                        "provider_id": 2,
+                        "provider_name": "Apple TV",
+                        "display_priority": 1
+                        },
+                        {
+                        "logo_path": "/tbEdFQDwx5LEVr8WpSeXQSIirVq.jpg",
+                        "provider_id": 3,
+                        "provider_name": "Google Play Movies",
+                        "display_priority": 3
+                        }
+                    ],
+                    "buy": [
+                        {
+                        "logo_path": "/peURlLlr8jggOwK53fJ5wdQl05y.jpg",
+                        "provider_id": 2,
+                        "provider_name": "Apple TV",
+                        "display_priority": 1
+                        },
+                        {
+                        "logo_path": "/tbEdFQDwx5LEVr8WpSeXQSIirVq.jpg",
+                        "provider_id": 3,
+                        "provider_name": "Google Play Movies",
+                        "display_priority": 3
+                        }
+                    ]
+                    }
+                })
+        client.get.assert_called_with(path=f"/movie/1/watch/providers")

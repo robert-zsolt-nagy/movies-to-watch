@@ -16,7 +16,7 @@ def is_expired(expires_at: str) -> bool:
     except:
         return True
     else:
-        if validity.seconds > 0:
+        if validity.total_seconds() > 0:
             return False
         else:
             return True
@@ -126,7 +126,7 @@ class TmdbUserRepository():
             session_id: the session id of the user.
         Returns
         -------
-            A tuple containing the list of all the movies AND the number of pages.
+            A list of all the movies on the watchlist.
         """
         movies = []
         results, total_pages = self.get_watchlist_movie_page(
