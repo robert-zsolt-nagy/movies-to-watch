@@ -24,11 +24,6 @@ class SecretManager():
         return self.__SECRETS['tmdb']['auth']['bearer_token']
     
     @property
-    def tmdb_session(self) -> str:
-        """ The session ID for authentication"""
-        return self.__SECRETS['tmdb']['auth']['session_id']
-    
-    @property
     def tmdb_API(self) -> str:
         """ The base URL for the tmdb API."""
         return self.__SECRETS['tmdb']['URLs']['API_base_URL']
@@ -72,3 +67,8 @@ class SecretManager():
     def m2w_movie_retention(self) -> str:
         """ The base movies-to-watch URL."""
         return self.__SECRETS['m2w']['movie_retention']
+    
+    @property
+    def flask_key(self) -> str:
+        """ The base movies-to-watch URL."""
+        return self.__SECRETS['flask']['secret_key']
