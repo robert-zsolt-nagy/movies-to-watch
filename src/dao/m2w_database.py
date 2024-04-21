@@ -44,10 +44,26 @@ class M2wDocumentHandler():
         ----------
         db: the client for the firestore API.
         collection: the ID of the collection that contains the document.
+        kind: name of what kind of document is handled.
         """
         self.__db = db
         self.__collection = collection
         self.__kind = kind
+
+    @property
+    def db(self) -> firestore.Client:
+        """The client for the firestore API."""
+        return self.__db
+    
+    @property
+    def collection(self) -> firestore.Client:
+        """The ID of the collection that contains the document."""
+        return self.__collection
+    
+    @property
+    def kind(self) -> firestore.Client:
+        """The name of what kind of document is handled."""
+        return self.__kind
 
     def get_one(self, id_: str) -> firestore.DocumentSnapshot:
         """Returns a document with ID `id_` if exists.
@@ -56,12 +72,12 @@ class M2wDocumentHandler():
         ------
         M2WDatabaseException: if document doesn't exist.
         """
-        doc_ref = self.__db.collection(self.__collection).document(id_)
+        doc_ref = self.db.collection(self.collection).document(id_)
         doc = doc_ref.get()
         if doc.exists:
             return doc
         else:
-            raise M2WDatabaseException(f"{self.__kind} does not exist.")
+            raise M2WDatabaseException(f"{self.kind} does not exist.")
         
     def get_all(self) -> Generator[firestore.DocumentSnapshot]:
         """Returns a stream with all documents in the collection.
@@ -70,7 +86,7 @@ class M2wDocumentHandler():
         ------
         M2WDatabaseException: if document doesn't exist.
         """
-        return self.__db.collection(self.__collection).stream()
+        return self.db.collection(self.collection).stream()
     
     def set_data(self, id_: str, data: dict, merge: bool=True):
         """Creates or updates a document.
@@ -83,7 +99,7 @@ class M2wDocumentHandler():
         if `False` overwrites the existing document with the only the new content. 
         Creates the document if it doesn't exist in both cases.
         """
-        return self.__db.collection(self.__collection).document(id_).set(document_data=data, merge=merge)
+        return self.db.collection(self.collection).document(id_).set(document_data=data, merge=merge)
     
     def delete(self, id_: str) -> bool:
         """Deletes a document. 
@@ -97,7 +113,7 @@ class M2wDocumentHandler():
         True is successfully deleted, False otherwise.
         """
         try:
-            self.__db.collection(self.__collection).document(id_).delete()
+            self.db.collection(self.collection).document(id_).delete()
         except:
             return False
         else:
@@ -106,6 +122,12 @@ class M2wDocumentHandler():
 
 class M2wUserHandler(M2wDocumentHandler):
     def __init__(self, db: firestore.Client) -> None:
+        """Returns a representation of a user.
+        
+        Parameters
+        ----------
+        db: the client for the firestore API.
+        """
         super().__init__(db, collection='users', kind='User')
 
     def get_blocklist(self, user_id: str) -> firestore.CollectionReference:
@@ -116,15 +138,21 @@ class M2wUserHandler(M2wDocumentHandler):
         ------
         M2WDatabaseException: if user doesn't exist.
         """
-        user_ref = self.__db.collection(self.__collection).document(user_id)
+        user_ref = self.db.collection(self.collection).document(user_id)
         user = user_ref.get()
         if user.exists:
             return user_ref.collection('blocklist')
         else:
-            raise M2WDatabaseException(f"{self.__kind} does not exist.")
+            raise M2WDatabaseException(f"{self.kind} does not exist.")
         
 class M2wMovieHandler(M2wDocumentHandler):
     def __init__(self, db: firestore.Client) -> None:
+        """Returns a representation of a movie.
+        
+        Parameters
+        ----------
+        db: the client for the firestore API.
+        """
         super().__init__(db, collection='movies', kind="Movie")
 
     def remove_from_blocklist(self, movie_id: str, blocklist: firestore.CollectionReference) -> bool:
@@ -175,6 +203,12 @@ class M2wMovieHandler(M2wDocumentHandler):
 
 class M2wGroupHandler(M2wDocumentHandler):
     def __init__(self, db: firestore.Client) -> None:
+        """Returns a representation of a watchgroup.
+        
+        Parameters
+        ----------
+        db: the client for the firestore API.
+        """
         super().__init__(db, collection='groups', kind='Group')
 
     def get_all_group_members(self, group_id: str) -> Generator[firestore.DocumentSnapshot]:
@@ -191,7 +225,7 @@ class M2wGroupHandler(M2wDocumentHandler):
         try:
             group_ref = self.get_one(id_=group_id).reference
         except:
-            raise M2WDatabaseException(f"{self.__kind} does not exist.")
+            raise M2WDatabaseException(f"{self.kind} does not exist.")
         else:
             return group_ref.collection('members').stream()
         
