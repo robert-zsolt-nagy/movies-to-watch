@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 import requests
 from src.dao.tmdb_http_client import TmdbHttpClient, TmdbHttpClientException
