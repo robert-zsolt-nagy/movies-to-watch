@@ -1,6 +1,7 @@
 from google.cloud import firestore
 from google.oauth2 import service_account
-from typing import Generator, Optional, Union
+from typing import Optional, Union
+from collections.abc import Generator
 
 class M2WDatabaseException(Exception):
     """Base class for Exceptions of M2WDatabase"""
