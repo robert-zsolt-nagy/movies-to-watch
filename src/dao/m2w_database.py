@@ -220,7 +220,7 @@ class M2wGroupHandler(M2wDocumentHandler):
 
         Raises
         ------
-        M2WDatabaseException: if member document doesn't exist.
+        M2WDatabaseException: if group doesn't exist.
         """
         try:
             group_ref = self.get_one(id_=group_id).reference
@@ -286,7 +286,7 @@ class M2wGroupHandler(M2wDocumentHandler):
         M2WDatabaseException: if the group couldn't be created.
         """
         try:
-            _, group_ref = self.__db.collection("groups").add(document_data=data)
+            _, group_ref = self.db.collection("groups").add(document_data=data)
             if members is not None:
                 if not isinstance(members, list):
                     members = [members]

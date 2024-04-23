@@ -139,7 +139,7 @@ class TestM2wUserHandler(TestCase):
 
         #when
         with self.assertRaises(M2WDatabaseException) as context:
-            response = under_test.get_blocklist("1")
+            under_test.get_blocklist("1")
 
         #then
         self.assertIsInstance(context.exception, M2WDatabaseException)
@@ -147,9 +147,79 @@ class TestM2wUserHandler(TestCase):
         collection.document.assert_called_with("1")
 
 class TestM2wMovieHandler(TestCase):
-    def test(self):
-        pass
+    def test_remove_from_blocklist_should_return_boolean(self):
+        #given
+        db = firestore.Client()
+        doc = MagicMock(firestore.DocumentReference)
+        doc.delete = MagicMock(return_value="success")
+        blocklist = MagicMock(firestore.CollectionReference)
+        blocklist.document = MagicMock(return_value=doc)
+        under_test = M2wMovieHandler(db=db)
+
+        #when
+        response = under_test.remove_from_blocklist(
+            movie_id="1",
+            blocklist=blocklist
+        )
+
+        #then
+        self.assertEqual(response, True)
+        blocklist.document.assert_called_with("1")
+
+    def test_add_to_blocklist_should_return_boolean(self):
+        #given
+        db = firestore.Client()
+        doc = MagicMock(firestore.DocumentReference)
+        doc.set = MagicMock(return_value="success")
+        blocklist = MagicMock(firestore.CollectionReference)
+        blocklist.document = MagicMock(return_value=doc)
+        under_test = M2wMovieHandler(db=db)
+
+        #when
+        response = under_test.add_to_blocklist(
+            movie_id="1",
+            blocklist=blocklist,
+            movie_title="title"
+        )
+
+        #then
+        self.assertEqual(response, True)
+        blocklist.document.assert_called_with("1")
+        doc.set.assert_called_with({"title":"title"})
+
+    def test_add_to_blocklist_should_get_title_if_it_is_cached(self):
+        #given
+        db = firestore.Client()
+        doc = MagicMock(firestore.DocumentReference)
+        doc.set = MagicMock(return_value="success")
+        blocklist = MagicMock(firestore.CollectionReference)
+        blocklist.document = MagicMock(return_value=doc)
+        under_test = M2wMovieHandler(db=db)
+        get_one_doc = MagicMock(firestore.DocumentSnapshot)
+        under_test.get_one = MagicMock(return_value=get_one_doc)
+        get_one_doc.to_dict = MagicMock(return_value={"title":"cached"})
+
+        #when
+        response = under_test.add_to_blocklist(
+            movie_id="1",
+            blocklist=blocklist
+        )
+
+        #then
+        self.assertEqual(response, True)
+        blocklist.document.assert_called_with("1")
+        doc.set.assert_called_with({"title":"cached"})
+        under_test.get_one.assert_called_with(id_="1")
 
 class TestM2wGroupHandler(TestCase):
-    def test(self):
+    def test_get_all_group_members(self):
+        pass
+
+    def test_add_member_to_group(self):
+        pass
+
+    def test_remove_member_from_group(self):
+        pass
+
+    def test_create_new(self):
         pass
