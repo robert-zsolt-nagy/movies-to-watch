@@ -8,3 +8,4 @@ drawio
 tests.py
 tests/
 __pycache__/
+.pytest_cache/
