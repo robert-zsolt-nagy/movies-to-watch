@@ -50,9 +50,6 @@ def update_movies():
             movie_list = Account(
                 token=secrets.tmdb_token,
                 session_id=user_data["tmdb_session"],
-                # blocklist=fsWatchGroup.get_user_blocklist(member=user.id),
-                # m2w_id=user.id,
-                # m2w_nick=user_data["nickname"],
                 **user_data["tmdb_user"]
             ).get_watchlist_movie()
             # check and update cache
@@ -91,7 +88,6 @@ def logout():
         keys = list(session.keys())
         for key in keys:
             session.pop(key)
-        # session.pop("user")
     except KeyError:
         return redirect("/")
     else:
@@ -265,7 +261,6 @@ def link_to_tmdb():
         try:
             response = tmdb_auth.create_request_token()
             session['request_payload'] = json.dumps(response)
-            # print(session['request_payload'])
             ask_URL = tmdb_auth.ask_user_permission()
             session['approve_id'] = tmdb_auth.approve_id
         except Exception:
@@ -323,7 +318,6 @@ def group_content(group):
                         "vote": value
                     }
             display[mov.id]['votes'] = votes
-        print(display[787699]['votes'])
         return render_template("group_content.html", movies=display)
     else:
         target = f"/login?redirect=/api/group/{group}"
@@ -349,7 +343,6 @@ def vote_for_movie(movie, vote):
                 member=logged_on,
                 movie_id=movie
                 )
-            # return f"liking {movie}"
             return render_template("vote_response.html", vote="liked", movie_id=movie)
         elif vote == "block":
             user.remove_movie_from_watchlist(int(movie))
@@ -358,7 +351,6 @@ def vote_for_movie(movie, vote):
                 member=logged_on,
                 movie_id=movie
             )
-            # return f"blocking {movie}"
             return render_template("vote_response.html", vote="blocked", movie_id=movie)
     else:
         target = f"/login?redirect=/api/vote/{movie}/{vote}"

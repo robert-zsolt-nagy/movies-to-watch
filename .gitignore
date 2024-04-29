@@ -5,6 +5,7 @@ m2w-firestore-af83353e159e.json
 
 drawio/
 .vscode/
+.pytest_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
