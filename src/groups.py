@@ -216,23 +216,3 @@ class fsWatchGroup():
             mov["votes"] = vote
             result.append(mov)
         return result
-
-
-# if __name__ == "__main__":
-#     from authenticate import SecretManager
-#     from google.oauth2 import service_account
-
-#     secrets = SecretManager()
-#     db_cert = service_account.Credentials.from_service_account_file(secrets.firestore_cert)
-#     db = fsClient(project=secrets.firestore_project, credentials=db_cert)
-
-#     my_group = fsWatchGroup(
-#         id="cf1lfA0B9k919oMaurS0",
-#         database=db,
-#         tmdb_token=secrets.tmdb_token
-#     )
-#     print(my_group.get_movie_grouplist_union())
-#     my_group.members[0].add_movie_to_watchlist(movie_id=550)
-#     print(my_group.get_movie_grouplist_union())
-#     my_group.members[0].remove_movie_from_watchlist(movie_id=550)
-#     print(my_group.get_movie_grouplist_union())

@@ -43,7 +43,7 @@ class Movie():
         if movie.exists:
             movie_data = movie.to_dict()
             age = datetime.now(UTC) - movie_data['refreshed_at']
-            if age.seconds >= self.retention:
+            if age.total_seconds() >= self.retention:
                 refresh = True
             else:
                 refresh = False
