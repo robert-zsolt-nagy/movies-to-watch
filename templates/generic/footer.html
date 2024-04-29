@@ -1,38 +1,41 @@
 <footer class="footer mt-auto py-4 bg-dark">
-    <div class="container col-xxl-8">
-        <div class="row justify-content-between">
-            <div class="col-lg-2 py-5">
-                <p class="text-light"><img
-                        src="{{ url_for('static', filename='img/m2w-icon.svg') }}" alt="Movies-to-watch"
-                        title="Movies-to-watch icon" style="max-width:100%;"></p>
-                <p class="text-light"><a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="nofollow"><img
-                        src="{{ url_for('static', filename='img/license.svg') }}" alt="License: CC BY-SA 4.0"
-                        title="Creative Commons Attribution Share Alike 4.0" style="max-width:100%;"></a></p>
-                {% if logged_on %}
-                    <p class="text-light"><a href="/" class="text-light" rel="nofollow">Default group</a></p>
-                    <p class="text-light"><a href="/profile" class="text-light" rel="nofollow">Profile</a></p>
-                    <p class="text-light"><a href="/logout" class="text-light" rel="nofollow">Log out</a></p>
-                {% else %}
-                    <p class="text-light"><a href="/" class="text-light" rel="nofollow">Home</a></p>
-                    <p class="text-light"><a href="/login" class="text-light" rel="nofollow">Log in</a></p>
-                {% endif %}
-            </div>
-            <div class="col-lg-3 py-5 text-nowrap">
-                <p class="text-light"><a href="https://flask.palletsprojects.com/" rel="nofollow">
-                    <img width="32" height="32" src="{{ url_for('static', filename='img/flask-icon.png') }}"
-                         alt="Powered by Flask"
-                         title="Powered by Flask" style="max-width:100%;"></a><span class="ms-1">Powered by Flask</span>
-                </p>
-                <p class="text-light"><a href="https://getbootstrap.com/" rel="nofollow" class="link-light">
-                    <svg
-                            xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor"
-                            class="bi bi-bootstrap" viewBox="0 0 16 16">
-                        <path d="M5.062 12h3.475c1.804 0 2.888-.908 2.888-2.396 0-1.102-.761-1.916-1.904-2.034v-.1c.832-.14 1.482-.93 1.482-1.816 0-1.3-.955-2.11-2.542-2.11H5.062V12zm1.313-4.875V4.658h1.78c.973 0 1.542.457 1.542 1.237 0 .802-.604 1.23-1.764 1.23H6.375zm0 3.762V8.162h1.822c1.236 0 1.887.463 1.887 1.348 0 .896-.627 1.377-1.811 1.377H6.375z"></path>
-                        <path d="M0 4a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4zm4-3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V4a3 3 0 0 0-3-3H4z"></path>
-                    </svg>
-                </a>
-                    <span class="ms-1">Powered by Bootstrap 5</span></p>
-            </div>
-        </div>
+  <div class="container col-xxl-8">
+    <div class="row justify-content-between">
+      <div class="col-lg-2 py-5">
+        <p class="text-light"><img
+            src="{{ url_for('static', filename='img/m2w-icon.svg') }}" alt="Movies-to-watch"
+            title="Movies-to-watch icon" style="max-width:100%;"></p>
+        <p class="text-light"><a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="nofollow"><img
+            src="{{ url_for('static', filename='img/license.svg') }}" alt="License: CC BY-SA 4.0"
+            title="Creative Commons Attribution Share Alike 4.0" style="max-width:100%;"></a></p>
+        {% if logged_on %}
+          <p class="text-light"><a href="/" class="text-light" rel="nofollow">Default group</a></p>
+          <p class="text-light"><a href="/profile" class="text-light" rel="nofollow">Profile</a></p>
+          <p class="text-light"><a href="/logout" class="text-light" rel="nofollow">Log out</a></p>
+        {% else %}
+          <p class="text-light"><a href="/" class="text-light" rel="nofollow">Home</a></p>
+          <p class="text-light"><a href="/login" class="text-light" rel="nofollow">Log in</a></p>
+        {% endif %}
+      </div>
+      <div class="col-lg-3 py-5 text-nowrap">
+        <p class="text-light fw-bolder"><span class="ms-1">Powered by</span></p>
+        <p class="text-light"><a href="https://flask.palletsprojects.com/" rel="nofollow">
+          <img width="32" height="32" src="{{ url_for('static', filename='img/flask-icon.png') }}"
+               alt="Powered by Flask"
+               title="Powered by Flask" style="max-width:100%;"></a><span class="ms-1">Flask</span>
+        </p>
+        <p class="text-light"><a href="https://getbootstrap.com/" rel="nofollow" class="link-light">
+          <img width="32" height="32" src="{{ url_for('static', filename='img/bootstrap.svg') }}"
+               alt="Powered by Bootstrap"
+               title="Powered by Bootstrap" style="max-width:100%;"></a><span class="ms-1">Bootstrap 5</span>
+        </p>
+        <p class="text-light mt-5 fw-bolder"><span class="ms-1">Data sourced from</span></p>
+        <p class="text-light"><a href="https://www.themoviedb.org/" rel="nofollow" class="link-light">
+          <img height="32" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
+               alt="Data sourced from TMDB"
+               title="Data sourced from TMDB" style="max-width:100%;"></a>
+        </p>
+      </div>
     </div>
+  </div>
 </footer>

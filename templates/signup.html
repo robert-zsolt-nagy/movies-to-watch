@@ -2,41 +2,95 @@
 {% block title %}Sign up{% endblock %}
 {% block content %}
   <h1>Sign up for Movies-to-watch</h1>
-  {% if error %}
-      <div class="alert alert-danger" role="alert">
+  <div class="row row-cols-lg mt-5">
+    <div class="col-lg-3">
+    </div>
+    <div class="col-lg-6 card bg-light">
+      {% if error %}
+        <div class="alert alert-danger mt-3" role="alert">
           <p> The following error occurred:</p>
-    {% if error == "INVALID_EMAIL" %}
-    <p> Email is not valid! </p>
-    {% elif error == "MISSING_PASSWORD" %}
-    <p> Password is missing! </p>
-    {% elif error == "INVALID_LOGIN_CREDENTIALS" %}
-    <p> Email or password is incorrect! </p>
-    {% elif error == "EMAIL_EXISTS" %}
-    <p> Email already exists! </p>
-    {% elif error == "WEAK_PASSWORD : Password should be at least 6 characters" %}
-    <p> Password should be at least 6 characters! </p>
-    {% else %}
-    <p> {{ error }} </p>
-    {% endif %}
+          {% if error == "INVALID_EMAIL" %}
+            <p> Email is not valid! </p>
+          {% elif error == "MISSING_PASSWORD" %}
+            <p> Password is missing! </p>
+          {% elif error == "INVALID_LOGIN_CREDENTIALS" %}
+            <p> Email or password is incorrect! </p>
+          {% elif error == "EMAIL_EXISTS" %}
+            <p> Email already exists! </p>
+          {% elif error == "WEAK_PASSWORD : Password should be at least 6 characters" %}
+            <p> Password should be at least 6 characters! </p>
+          {% else %}
+            <p> {{ error }} </p>
+          {% endif %}
+        </div>
+      {% endif %}
+      {% if success %}
+        <div class="alert alert-success" role="alert">
+          <p> Your account is successfully created! </p>
+          <p> Your can log in <a href="/login">here</a>. </p>
+        </div>
+      {% else %}
+        <form action="/signup" method="post">
+          {% if target %}
+            <input type="hidden" name="redirect" value="{{ target }}">
+          {% endif %}
+          <div class="row">
+            <div class="col-form-label">
+              <label class="form-label pt-2" for="email">Email:</label><sup class="text-danger"
+                                                                            title="Required!">*</sup>
+            </div>
+            <div class="col">
+              <input class="form-text w-100" id="email" type="email" name="email" value={{ email }}>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-form-label">
+              <label class="form-label pt-2" for="email_confirm">Confirm Email:</label><sup class="text-danger"
+                                                                                            title="Required!">*</sup>
+            </div>
+            <div class="col">
+              <input class="form-text w-100" id="email_confirm" type="email" name="email_confirm" value={{ email_c }}>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-form-label">
+              <label class="form-label pt-2" for="password">Password:</label><sup class="text-danger" title="Required!">*</sup>
+            </div>
+            <div class="col">
+              <input class="form-text w-100" id="password" type="password" name="password" value={{ password }}>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-form-label">
+              <label class="form-label pt-2" for="password_confirm">Confirm Password:</label><sup class="text-danger"
+                                                                                                  title="Required!">*</sup>
+            </div>
+            <div class="col">
+              <input class="form-text w-100" id="password_confirm" type="password" name="password_confirm"
+                     value={{ password_c }}>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-form-label">
+              <label class="form-label pt-2" for="nickname">Nickname:</label>
+            </div>
+            <div class="col">
+              <input class="form-text w-100" id="nickname" type="text" name="nickname" value={{ nickname }}>
+            </div>
+          </div>
+          <div class="row pt-3">
+            <div class="col">
+              <input class="btn btn-outline-primary w-100" type="submit" value="Register">
+            </div>
+          </div>
+        </form>
+        <div class="pt-3">
+          <p class="text-dark-emphasis fw-bolder">Already a member?</p>
+          <p>Log in <a href="/login">here</a> !</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="col-lg-3">
+    </div>
   </div>
-  {% endif %}
-  {% if success %}
-      <div class="alert alert-success" role="alert">
-    <p> Your account is successfully created! </p>
-    <p> Your can log in <a href="/login">here</a>. </p>
-  </div>
-  {% else %}
-  <form action="/signup" method="post">
-      <label for="email">*Email:</label><input id="email" type="email" name="email" value={{ email }}><br><br>
-      <label for="email_confirm">*Confirm Email:</label><input id="email_confirm" type="email" name="email_confirm"
-                                                               value={{ email_c }}><br><br>
-      <label for="password">*Password:</label><input id="password" type="password" name="password"
-                                                     value={{ password }}><br><br>
-      <label for="password_confirm">*Confirm Password:</label><input id="password_confirm" type="password"
-                                                                     name="password_confirm" value={{ password_c }}><br><br>
-      <label for="nickname">Nickname:</label><input id="nickname" type="text" name="nickname"
-                                                    value={{ nickname }}><br><br>
-      <input class="btn btn-outline-primary" type="submit" value="Register">
-  </form>
-  {% endif %}
 {% endblock %}
