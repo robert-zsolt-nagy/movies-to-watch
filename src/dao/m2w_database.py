@@ -1,4 +1,5 @@
 from google.cloud import firestore
+from google.cloud.firestore_v1.types.write import WriteResult
 from google.oauth2 import service_account
 from typing import Optional, Union
 from collections.abc import Generator
@@ -88,7 +89,7 @@ class M2wDocumentHandler():
         """
         return self.db.collection(self.collection).stream()
     
-    def set_data(self, id_: str, data: dict, merge: bool=True):
+    def set_data(self, id_: str, data: dict, merge: bool=True) -> WriteResult:
         """Creates or updates a document.
         
         Parameters
@@ -229,7 +230,7 @@ class M2wGroupHandler(M2wDocumentHandler):
         else:
             return group_ref.collection('members').stream()
         
-    def add_member_to_group(self, group_id: str, user: firestore.DocumentSnapshot) -> bool:
+    def add_member_to_group(self, group_id: str, user: firestore.DocumentSnapshot) -> dict:
         """Adds a user to the members of the group.
         
         Parameters
@@ -239,15 +240,27 @@ class M2wGroupHandler(M2wDocumentHandler):
 
         Returns
         -------
-        True if successfull, False otherwise.
+        A dictionary with the result.
+        ```
+        {
+            "success": bool,
+            "message": "OK" or Exception
+        }
+        ```
         """
         try:
             group_ref = self.get_one(id_=group_id).reference
             group_ref.collection('members').document(user.id).set(user.to_dict())
-        except:
-            return False
+        except Exception as e:
+            return {
+                "success": False,
+                "message": e
+            }
         else:
-            return True
+            return {
+                "success": True,
+                "message": "OK"
+            }
         
     def remove_member_from_group(self, group_id: str, user_id: str) -> bool:
         """Adds a user to the members of the group.
@@ -259,17 +272,29 @@ class M2wGroupHandler(M2wDocumentHandler):
 
         Returns
         -------
-        True if successfull, False otherwise.
+        A dcitionary with the result.
+        ```
+        {
+            "success": bool,
+            "message": "OK" or Exception
+        }
+        ```
         """
         try:
             group_ref = self.get_one(id_=group_id).reference
             group_ref.collection('members').document(user_id).delete()
-        except:
-            return False
+        except Exception as e:
+            return {
+                "success": False,
+                "message": e
+            }
         else:
-            return True
+            return {
+                "success": True,
+                "message": "OK"
+            }
     
-    def create_new(self, data: dict, members: Optional[Union[list[firestore.DocumentSnapshot], firestore.DocumentSnapshot]]=None) -> str:
+    def create_new(self, data: dict, members: Union[list[firestore.DocumentSnapshot], firestore.DocumentSnapshot]) -> dict:
         """Creates a new group.
         
         Parameters
@@ -287,12 +312,23 @@ class M2wGroupHandler(M2wDocumentHandler):
         """
         try:
             _, group_ref = self.db.collection("groups").add(document_data=data)
-            if members is not None:
-                if not isinstance(members, list):
-                    members = [members]
-                for member in members:
-                    self.add_member_to_group(group_id=group_ref.id, user=member)
+            if not isinstance(members, list):
+                members = [members]
+            group_is_empty = True
+            added_members = []
+            for member in members:
+                added = self.add_member_to_group(group_id=group_ref.id, user=member)
+                if added['success']:
+                    group_is_empty = False
+                    added_members.append(member)
+            if group_is_empty:
+                raise M2WDatabaseException("Could not create group.")
         except:
             raise M2WDatabaseException("Could not create group.")
         else:
-            return group_ref
+            return {
+                "success": True,
+                "group_reference": group_ref,
+                "added_members": added_members,
+                "number_of_new_members": len(added_members)
+            }
