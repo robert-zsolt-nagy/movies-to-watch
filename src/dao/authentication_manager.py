@@ -1,18 +1,23 @@
 from requests.exceptions import HTTPError
 import json
 import pyrebase
+from typing import Union
 
 class AuthenticationManager():
     """Provides the user authentication service."""
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: Union[dict, pyrebase.pyrebase.Auth]) -> None:
         """Provide user authentication service.
         
         Parameters
         ----------
-        config: the configuration data for the firebase service.
+        config: the configuration data for the firebase service as dictionary or 
+        an instance of a pyrebase.Auth object.
         """
-        firebase_app = pyrebase.initialize_app(config=config)
-        self.__auth = firebase_app.auth()
+        if isinstance(config, dict):
+            firebase_app = pyrebase.initialize_app(config=config)
+            self.__auth = firebase_app.auth()
+        else:
+            self.__auth = config
 
     def get_authentication_error_msg(error: HTTPError) -> str:
         """Get the error message from a raised error. """

@@ -1,8 +1,10 @@
 .venv
 .git
 .gitignore
+.vscode
 connection_test.py
 README.md
 drawio
+tests.py
 tests/
 __pycache__/

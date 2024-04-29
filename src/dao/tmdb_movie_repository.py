@@ -53,8 +53,8 @@ class TmdbMovieRepository(MovieRepository):
         movie_id: the ID of the movie in TMDB
         """
         response = self.__client.get(
-            path=f"/movie/{movie_id}/videos", params={"language": "en-US"})
-
+            path=f"/movie/{movie_id}/videos", params={"language": "en-US"}
+            )
         videos = response['results']
         return _find_best_trailer(videos)
 
