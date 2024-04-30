@@ -1,7 +1,7 @@
 from src.dao.tmdb_http_client import TmdbHttpClient
 from src.dao.tmdb_user_repository import TmdbUserRepository
 from src.dao.tmdb_movie_repository import TmdbMovieRepository
-from src.dao.m2w_database import M2wMovieHandler, M2wUserHandler, M2WDatabase, M2WDatabaseException
+from src.dao.m2w_database import M2WDatabase
 from datetime import datetime, UTC
 from typing import Union
 from collections.abc import Generator
@@ -39,8 +39,8 @@ class MovieCachingService():
         """
         self.user_repo = TmdbUserRepository(tmdb_http_client=tmdb_http_client)
         self.movie_repo = TmdbMovieRepository(tmdb_http_client=tmdb_http_client)
-        self.movie_handler = M2wMovieHandler(db=m2w_database)
-        self.user_handler = M2wUserHandler(db=m2w_database)
+        self.movie_handler = m2w_database.movie
+        self.user_handler = m2w_database.user
         self.movie_retention = m2w_movie_retention
 
     def get_movie_details_from_cache(self, movie_id: str) -> dict:
@@ -64,7 +64,7 @@ class MovieCachingService():
             details = movie.to_dict()
             age = datetime.now(UTC) - details['refreshed_at']
             if age.total_seconds() > self.movie_retention:
-                MovieNotFoundException("Movie not cached.")
+                raise MovieNotFoundException("Movie not cached.")
         except:
             raise MovieNotFoundException("Movie not cached.")
         else:
