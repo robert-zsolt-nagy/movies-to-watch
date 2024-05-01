@@ -227,10 +227,11 @@ class MovieCachingService():
         -------
         The consolidated watchlist without duplicates.
         """
-        result = []
+        result = {}
         for watchlist in watchlists:
-            result.extend(watchlist)
-        return [movie for movie in set(result)]
+            for movie in watchlist:
+                result[movie['id']] = movie
+        return [movie for movie in result.values()]
     
     def movie_cache_update_job(self) -> bool:
         """Caches the details of every movie from every users watchlist.
@@ -252,4 +253,6 @@ class MovieCachingService():
                 )
         except:
             raise MovieCacheUpdateError("Error during update job.")
+        else:
+            return True
         
