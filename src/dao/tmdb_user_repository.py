@@ -13,7 +13,7 @@ def is_expired(expires_at: str) -> bool:
     try:
         exp = datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=UTC)
         validity = exp - datetime.now(UTC)
-    except:
+    except Exception:
         return True
     else:
         if validity.total_seconds() > 0:

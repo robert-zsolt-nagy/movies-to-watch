@@ -183,7 +183,7 @@ class UserManagerService():
         if user_data['tmdb_session'] is not None:
             try:
                 fresh_data = self.get_tmdb_account_data(session_id=user_data['tmdb_session'])
-            except:
+            except Exception:
                 raise UserManagerException("Error during reading TMDB account data.")            
             else:
                 data = {

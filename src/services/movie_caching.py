@@ -65,7 +65,7 @@ class MovieCachingService():
             age = datetime.now(UTC) - details['refreshed_at']
             if age.total_seconds() > self.movie_retention:
                 raise MovieNotFoundException("Movie not cached.")
-        except:
+        except Exception:
             raise MovieNotFoundException("Movie not cached.")
         else:
             return details
@@ -90,7 +90,7 @@ class MovieCachingService():
             details['official_trailer'] = self.movie_repo.get_trailer(movie_id=movie_id)
             details['local_providers'] = self.movie_repo.get_watch_providers(movie_id=movie_id)
             details['refreshed_at'] = datetime.now(UTC)
-        except:
+        except Exception:
             raise MovieNotFoundException("Movie not found.")
         else:
             return details
@@ -140,7 +140,7 @@ class MovieCachingService():
                 id_=str(movie_id),
                 data=details
             )
-        except:
+        except Exception:
             raise MovieCacheUpdateError("Error during update.")
         else:
             return True
@@ -210,7 +210,7 @@ class MovieCachingService():
                 )
                 watchlist_data.append(watchlist)
             consolidated = self._consolidate_watchlists(watchlist_data)
-        except:
+        except Exception:
             raise WatchlistCreationError("Watchlist creation failed.")
         else:
             return consolidated
@@ -251,7 +251,7 @@ class MovieCachingService():
                 self.check_and_update_movie_cache_by_id(
                     movie_id=str(movie['id'])
                 )
-        except:
+        except Exception:
             raise MovieCacheUpdateError("Error during update job.")
         else:
             return True

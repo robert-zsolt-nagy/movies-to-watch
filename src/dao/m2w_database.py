@@ -115,7 +115,7 @@ class M2wDocumentHandler():
         """
         try:
             self.db.collection(self.collection).document(id_).delete()
-        except:
+        except Exception:
             return False
         else:
             return True
@@ -170,7 +170,7 @@ class M2wMovieHandler(M2wDocumentHandler):
         """
         try:
             blocklist.document(movie_id).delete()
-        except:
+        except Exception:
             return False
         else:
             return True
@@ -192,12 +192,12 @@ class M2wMovieHandler(M2wDocumentHandler):
             try:
                 movie_data = self.get_one(id_=movie_id).to_dict()
                 movie_title = movie_data['title']
-            except:
+            except Exception:
                 movie_title = 'unknown'
         data = {"title":movie_title}
         try:
             blocklist.document(movie_id).set(data)
-        except:
+        except Exception:
             return False
         else:
             return True
@@ -225,7 +225,7 @@ class M2wGroupHandler(M2wDocumentHandler):
         """
         try:
             group_ref = self.get_one(id_=group_id).reference
-        except:
+        except Exception:
             raise M2WDatabaseException(f"{self.kind} does not exist.")
         else:
             return group_ref.collection('members').stream()
@@ -323,7 +323,7 @@ class M2wGroupHandler(M2wDocumentHandler):
                     added_members.append(member)
             if group_is_empty:
                 raise M2WDatabaseException("Could not create group.")
-        except:
+        except Exception:
             raise M2WDatabaseException("Could not create group.")
         else:
             return {
