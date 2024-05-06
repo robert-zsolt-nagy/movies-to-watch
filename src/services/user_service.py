@@ -2,12 +2,23 @@ from src.dao.m2w_database import M2WDatabase
 from src.dao.authentication_manager import AuthenticationManager
 from src.dao.tmdb_user_repository import TmdbUserRepository
 from requests.exceptions import HTTPError
+from typing import Optional
 
 
 class UserManagerException(Exception):
     """Base class for exceptions in the User Manager Service."""
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class EmailMismatchError(UserManagerException):
+    """Email and confirm Email does not match."""
+
+class PasswordMismatchError(UserManagerException):
+    """Password and confirm password does not natch."""
+
+class WeakPasswordError(UserManagerException):
+    """Password should contain at least 6 characters."""
+
 
 class UserManagerService():
     """Handles the user administration."""
@@ -190,10 +201,11 @@ class UserManagerService():
                     "tmdb_user":fresh_data
                 }
                 self.update_user_data(user_id=user_id, user_data=data)
+                return data
         else:
             return {}
         
-    def create_tmdb_session_for_user(self, request_token: dict):
+    def create_tmdb_session_for_user(self, request_token: dict) -> str:
         """ Create a session id for a particular request token of a user.
         
         Parameters
@@ -205,8 +217,117 @@ class UserManagerService():
         The created session ID.
         """
         return self.user_repo.create_session_id(request_token=request_token)
+    
+    def send_firebase_email_verification(self, id_token: str):
+        """Send a new verification email for the user identified by id_token.
+        
+        Parameters
+        ----------
+        id_token: the ID token of the user who needs a verfication email.
+        """
+        return self.auth.send_email_verification(id_token=id_token)
+    
+    def sign_up_user(
+            self,
+            email: str,
+            confirm_email: str,
+            password: str,
+            confirm_password: str,
+            nickname: str,
+            picture: str="01.png",
+            locale: str="HU"
+        ) -> dict:
+        """Validate the sign up form and creeate the user if valid.
+        
+        Parameters
+        ----------
+        email: the email of the user.
+        confirm_email: the email of the user repeated.
+        password: the password of the user.
+        confirm_password: the password of the user repeated.
+        nickname: the nickname of the user.
+        picture: the filename of the chosen profile picture.
+        locale: the two character locale ID of the user's locale.
 
+        Returns
+        -------
+        True if successful.
 
-# create user if signup form is validated
-# link to tmdb
-# resend email verification for user
+        Raises
+        ------
+        EmailMismatchError: if email and confirm_email doesn't match.
+        PasswordMismatchError: if password and confirm_password doesn't match.
+        WeakPasswordError: if password is shorter than 6 characters.
+        HttpError: if firebase raises INVALID_EMAIL, MISSING_PASSWORD, INVALID_LOGIN_CREDENTIALS, 
+        EMAIL_EXISTS or WEAK_PASSWORD
+
+        """
+        if email != confirm_email:
+            raise EmailMismatchError()
+        
+        if password != confirm_password:
+            raise PasswordMismatchError()
+        
+        if len(password) < 6:
+            raise WeakPasswordError()
+        
+        # create user and add details
+        my_user = self.auth.create_user_with_email_and_password(
+            email=email,
+            password=password
+        )
+        self.auth.update_profile(
+            id_token=my_user['idToken'],
+            display_name=nickname
+        )
+        # send verification email for profile
+        self.send_firebase_email_verification(id_token=my_user['idToken'])
+        # upsert user profile in M2W database
+        data = {
+            "email": email, 
+            "nickname": nickname, 
+            "tmdb_user": None,
+            "tmdb_session": None,
+            "locale": locale,
+            "primary_group": None,
+            "profile_pic": picture
+            }
+        self.user_handler.set_data(
+            id_=my_user['localId'],
+            data=data
+        )
+        return True
+        
+    def init_link_user_profile_to_tmdb(
+            self,
+            redirect_to: Optional[str] = None, 
+            tmdb_url: str = "https://www.themoviedb.org",
+            ) -> dict:
+        """Initiate linking user's M2W and TMDB profiles.
+        
+        Parameters
+        ----------
+        redirect_to: the URL to redirect to after the approval process.
+        tmdb_url: the base URL of TMDB.
+
+        Returns
+        -------
+        The created tmdb request token and user permission URL in a dict.
+        ```
+        {
+            "tmdb_request_token": str,
+            "permission_URL" : str
+        }
+        ```
+        """
+        tmdb_request_token = self.user_repo.create_request_token()
+        permission_URL = self.user_repo.get_user_permission_URL(
+            redirect_to=redirect_to,
+            tmdb_url=tmdb_url,
+            **tmdb_request_token
+        )
+        return {
+            "tmdb_request_token": tmdb_request_token, 
+            "permission_URL": permission_URL
+        }
+
