@@ -1,4 +1,4 @@
-from src.dao.m2w_database import M2WDatabase, M2WDatabaseException
+from src.dao.m2w_database import M2WDatabase
 from src.dao.authentication_manager import AuthenticationManager
 from src.dao.tmdb_user_repository import TmdbUserRepository
 from requests.exceptions import HTTPError
@@ -412,5 +412,4 @@ class UserManagerService():
             raise UserManagerException("TMDB data of user is missing.")
         else:
             return watchlist
-        
         

@@ -1,4 +1,3 @@
-from src.dao.tmdb_user_repository import TmdbUserRepository
 from src.dao.m2w_database import M2WDatabase
 from src.dao.secret_manager import SecretManager
 from src.services.user_service import UserManagerService
