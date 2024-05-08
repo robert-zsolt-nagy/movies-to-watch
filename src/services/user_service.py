@@ -1,14 +1,13 @@
-from src.dao.m2w_database import M2WDatabase
+from src.dao.m2w_database import M2WDatabase, M2WDatabaseException
 from src.dao.authentication_manager import AuthenticationManager
 from src.dao.tmdb_user_repository import TmdbUserRepository
 from requests.exceptions import HTTPError
 from typing import Optional
+from google.cloud import firestore
 
 
 class UserManagerException(Exception):
     """Base class for exceptions in the User Manager Service."""
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
 
 class EmailMismatchError(UserManagerException):
     """Email and confirm Email does not match."""
@@ -330,4 +329,88 @@ class UserManagerService():
             "tmdb_request_token": tmdb_request_token, 
             "permission_URL": permission_URL
         }
+    
+    def add_movie_to_users_watchlist(self, movie_id: str, user_id: str) -> bool:
+        """Adds a movie to the movie watchlist of a user.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in M2W.
+        user_id: the M2W ID of the user.
 
+        Returns
+        --------
+        True if successful, False otherwise.
+        
+        """
+        # get user data
+        try:
+            user_data = self.get_m2w_user_profile_data(user_id=user_id)
+            response_watchlist = self.user_repo.add_movie_to_watchlist(
+                movie_id=int(movie_id),
+                user_id=user_data['tmdb_user']['id'],
+                session_id=user_data['tmdb_session']
+            )
+        except KeyError:
+            raise UserManagerException("TMDB data of user is missing.")
+        else:
+            return response_watchlist["status_message"] == "Success."
+        
+    def remove_movie_from_users_watchlist(self, movie_id: str, user_id: str) -> bool:
+        """Remove a movie from the movie watchlist of a user.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie in M2W.
+        user_id: the M2W ID of the user.
+
+        Returns
+        --------
+        True if successful, False otherwise.
+        
+        """
+        try:
+            user_data = self.get_m2w_user_profile_data(user_id=user_id)
+            response_watchlist = self.user_repo.remove_movie_from_watchlist(
+                movie_id=int(movie_id),
+                user_id=user_data['tmdb_user']['id'],
+                session_id=user_data['tmdb_session']
+            )
+        except KeyError:
+            raise UserManagerException("TMDB data of user is missing.")
+        else:
+            return response_watchlist["status_message"] == "Success."
+        
+    def get_blocklist(self, user_id: str) -> firestore.CollectionReference:
+        """Returns the reference to the blocklist collection of a user 
+        with ID `user_id` if the user exists.
+        
+        Raises
+        ------
+        M2WDatabaseException: if user doesn't exist.
+        """
+        return self.user_handler.get_blocklist(user_id=user_id)
+
+    def get_movies_watchlist(self, user_id: str) -> list[dict]:
+        """Get the movies watchlist of the user.
+        
+        Parameters
+        ----------
+        user_id: the ID of the user in M2W Database.
+
+        Returns
+        -------
+        A list containing the movie dicitonaries.
+        """
+        try:
+            user_data = self.get_m2w_user_profile_data(user_id=user_id)
+            watchlist = self.user_repo.get_watchlist_movie(
+                user_id=user_data['tmdb_user']['id'],
+                session_id=user_data['tmdb_session']
+            )
+        except KeyError:
+            raise UserManagerException("TMDB data of user is missing.")
+        else:
+            return watchlist
+        
+        

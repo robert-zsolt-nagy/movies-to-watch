@@ -388,4 +388,108 @@ class TestUserManagerService(TestCase):
             expires_at="2024-05-06",
             request_token="my_token"
         )
-        
+
+    def test_add_movie_to_users_watchlist_should_pass_correct_parameters(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.user = MagicMock(M2wUserHandler)
+        under_test = UserManagerService(
+            m2w_db=m2w_db,
+            auth=MagicMock(AuthenticationManager),
+            user_repo=MagicMock(TmdbUserRepository)
+        )
+        under_test.get_m2w_user_profile_data = MagicMock(return_value={
+            'tmdb_session':'my_session',
+            'tmdb_user':{
+                'id':123
+            }
+        })
+        under_test.user_repo.add_movie_to_watchlist = MagicMock(return_value={"status_code":1, "status_message": "Success."})
+
+        #when
+        response = under_test.add_movie_to_users_watchlist(movie_id="1", user_id="user_1")
+
+        #then
+        self.assertEqual(response, True)
+        under_test.get_m2w_user_profile_data.assert_called_with(user_id="user_1")
+        under_test.user_repo.add_movie_to_watchlist.assert_called_with(
+            movie_id=1,
+            user_id=123,
+            session_id='my_session'
+        )
+
+    def test_remove_movie_from_users_watchlist_should_pass_correct_parameters(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.user = MagicMock(M2wUserHandler)
+        under_test = UserManagerService(
+            m2w_db=m2w_db,
+            auth=MagicMock(AuthenticationManager),
+            user_repo=MagicMock(TmdbUserRepository)
+        )
+        under_test.get_m2w_user_profile_data = MagicMock(return_value={
+            'tmdb_session':'my_session',
+            'tmdb_user':{
+                'id':123
+            }
+        })
+        under_test.user_repo.remove_movie_from_watchlist = MagicMock(return_value={"status_code":1, "status_message": "Success."})
+
+        #when
+        response = under_test.remove_movie_from_users_watchlist(movie_id="1", user_id="user_1")
+
+        #then
+        self.assertEqual(response, True)
+        under_test.get_m2w_user_profile_data.assert_called_with(user_id="user_1")
+        under_test.user_repo.remove_movie_from_watchlist.assert_called_with(
+            movie_id=1,
+            user_id=123,
+            session_id='my_session'
+        )
+
+    def test_get_blocklist_should_pass_correct_parameters(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.user = MagicMock(M2wUserHandler)
+        under_test = UserManagerService(
+            m2w_db=m2w_db,
+            auth=MagicMock(AuthenticationManager),
+            user_repo=MagicMock(TmdbUserRepository)
+        )
+        under_test.user_handler.get_blocklist = MagicMock(return_value="success")
+
+        #when
+        response = under_test.get_blocklist(user_id="user_id")
+
+        #then
+        self.assertEqual(response, "success")
+        under_test.user_handler.get_blocklist.assert_called_with(user_id="user_id")
+
+    def test_get_movies_watchlist_should_pass_correct_parameters(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.user = MagicMock(M2wUserHandler)
+        under_test = UserManagerService(
+            m2w_db=m2w_db,
+            auth=MagicMock(AuthenticationManager),
+            user_repo=MagicMock(TmdbUserRepository)
+        )
+        under_test.get_m2w_user_profile_data = MagicMock(return_value={
+            'tmdb_session':'my_session',
+            'tmdb_user':{
+                'id':123
+            }
+        })
+        under_test.user_repo.get_watchlist_movie = MagicMock(return_value=[{"movie":"data"}])
+
+        #when
+        response = under_test.get_movies_watchlist(user_id="user_1")
+
+        #then
+        self.assertEqual(response, [{"movie":"data"}])
+        under_test.get_m2w_user_profile_data.assert_called_with(user_id="user_1")
+        under_test.user_repo.get_watchlist_movie.assert_called_with(
+            user_id=123,
+            session_id='my_session'
+        )
+

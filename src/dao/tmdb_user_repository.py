@@ -215,7 +215,6 @@ class TmdbUserRepository():
         Parameters
         ----------
         movie_id: the ID of the movie in TMDB
-        add: if True adds the movie, otherwise removes the movie
         user_id: the TMDB ID of the user.
         session_id: the session id of the user.
 
@@ -243,7 +242,6 @@ class TmdbUserRepository():
         Parameters
         ----------
         movie_id: the ID of the movie in TMDB
-        add: if True adds the movie, otherwise removes the movie
         user_id: the TMDB ID of the user.
         session_id: the session id of the user.
 

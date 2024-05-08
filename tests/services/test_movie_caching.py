@@ -287,4 +287,42 @@ class TestMovieCachingService(TestCase):
         under_test.user_handler.get_all.assert_called_once()
         under_test.get_combined_watchlist_of_users.assert_called_with(users="all_users")
         under_test.check_and_update_movie_cache_by_id.assert_called_with(movie_id="1")
+
+    def test_add_movie_to_blocklist_should_pass_correct_parameter(self):
+        #given
+        tmdb = TmdbHttpClient(token="ignore", base_url="url")
+        m2w = MagicMock(M2WDatabase)
+        m2w.movie = MagicMock(M2wMovieHandler)
+        m2w.user = MagicMock(M2wUserHandler)
+        under_test = MovieCachingService(
+            tmdb_http_client=tmdb,
+            m2w_database=m2w
+        )
+        under_test.movie_handler.add_to_blocklist = MagicMock(return_value=True)
+
+        #when
+        response = under_test.add_movie_to_blocklist(movie_id="1", blocklist="blocklist")
+        
+        #then
+        self.assertEqual(response, True)
+        under_test.movie_handler.add_to_blocklist.assert_called_with(movie_id="1", blocklist="blocklist")
+
+    def test_remove_movie_from_blocklist_should_pass_correct_parameter(self):
+        #given
+        tmdb = TmdbHttpClient(token="ignore", base_url="url")
+        m2w = MagicMock(M2WDatabase)
+        m2w.movie = MagicMock(M2wMovieHandler)
+        m2w.user = MagicMock(M2wUserHandler)
+        under_test = MovieCachingService(
+            tmdb_http_client=tmdb,
+            m2w_database=m2w
+        )
+        under_test.movie_handler.remove_from_blocklist = MagicMock(return_value=True)
+
+        #when
+        response = under_test.remove_movie_from_blocklist(movie_id="1", blocklist="blocklist")
+        
+        #then
+        self.assertEqual(response, True)
+        under_test.movie_handler.remove_from_blocklist.assert_called_with(movie_id="1", blocklist="blocklist")
     

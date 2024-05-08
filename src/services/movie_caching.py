@@ -5,6 +5,7 @@ from src.dao.m2w_database import M2WDatabase
 from datetime import datetime, UTC
 from typing import Union
 from collections.abc import Generator
+from google.cloud import firestore
 
 
 class MovieNotFoundException(Exception):
@@ -256,3 +257,30 @@ class MovieCachingService():
         else:
             return True
         
+    def add_movie_to_blocklist(self, movie_id: str, blocklist: firestore.CollectionReference) -> bool:
+        """Adds a movie to the blocklist of the member.
+        
+        Parameters
+        ----------
+        movie_id: ID of the movie in M2W.
+        blocklist: the reference of the affected blocklist.
+
+        Returns
+        -------
+        True if successfull, False otherwise.
+        """
+        return self.movie_handler.add_to_blocklist(movie_id=movie_id, blocklist=blocklist)
+
+    def remove_movie_from_blocklist(self, movie_id: str, blocklist: firestore.CollectionReference) -> bool:
+        """Removes the movie from the blocklist.
+        
+        Parameters
+        ----------
+        movie_id: ID of the movie in TMDB.
+        blocklist: the reference of the affected blocklist.
+
+        Returns
+        -------
+        True if successfull, False otherwise.
+        """
+        return self.movie_handler.remove_from_blocklist(movie_id=movie_id, blocklist=blocklist)
