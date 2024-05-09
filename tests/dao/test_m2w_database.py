@@ -1,13 +1,16 @@
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from src.dao.m2w_database import M2WDatabaseException, M2wDocumentHandler, M2wGroupHandler, M2wMovieHandler, M2wUserHandler
 from google.cloud import firestore
+
+from src.dao.m2w_database import M2WDatabaseException, M2wDocumentHandler, M2wGroupHandler, M2wMovieHandler, \
+    M2wUserHandler
+
 
 class TestM2wDocumentHandler(TestCase):
     def test_get_one_should_return_one_item(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc = MagicMock(firestore.DocumentSnapshot)
         doc.exists = True
         doc_ref = MagicMock(firestore.DocumentReference)
@@ -27,7 +30,7 @@ class TestM2wDocumentHandler(TestCase):
 
     def test_get_one_should_raise_exception_if_document_is_missing(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc = MagicMock(firestore.DocumentSnapshot)
         doc.exists = False
         doc_ref = MagicMock(firestore.DocumentReference)
@@ -49,7 +52,7 @@ class TestM2wDocumentHandler(TestCase):
 
     def test_get_all_should_return_a_generator(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         collection = MagicMock(firestore.CollectionReference)
         collection.stream = MagicMock(return_value=range(5))
         db.collection = MagicMock(return_value=collection)
@@ -65,7 +68,7 @@ class TestM2wDocumentHandler(TestCase):
 
     def test_set_data_should_return_write_results(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc_ref = MagicMock(firestore.DocumentReference)
         doc_ref.set = MagicMock(return_value={'success':True})
         collection = MagicMock(firestore.CollectionReference)
@@ -84,7 +87,7 @@ class TestM2wDocumentHandler(TestCase):
 
     def test_delete_should_return_boolean(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc_ref = MagicMock(firestore.DocumentReference)
         doc_ref.delete = MagicMock(return_value=True)
         collection = MagicMock(firestore.CollectionReference)
@@ -104,7 +107,7 @@ class TestM2wDocumentHandler(TestCase):
 class TestM2wUserHandler(TestCase):
     def test_get_blocklist_should_return_collection_reference(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc = MagicMock(firestore.DocumentSnapshot)
         doc.exists = True
         doc_ref = MagicMock(firestore.DocumentReference)
@@ -126,7 +129,7 @@ class TestM2wUserHandler(TestCase):
 
     def test_get_blocklist_should_raise_exception_if_blocklist_missing(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc = MagicMock(firestore.DocumentSnapshot)
         doc.exists = False
         doc_ref = MagicMock(firestore.DocumentReference)
@@ -149,7 +152,7 @@ class TestM2wUserHandler(TestCase):
 class TestM2wMovieHandler(TestCase):
     def test_remove_from_blocklist_should_return_boolean(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc = MagicMock(firestore.DocumentReference)
         doc.delete = MagicMock(return_value="success")
         blocklist = MagicMock(firestore.CollectionReference)
@@ -168,7 +171,7 @@ class TestM2wMovieHandler(TestCase):
 
     def test_add_to_blocklist_should_return_boolean(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc = MagicMock(firestore.DocumentReference)
         doc.set = MagicMock(return_value="success")
         blocklist = MagicMock(firestore.CollectionReference)
@@ -189,7 +192,7 @@ class TestM2wMovieHandler(TestCase):
 
     def test_add_to_blocklist_should_get_title_if_it_is_cached(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         doc = MagicMock(firestore.DocumentReference)
         doc.set = MagicMock(return_value="success")
         blocklist = MagicMock(firestore.CollectionReference)
@@ -214,7 +217,7 @@ class TestM2wMovieHandler(TestCase):
 class TestM2wGroupHandler(TestCase):
     def test_get_all_group_members_should_return_stream(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         under_test = M2wGroupHandler(db=db)
         group = MagicMock(firestore.DocumentSnapshot)
         group_ref = MagicMock(firestore.DocumentReference)
@@ -235,7 +238,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_get_all_group_members_should_raise_exception_if_group_is_missing(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         under_test = M2wGroupHandler(db=db)
         def raise_exception(*args, **kwargs):
             raise M2WDatabaseException()
@@ -251,7 +254,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_add_member_to_group_should_return_dict(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         under_test = M2wGroupHandler(db=db)
         group = MagicMock(firestore.DocumentSnapshot)
         group_ref = MagicMock(firestore.DocumentReference)
@@ -283,7 +286,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_add_member_to_group_should_return_as_unsuccessful_if_group_does_not_exist(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         under_test = M2wGroupHandler(db=db)
         new_user = MagicMock(firestore.DocumentSnapshot)
         new_user.id = "user1"
@@ -306,7 +309,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_remove_member_from_group_should_return_dict(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         under_test = M2wGroupHandler(db=db)
         group = MagicMock(firestore.DocumentSnapshot)
         group_ref = MagicMock(firestore.DocumentReference)
@@ -332,7 +335,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_remove_member_from_group_should_return_as_unsuccessful_if_group_does_not_exist(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         under_test = M2wGroupHandler(db=db)
         def raise_exception():
             raise M2WDatabaseException("No group.")
@@ -350,7 +353,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_create_new_should_return_dict(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         collection_ref = MagicMock(firestore.CollectionReference)
         group_ref = MagicMock(firestore.DocumentReference)
         group_ref.id = "new_group"
@@ -389,7 +392,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_create_new_should_raise_exception_if_group_not_created(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         def raise_exception():
             raise M2WDatabaseException("No group.")
         db.collection = MagicMock(side_effect=raise_exception)
@@ -412,7 +415,7 @@ class TestM2wGroupHandler(TestCase):
 
     def test_create_new_should_raise_exception_if_group_created_but_could_not_add_members(self):
         #given
-        db = firestore.Client()
+        db = MagicMock(firestore.Client)
         collection_ref = MagicMock(firestore.CollectionReference)
         group_ref = MagicMock(firestore.DocumentReference)
         group_ref.id = "new_group"
