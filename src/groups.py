@@ -30,7 +30,7 @@ def add_to_blocklist(db: fsClient, member: str, movie_id: str, movie_title: Opti
         try:
             user_ref = db.collection("users").document(member)
             user_ref.collection("blocklist").document(movie_id).set(data)
-        except:
+        except Exception:
             return False
         else:
             return True
@@ -54,7 +54,7 @@ def remove_from_blocklist(db: fsClient, member: str, movie_id: str) -> None:
             mov_ref = user_ref.collection("blocklist").document(movie_id).get()
             if mov_ref.exists:
                 user_ref.collection("blocklist").document(movie_id).delete()
-        except:
+        except Exception:
             return False
         else:
             return True

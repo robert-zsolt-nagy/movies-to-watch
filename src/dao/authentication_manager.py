@@ -26,6 +26,11 @@ class AuthenticationManager():
     
     def sign_in_with_email_and_password(self, email: str, password: str) -> dict:
         """Signs in a user with email and password.
+
+        Parameters
+        ----------
+        email: the email of the user.
+        password: the password of the user.
         
         Returns
         -------

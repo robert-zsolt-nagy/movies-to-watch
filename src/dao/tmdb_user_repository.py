@@ -13,7 +13,7 @@ def is_expired(expires_at: str) -> bool:
     try:
         exp = datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=UTC)
         validity = exp - datetime.now(UTC)
-    except:
+    except Exception:
         return True
     else:
         if validity.total_seconds() > 0:
@@ -215,7 +215,6 @@ class TmdbUserRepository():
         Parameters
         ----------
         movie_id: the ID of the movie in TMDB
-        add: if True adds the movie, otherwise removes the movie
         user_id: the TMDB ID of the user.
         session_id: the session id of the user.
 
@@ -243,7 +242,6 @@ class TmdbUserRepository():
         Parameters
         ----------
         movie_id: the ID of the movie in TMDB
-        add: if True adds the movie, otherwise removes the movie
         user_id: the TMDB ID of the user.
         session_id: the session id of the user.
 

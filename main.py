@@ -59,7 +59,7 @@ def update_movies():
                     token=secrets.tmdb_token,
                     db=db
                 )
-    except:
+    except Exception:
         pass
 
 
@@ -123,7 +123,7 @@ def login():
             if user_data['tmdb_session'] is not None:
                 try:
                     fresh_data = tmdb_auth.get_account_data(session_id=user_data['tmdb_session'])
-                except:
+                except Exception:
                     pass
                 else:
                     data = {
