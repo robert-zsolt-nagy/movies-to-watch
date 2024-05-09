@@ -367,7 +367,6 @@
   .providers {
     @extend .row;
     min-height: 6em;
-    max-height: 6em;
 
     .section:not(:first-of-type) {
       @extend .border-start;
