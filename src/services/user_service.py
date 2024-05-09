@@ -235,7 +235,7 @@ class UserManagerService():
             nickname: str,
             picture: str="01.png",
             locale: str="HU"
-        ) -> dict:
+        ) -> bool:
         """Validate the sign up form and creeate the user if valid.
         
         Parameters

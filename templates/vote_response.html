@@ -1,4 +1,18 @@
 <h5>Your vote</h5>
+{% if error %}
+    <div class="no">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-primary" role="alert">
+                {% for message in messages %}
+                <p>{{ message }}</p><br>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+        <a class="nav-link" href="/">Refresh page</a>
+    </div>
+{% else %}
 {% if vote == "liked" %}
     <div class="yes">
         <button class="button-selected">I'm in!</button>
@@ -10,16 +24,17 @@
         </button>
     </div>
 {% endif %}
-    {% if vote == "blocked" %}
-        <div class="no">
-            <button class="button-selected">I'm out!</button>
+{% if vote == "blocked" %}
+    <div class="no">
+        <button class="button-selected">I'm out!</button>
     </div>
 {% else %}
-        <div class="no">
-            <button hx-get="/api/vote/{{ movie_id }}/block" hx-trigger="click" hx-target="#my_vote{{ movie_id }}"
-                    hx-indicator="#indicator{{ movie_id }}" class="button-active">I'm out!
-            </button>
+    <div class="no">
+        <button hx-get="/api/vote/{{ movie_id }}/block" hx-trigger="click" hx-target="#my_vote{{ movie_id }}"
+                hx-indicator="#indicator{{ movie_id }}" class="button-active">I'm out!
+        </button>
     </div>
 {% endif %}
     <img alt="Working..." class="htmx-indicator" id="indicator{{ movie_id }}"
          src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
+{% endif %}
