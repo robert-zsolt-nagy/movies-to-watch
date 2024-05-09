@@ -218,6 +218,10 @@ class TestGroupManagerService(TestCase):
             },
             2:{
                 "user_1": "blocked"
+            },
+            3:{
+                "user_1": "blocked",
+                "user_2": "liked"
             }
         }
         def details(movie_id):
@@ -239,14 +243,15 @@ class TestGroupManagerService(TestCase):
                 }
             }
             ,
-            2:{
-                "title": "The 2",
+            3:{
+                "title": "The 3",
                 "votes":{
-                    "user_1": "blocked"
+                    "user_1": "blocked",
+                    "user_2": "liked"
                 }
             }
         })
-        under_test.movie.get_movie_details.assert_called_with(movie_id=2)
+        under_test.movie.get_movie_details.assert_called_with(movie_id=3)
 
     def test_process_votes_should_return_dict(self):
         #given
@@ -300,145 +305,986 @@ class TestGroupManagerService(TestCase):
         })
         under_test.user.get_m2w_user_profile_data.assert_called_with(user_id='u4')
 
+    def test_process_providers_should_return_dict(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_watchgroup_data = MagicMock(return_value={"locale":"XX"})
+        prov = {
+            "AA":{
+                "link":"URL",
+                "flatrate":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ]
+            },
+            "XX":{
+                "link":"URL",
+                "flatrate":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ],
+                "buy":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 2,
+                        "provider_name": "Notflex",
+                        "display_priority": 2
+                    },
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ],
+                "rent":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    },
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 3,
+                        "provider_name": "Gaggle play",
+                        "display_priority": 3
+                    }
+                ]
+            }
+        }
 
+        #when
+        response = under_test.process_providers(providers=prov, group_id="gr1")
 
-  
+        #then
+        self.assertEqual(response, {
+            "stream":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                }
+            ],
+            "buy_or_rent":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 2,
+                    "provider_name": "Notflex",
+                    "display_priority": 2
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 3,
+                    "provider_name": "Gaggle play",
+                    "display_priority": 3
+                }
+            ]
+        })
+        under_test.get_watchgroup_data.assert_called_with(group_id="gr1")
 
+    def test_process_providers_should_return_partial_if_flatrate_is_missing(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_watchgroup_data = MagicMock(return_value={"locale":"XX"})
+        prov = {
+            "XX":{
+                "link":"URL",
+                "buy":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 2,
+                        "provider_name": "Notflex",
+                        "display_priority": 2
+                    },
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ],
+                "rent":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    },
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 3,
+                        "provider_name": "Gaggle play",
+                        "display_priority": 3
+                    }
+                ]
+            }
+        }
 
+        #when
+        response = under_test.process_providers(providers=prov, group_id="gr1")
 
+        #then
+        self.assertEqual(response, {
+            "stream":[],
+            "buy_or_rent":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 2,
+                    "provider_name": "Notflex",
+                    "display_priority": 2
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 3,
+                    "provider_name": "Gaggle play",
+                    "display_priority": 3
+                }
+            ]
+        })
+        under_test.get_watchgroup_data.assert_called_with(group_id="gr1")
 
-####### original data from the class
-    # def process_providers(self, providers: dict, group_id: str) -> dict:
-    #     datasheet = {
-    #         "stream":[],
-    #         "buy_or_rent":[]
-    #     }
-    #     try:
-    #         group_data = self.get_watchgroup_data(group_id=group_id)
-    #         locale = group_data.get("locale", "HU")
-    #         local_providers = providers.get(locale, False)
-    #         if local_providers:
-    #             # collect stream
-    #             stream = local_providers.get("flatrate", False)
-    #             if stream:
-    #                 datasheet['stream'] = stream
-    #             # compile buy and rent
-    #             buy_or_rent = {}
-    #             buy = local_providers.get('buy', False)
-    #             if buy:
-    #                 for current in buy:
-    #                     buy_or_rent[current["provider_id"]] = current
-    #             rent = local_providers.get('rent', False)
-    #             if rent:
-    #                 for current in rent:
-    #                     buy_or_rent[current["provider_id"]] = current
-    #             if buy_or_rent:
-    #                 datasheet['buy_or_rent'] = [prov for prov in buy_or_rent.values()]
-    #     except Exception:
-    #         return {
-    #             "stream":[],
-    #             "buy_or_rent":[]
-    #         }
-    #     else:
-    #         return datasheet
+    def test_process_providers_should_return_partial_if_buy_is_missing(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_watchgroup_data = MagicMock(return_value={"locale":"XX"})
+        prov = {
+            "XX":{
+                "link":"URL",
+                "flatrate":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ],
+                "rent":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    },
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 3,
+                        "provider_name": "Gaggle play",
+                        "display_priority": 3
+                    }
+                ]
+            }
+        }
 
-    # def get_group_votes(self, group_id: str) -> dict:
-    #     try:
-    #         # get all members
-    #         all_members = self.get_all_members(group_id=group_id)
-    #         # collect lists
-    #         vote_map = {}
-    #         for member in all_members:
-    #             # get watchlist
-    #             watchlist = self.user.get_movies_watchlist(user_id=member.id)
-    #             # get blocklist
-    #             blocklist_ref = self.user.get_blocklist(user_id=member.id)
-    #             # register votes
-    #             for movie in watchlist:
-    #                 # register "liked" if on watchlist
-    #                 if vote_map.get(movie['id'], False):
-    #                     vote_map[movie['id']][member.id] = "liked"
-    #                 else:
-    #                     vote_map[movie['id']] = {}
-    #                     vote_map[movie['id']][member.id] = "liked"
-    #                 # remove from user's blocklist if on user's watchlist
-    #                 for blocked_movie in blocklist_ref.stream():
-    #                     if int(blocked_movie.id) == movie['id']:
-    #                         self.movie.remove_movie_from_blocklist(
-    #                             movie_id=str(movie['id']),
-    #                             blocklist=blocklist_ref
-    #                             )
-    #                         break
-    #             for blocked_movie in blocklist_ref.stream():
-    #                 # register "blocked" if on blocklist
-    #                 _id = int(blocked_movie.id)
-    #                 if vote_map.get(_id, False):
-    #                     vote_map[_id][member.id] = "blocked"
-    #                 else:
-    #                     vote_map[_id] = {}
-    #                     vote_map[_id][member.id] = "blocked"
-    #     except Exception:
-    #         raise GroupManagerServiceException('Error during vote collection.')
-    #     else:
-    #         return vote_map
+        #when
+        response = under_test.process_providers(providers=prov, group_id="gr1")
+
+        #then
+        self.assertEqual(response, {
+            "stream":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                }
+            ],
+            "buy_or_rent":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 3,
+                    "provider_name": "Gaggle play",
+                    "display_priority": 3
+                }
+            ]
+        })
+        under_test.get_watchgroup_data.assert_called_with(group_id="gr1")
+
+    def test_process_providers_should_return_partial_if_rent_is_missing(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_watchgroup_data = MagicMock(return_value={"locale":"XX"})
+        prov = {
+            "XX":{
+                "link":"URL",
+                "flatrate":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ],
+                "buy":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 2,
+                        "provider_name": "Notflex",
+                        "display_priority": 2
+                    },
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ]
+            }
+        }
+
+        #when
+        response = under_test.process_providers(providers=prov, group_id="gr1")
+
+        #then
+        self.assertEqual(response, {
+            "stream":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                }
+            ],
+            "buy_or_rent":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 2,
+                    "provider_name": "Notflex",
+                    "display_priority": 2
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                }
+            ]
+        })
+        under_test.get_watchgroup_data.assert_called_with(group_id="gr1")
+
+    def test_process_providers_should_return_partial_if_buy_and_rent_missing(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_watchgroup_data = MagicMock(return_value={"locale":"XX"})
+        prov = {
+            "XX":{
+                "link":"URL",
+                "flatrate":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ]
+            }
+        }
+
+        #when
+        response = under_test.process_providers(providers=prov, group_id="gr1")
+
+        #then
+        self.assertEqual(response, {
+            "stream":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                }
+            ],
+            "buy_or_rent":[]
+        })
+        under_test.get_watchgroup_data.assert_called_with(group_id="gr1")
+
+    def test_process_providers_should_return_empty_if_locale_is_missing(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_watchgroup_data = MagicMock(return_value={"locale":"XX"})
+        prov = {
+            "AA":{
+                "link":"URL",
+                "flatrate":[
+                    {
+                        "logo_path": "/logo.jpg",
+                        "provider_id": 1,
+                        "provider_name": "Prime Provider",
+                        "display_priority": 1
+                    }
+                ]
+            }
+        }
+
+        #when
+        response = under_test.process_providers(providers=prov, group_id="gr1")
+
+        #then
+        self.assertEqual(response, {
+            "stream":[],
+            "buy_or_rent":[]
+        })
+        under_test.get_watchgroup_data.assert_called_with(group_id="gr1")
+
+    def test_get_group_votes_should_return_dict(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        member0 = MagicMock(firestore.DocumentSnapshot)
+        member0.id = "user_0"
+        member1 = MagicMock(firestore.DocumentSnapshot)
+        member1.id = "user_1"
+        under_test.get_all_members = MagicMock(return_value=[member0, member1])
         
-    
+        def get_watchlist(user_id):
+            watchlist = {
+                "user_0":[
+                    {
+                        'id':0
+                    },
+                    {
+                        'id':2
+                    }
+                ],
+                "user_1":[
+                    {
+                        'id':1
+                    },
+                ]
+            }
+            return watchlist[user_id]
+        under_test.user.get_movies_watchlist = MagicMock(side_effect=get_watchlist)
         
-    # def get_group_content(self, group_id: str, primary_user: str) -> list[dict]:
-    #     try:
-    #         watchlist = []
-    #         votes = self.get_group_votes(group_id=group_id)
-    #         raw_content = self.get_raw_group_content_from_votes(votes=votes)
-    #         for movie_id, details in raw_content.items():
-    #             datasheet = {
-    #                 'id': details['id'],
-    #                 'title': details['title'],
-    #                 'poster_path': None,
-    #                 'release_date': details['release_date'],
-    #                 'genres': None,
-    #                 'runtime': details['runtime'],
-    #                 'overview': details['overview'],
-    #                 'official_trailer': details['official_trailer'],
-    #                 'tmdb': None,
-    #                 'providers': None,
-    #                 'votes': None
-    #             }
-    #             # convert poster path
-    #             poster_path = f"{self.__secrets.tmdb_image}/t/p/original{details['poster_path']}"
-    #             datasheet['poster_path'] = poster_path
-    #             # convert genres
-    #             datasheet['genres'] = self.convert_genres(details['genres'])
-    #             # fill tmdb
-    #             tmdb = f"{self.__secrets.tmdb_home}/movie/{details['id']}"
-    #             datasheet['tmdb'] = tmdb
-    #             # process providers
-    #             datasheet['providers'] = self.process_providers(providers=details['local_providers'], group_id=group_id)
-    #             # process votes
-    #             datasheet['votes'] = self.process_votes(votes=details['votes'], primary_user=primary_user)
-    #             watchlist.append(datasheet)
-    #         # sort watchlist
-    #         def by_title(value):
-    #             return value['title']
-    #         watchlist.sort(key=by_title)
-    #         def by_vote(value):
-    #             votes = value['votes']
-    #             result = len(votes['liked']) + len(votes['blocked'])
-    #             return result
-    #         watchlist.sort(key=by_vote, reverse=True)
-    #         def by_provider(value):
-    #             stream = value['providers']['stream']
-    #             buy_or_rent = value['providers']['buy_or_rent']
-    #             score = len(stream)*10 + len(buy_or_rent)
-    #             return score
-    #         watchlist.sort(key=by_provider, reverse=True)
-    #     except Exception:
-    #         raise GroupManagerServiceException("Error during group content creation.")
-    #     else:
-    #         return watchlist
+        def get_blocklist(user_id):
+            blocklist = MagicMock(firestore.CollectionReference)
+            mov0 = MagicMock(firestore.DocumentSnapshot)
+            mov0.id = "0"
+            mov1 = MagicMock(firestore.DocumentSnapshot)
+            mov1.id = "1"
+            mov2 = MagicMock(firestore.DocumentSnapshot)
+            mov2.id = "2"
+            if user_id == "user_0":
+                blocklist.stream = MagicMock(return_value=[mov1])
+            if user_id == "user_1":
+                blocklist.stream = MagicMock(return_value=[mov2])
+            return blocklist
 
-    
+        under_test.user.get_blocklist = MagicMock(side_effect=get_blocklist)
+        under_test.movie.remove_movie_from_blocklist = MagicMock(return_value="success")
+
+        #when
+        result = under_test.get_group_votes(group_id="gr1")
+
+        #then
+        self.assertEqual(result, {
+            0:{
+                "user_0":"liked"
+            },
+            1:{
+                "user_0":"blocked",
+                "user_1":"liked"
+            },
+            2:{
+                "user_0":"liked",
+                "user_1":"blocked"
+            }
+        })
+        under_test.get_all_members.assert_called_with(group_id="gr1")
+        under_test.user.get_movies_watchlist.assert_called_with(user_id="user_1")
+        under_test.user.get_blocklist.assert_called_with(user_id="user_1")
+        under_test.movie.remove_movie_from_blocklist.assert_not_called()
+
+    def test_get_group_votes_should_remove_from_blocklist_if_on_watchlist(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        member1 = MagicMock(firestore.DocumentSnapshot)
+        member1.id = "user_1"
+        under_test.get_all_members = MagicMock(return_value=[member1])
         
-    
+        def get_watchlist(user_id):
+            watchlist = {
+                "user_1":[
+                    {
+                        'id':1
+                    },
+                ]
+            }
+            return watchlist[user_id]
+        under_test.user.get_movies_watchlist = MagicMock(side_effect=get_watchlist)
         
+        blocklist = MagicMock(firestore.CollectionReference)
+        mov0 = MagicMock(firestore.DocumentSnapshot)
+        mov0.id = "0"
+        mov1 = MagicMock(firestore.DocumentSnapshot)
+        mov1.id = "1"
+        mov2 = MagicMock(firestore.DocumentSnapshot)
+        mov2.id = "2"
+        blocklist.stream = MagicMock(return_value=[mov0, mov1, mov2])
+
+        under_test.user.get_blocklist = MagicMock(return_value=blocklist)
+        under_test.movie.remove_movie_from_blocklist = MagicMock(return_value="success")
+
+        #when
+        under_test.get_group_votes(group_id="gr1")
+
+        #then
+        under_test.get_all_members.assert_called_with(group_id="gr1")
+        under_test.user.get_movies_watchlist.assert_called_with(user_id="user_1")
+        under_test.user.get_blocklist.assert_called_with(user_id="user_1")
+        under_test.movie.remove_movie_from_blocklist.assert_called_once()
+        under_test.movie.remove_movie_from_blocklist.assert_called_with(
+            movie_id="1",
+            blocklist=blocklist
+        )
+
+    def test_get_group_content_should_sort_by_title(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_group_votes = MagicMock(return_value="success")
+        raw ={
+            2:{
+                'id': 2,
+                'title': 'Brave the Titular',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 2,
+                'votes': 2
+            },
+            3:{
+                'id': 3,
+                'title': 'Choclate Titles',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 3,
+                'votes': 3
+            },
+            1:{
+                'id': 1,
+                'title': 'Almost the Title',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 1,
+                'votes': 1
+            }
+        }
+        under_test.get_raw_group_content_from_votes = MagicMock(return_value=raw)
+        class secret_class():
+            def __init__(self) -> None:
+                self.tmdb_image = "TMDBimg"
+                self.tmdb_home = "TMDB"
+        under_test._secrets = secret_class()
+        under_test.convert_genres = MagicMock(return_value='Action, Adventure')
+        
+        def providers(providers, group_id):
+            prov = {
+                1:{
+                    "stream":[],
+                    "buy_or_rent":[]
+                },
+                2:{
+                    "stream":[],
+                    "buy_or_rent":[]
+                },
+                3:{
+                    "stream":[],
+                    "buy_or_rent":[]
+                }
+            }
+            return prov[providers]
+        under_test.process_providers = MagicMock(side_effect=providers)
+
+        def votes(votes, primary_user):
+            my_votes = {
+                1:{
+                    "primary_vote": "liked",
+                    "liked": [],
+                    "blocked": []
+                },
+                2:{
+                    "primary_vote": "liked",
+                    "liked": [],
+                    "blocked": []
+                },
+                3:{
+                    "primary_vote": "liked",
+                    "liked": [],
+                    "blocked": []
+                }
+            }
+            return my_votes[votes]
+        under_test.process_votes = MagicMock(side_effect=votes)
+
+        #when
+        result = under_test.get_group_content(group_id="gr1", primary_user="user1")
+        sorted_result = [elem['id'] for elem in result]
+
+        #then
+        self.assertEqual(sorted_result, [1, 2, 3])
+
+    def test_get_group_content_should_sort_by_votes(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_group_votes = MagicMock(return_value="success")
+        raw ={
+            2:{
+                'id': 2,
+                'title': 'The Title',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 2,
+                'votes': 2
+            },
+            3:{
+                'id': 3,
+                'title': 'The Title',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 3,
+                'votes': 3
+            },
+            1:{
+                'id': 1,
+                'title': 'The Title',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 1,
+                'votes': 1
+            }
+        }
+        under_test.get_raw_group_content_from_votes = MagicMock(return_value=raw)
+        class secret_class():
+            def __init__(self) -> None:
+                self.tmdb_image = "TMDBimg"
+                self.tmdb_home = "TMDB"
+        under_test._secrets = secret_class()
+        under_test.convert_genres = MagicMock(return_value='Action, Adventure')
+        
+        def providers(providers, group_id):
+            prov = {
+                1:{
+                    "stream":[],
+                    "buy_or_rent":[]
+                },
+                2:{
+                    "stream":[],
+                    "buy_or_rent":[]
+                },
+                3:{
+                    "stream":[],
+                    "buy_or_rent":[]
+                }
+            }
+            return prov[providers]
+        under_test.process_providers = MagicMock(side_effect=providers)
+
+        def votes(votes, primary_user):
+            my_votes = {
+                1:{
+                    "primary_vote": "liked",
+                    "liked": [1, 2],
+                    "blocked": [1]
+                },
+                2:{
+                    "primary_vote": "liked",
+                    "liked": [1],
+                    "blocked": [1]
+                },
+                3:{
+                    "primary_vote": "liked",
+                    "liked": [],
+                    "blocked": [1]
+                }
+            }
+            return my_votes[votes]
+        under_test.process_votes = MagicMock(side_effect=votes)
+
+        #when
+        result = under_test.get_group_content(group_id="gr1", primary_user="user1")
+        sorted_result = [elem['id'] for elem in result]
+
+        #then
+        self.assertEqual(sorted_result, [1, 2, 3])
+
+    def test_get_group_content_should_sort_by_providers(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_group_votes = MagicMock(return_value="success")
+        raw ={
+            2:{
+                'id': 2,
+                'title': 'Brave the Titular',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 2,
+                'votes': 2
+            },
+            3:{
+                'id': 3,
+                'title': 'Choclate Titles',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 3,
+                'votes': 3
+            },
+            1:{
+                'id': 1,
+                'title': 'Almost the Title',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 1,
+                'votes': 1
+            }
+        }
+        under_test.get_raw_group_content_from_votes = MagicMock(return_value=raw)
+        class secret_class():
+            def __init__(self) -> None:
+                self.tmdb_image = "TMDBimg"
+                self.tmdb_home = "TMDB"
+        under_test._secrets = secret_class()
+        under_test.convert_genres = MagicMock(return_value='Action, Adventure')
+        
+        def providers(providers, group_id):
+            prov = {
+                1:{
+                    "stream":[],
+                    "buy_or_rent":[1,2,3,4,5]
+                },
+                2:{
+                    "stream":[1],
+                    "buy_or_rent":[]
+                },
+                3:{
+                    "stream":[1],
+                    "buy_or_rent":[1]
+                }
+            }
+            return prov[providers]
+        under_test.process_providers = MagicMock(side_effect=providers)
+
+        def votes(votes, primary_user):
+            my_votes = {
+                1:{
+                    "primary_vote": "liked",
+                    "liked": [1, 2],
+                    "blocked": [1]
+                },
+                2:{
+                    "primary_vote": "liked",
+                    "liked": [1],
+                    "blocked": [1]
+                },
+                3:{
+                    "primary_vote": "liked",
+                    "liked": [],
+                    "blocked": [1]
+                }
+            }
+            return my_votes[votes]
+        under_test.process_votes = MagicMock(side_effect=votes)
+
+        #when
+        result = under_test.get_group_content(group_id="gr1", primary_user="user1")
+        sorted_result = [elem['id'] for elem in result]
+
+        #then
+        self.assertEqual(sorted_result, [3,2,1])
+
+    def test_get_group_content_should_return_dict(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_group_votes = MagicMock(return_value="success")
+        raw ={
+            1:{
+                'id': 1,
+                'title': 'The Title',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': "prov",
+                'votes': 'votes'
+            }
+        }
+        under_test.get_raw_group_content_from_votes = MagicMock(return_value=raw)
+        class secret_class():
+            def __init__(self) -> None:
+                self.tmdb_image = "TMDBimg"
+                self.tmdb_home = "TMDB"
+        under_test._secrets = secret_class()
+        under_test.convert_genres = MagicMock(return_value='Action, Adventure')
+        under_test.process_providers = MagicMock(return_value={
+            "stream":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                }
+            ],
+            "buy_or_rent":[
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 2,
+                    "provider_name": "Notflex",
+                    "display_priority": 2
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 1,
+                    "provider_name": "Prime Provider",
+                    "display_priority": 1
+                },
+                {
+                    "logo_path": "/logo.jpg",
+                    "provider_id": 3,
+                    "provider_name": "Gaggle play",
+                    "display_priority": 3
+                }
+            ]
+        })
+        under_test.process_votes = MagicMock(return_value={
+            "primary_vote": "liked",
+            "liked": [
+                {
+                    'nickname':"u2",
+                    'email':"u2@mail.com",
+                    'profile_pic': "u2.png"
+                }
+            ],
+            "blocked": [
+                {
+                    'nickname':"u3",
+                    'email':"u3@mail.com",
+                    'profile_pic': "u3.png"
+                },
+                {
+                    'nickname':"u4",
+                    'email':"u4@mail.com",
+                    'profile_pic': "u4.png"
+                }
+            ]
+        })
+
+        #when
+        result = under_test.get_group_content(group_id="gr1", primary_user="user1")
+
+        #then
+        self.assertEqual(result, [
+            {
+                'id': 1,
+                'title': 'The Title',
+                'poster_path': "TMDBimg/t/p/original/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'Action, Adventure',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'tmdb': f"TMDB/movie/1",
+                'providers': {
+                    "stream":[
+                        {
+                            "logo_path": "/logo.jpg",
+                            "provider_id": 1,
+                            "provider_name": "Prime Provider",
+                            "display_priority": 1
+                        }
+                    ],
+                    "buy_or_rent":[
+                        {
+                            "logo_path": "/logo.jpg",
+                            "provider_id": 2,
+                            "provider_name": "Notflex",
+                            "display_priority": 2
+                        },
+                        {
+                            "logo_path": "/logo.jpg",
+                            "provider_id": 1,
+                            "provider_name": "Prime Provider",
+                            "display_priority": 1
+                        },
+                        {
+                            "logo_path": "/logo.jpg",
+                            "provider_id": 3,
+                            "provider_name": "Gaggle play",
+                            "display_priority": 3
+                        }
+                    ]
+                },
+                'votes': {
+                    "primary_vote": "liked",
+                    "liked": [
+                        {
+                            'nickname':"u2",
+                            'email':"u2@mail.com",
+                            'profile_pic': "u2.png"
+                        }
+                    ],
+                    "blocked": [
+                        {
+                            'nickname':"u3",
+                            'email':"u3@mail.com",
+                            'profile_pic': "u3.png"
+                        },
+                        {
+                            'nickname':"u4",
+                            'email':"u4@mail.com",
+                            'profile_pic': "u4.png"
+                        }
+                    ]
+                }
+            }
+        ])
+        under_test.get_group_votes.assert_called_with(group_id="gr1")
+        under_test.get_raw_group_content_from_votes(votes="success")
+        under_test.convert_genres.assert_called_with('genres')
+        under_test.process_providers.assert_called_with(providers="prov", group_id="gr1")
+        under_test.process_votes.assert_called_with(votes='votes', primary_user="user1")
     
         

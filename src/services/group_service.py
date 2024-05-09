@@ -30,7 +30,7 @@ class GroupManagerService():
         user_service: handles the user administration.
         movie_service: handles the movie caching and data retreival.
         """
-        self.__secrets = secrets
+        self._secrets = secrets
         self.group = m2w_db.group
         self.user = user_service
         self.movie = movie_service
@@ -221,7 +221,8 @@ class GroupManagerService():
 
         Returns
         -------
-        The raw content of the group.
+        The raw content of the group without the movies with 
+        only "blocked" votes.
 
         Raises
         ------
@@ -230,9 +231,11 @@ class GroupManagerService():
         try:
             group_content = {}
             for movie_id, vote in votes.items():
-                details = self.movie.get_movie_details(movie_id=movie_id)
-                group_content[movie_id] = details
-                group_content[movie_id]['votes'] = vote
+                tally = [user_vote for user_vote in vote.values()]
+                if "liked" in tally:
+                    details = self.movie.get_movie_details(movie_id=movie_id)
+                    group_content[movie_id] = details
+                    group_content[movie_id]['votes'] = vote
         except Exception:
             raise GroupManagerServiceException("Error during group content creation.")
         else:
@@ -254,7 +257,7 @@ class GroupManagerService():
             watchlist = []
             votes = self.get_group_votes(group_id=group_id)
             raw_content = self.get_raw_group_content_from_votes(votes=votes)
-            for movie_id, details in raw_content.items():
+            for _, details in raw_content.items():
                 datasheet = {
                     'id': details['id'],
                     'title': details['title'],
@@ -269,12 +272,12 @@ class GroupManagerService():
                     'votes': None
                 }
                 # convert poster path
-                poster_path = f"{self.__secrets.tmdb_image}/t/p/original{details['poster_path']}"
+                poster_path = f"{self._secrets.tmdb_image}/t/p/original{details['poster_path']}"
                 datasheet['poster_path'] = poster_path
                 # convert genres
                 datasheet['genres'] = self.convert_genres(details['genres'])
                 # fill tmdb
-                tmdb = f"{self.__secrets.tmdb_home}/movie/{details['id']}"
+                tmdb = f"{self._secrets.tmdb_home}/movie/{details['id']}"
                 datasheet['tmdb'] = tmdb
                 # process providers
                 datasheet['providers'] = self.process_providers(providers=details['local_providers'], group_id=group_id)
