@@ -1,9 +1,8 @@
 import json
-from datetime import datetime, timedelta
 from typing import Optional
 
 import pyrebase
-from flask import Flask, render_template, session, redirect, request, flash, url_for
+from flask import Flask, render_template, session, redirect, request, flash
 from flask_apscheduler import APScheduler
 from google.cloud import firestore
 from google.oauth2 import service_account
@@ -16,24 +15,15 @@ from src.dao.m2w_database import M2WDatabase
 from src.dao.authentication_manager import AuthenticationManager
 from src.dao.tmdb_user_repository import TmdbUserRepository
 
-from src.services.movie_caching import MovieCachingService, MovieCacheUpdateError, MovieNotFoundException, WatchlistCreationError
-from src.services.user_service import UserManagerService, UserManagerException, WeakPasswordError, EmailMismatchError, PasswordMismatchError
-from src.services.group_service import GroupManagerService, GroupManagerServiceException
-
-from src.authenticate import Authentication, Account
-from src.groups import fsWatchGroup, add_to_blocklist, remove_from_blocklist
-from src.movies import Movie
+from src.services.movie_caching import MovieCachingService
+from src.services.user_service import UserManagerService, WeakPasswordError, EmailMismatchError, PasswordMismatchError
+from src.services.group_service import GroupManagerService
 
 # reading the secrets
 SECRETS = SecretManager()
 
 # connect to database
 m2w_db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
-db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
-db = firestore.Client(project=SECRETS.firestore_project, credentials=db_cert)
-
-# setting up tmdb
-tmdb_auth = Authentication(secrets=SECRETS.secrets)
 
 def get_firebase_error(error: HTTPError) -> str:
     """Get the error message from a raised error. """
@@ -57,7 +47,6 @@ def get_auth() -> AuthenticationManager:
     return AuthenticationManager(
         config=SECRETS.firebase_config
     )
-
 
 # setting up Flask
 app = Flask(__name__)
@@ -289,7 +278,7 @@ def profile():
     
 @app.route("/link-to-tmdb")
 def link_to_tmdb():
-    if 'user' in session:
+    if ('user' in session) and (session['emailVerified'] == True):
         try:
             user_service = UserManagerService(
                 m2w_db=get_m2w_db(),
@@ -317,56 +306,73 @@ def resend_verification():
     if 'user' in session:
         if session['emailVerified'] == False:
             try:
-                firebase_auth.send_email_verification(id_token=session['idToken'])
+                user_service = UserManagerService(
+                    m2w_db=get_m2w_db(),
+                    auth=get_auth(),
+                    user_repo=TmdbUserRepository(
+                        tmdb_http_client=get_tmdb_http_client()
+                    )
+                )
+                account_data = user_service.get_firebase_user_account_info(user_idtoken=session['idToken'])
+                if account_data['emailVerified']:
+                    session['emailVerified'] = account_data['emailVerified']
+                else:
+                    firebase_auth.send_email_verification(id_token=session['idToken'])
             except Exception as e:
                 flash(f"The following error occured: {e}")
+                redirect('/error')
             else:
-                flash("Please check your mailbox you should receive a verification email shortly!")
-            return redirect("/")
+                if account_data['emailVerified']:
+                    flash("Your email verification is already complete!")
+                else:
+                    flash("Please check your mailbox you should receive a verification email shortly!")
+            return redirect('/error')
         else:
-            return redirect("/")
+            flash("Your email verification is already complete!")
+            return redirect('/error')
     else:
         return redirect("/login?redirect=/resend-verification")
     
 @app.route("/api/group/<group>")
 def group_content(group):
-    if 'user' in session:
-        logged_on = session['user']
-        w_group = fsWatchGroup(
-            id=group,
-            database=db,
-            tmdb_token=SECRETS.tmdb_token,
-            primary_member=logged_on
-        )
-        movie_watchlist = w_group.get_movie_grouplist_union()
-        display = {}
-        for movie in movie_watchlist:
-            mov = Movie(
-                id_=movie['id'],
-                token=SECRETS.tmdb_token,
-                db=db
+    if ('user' in session) and (session['emailVerified'] == True):
+        try:
+            logged_on = session['user']
+            m2w_db = get_m2w_db()
+            tmdb_client = get_tmdb_http_client()
+            group_service = GroupManagerService(
+                secrets=SECRETS,
+                m2w_db=m2w_db,
+                user_service=UserManagerService(
+                    m2w_db=m2w_db,
+                    auth=get_auth(),
+                    user_repo=TmdbUserRepository(
+                        tmdb_http_client=tmdb_client
+                    )
+                ),
+                movie_service=MovieCachingService(
+                    tmdb_http_client=tmdb_client,
+                    m2w_database=m2w_db,
+                    m2w_movie_retention=SECRETS.m2w_movie_retention
+                )
             )
-            display[mov.id] = mov.get_datasheet_for_locale(locale=w_group.locale)
-            votes = {}
-            for key, value in movie['votes'].items():
-                member = w_group.get_member(key)
-                if key == logged_on:
-                    display[mov.id]['your_vote'] = value
-                else:
-                    votes[key] = {
-                        "nickname": member.m2w_nick,
-                        "email": member.m2w_email,
-                        "vote": value
-                    }
-            display[mov.id]['votes'] = votes
-        return render_template("group_content.html", movies=display)
+            movie_datasheets = group_service.get_group_content(
+                group_id=group,
+                primary_user=logged_on
+            )
+        except Exception as e:
+            flash("The following error occured:")
+            flash(e)
+            return render_template("group_content.html", error=True)
+        else:
+            return render_template("group_content.html", movies=movie_datasheets, group=group)
     else:
-        target = f"/login?redirect=/api/group/{group}"
-        return redirect(target)
+        flash("You are not logged in!")
+        return render_template("group_content.html", error=True)
     
 @app.route("/api/vote/<movie>/<vote>")
 def vote_for_movie(movie, vote):
-    if 'user' in session:
+    if ('user' in session) and (session['emailVerified'] == True):
         try:
             logged_on = session['user']
             m2w_db = get_m2w_db()
@@ -394,19 +400,76 @@ def vote_for_movie(movie, vote):
             )
         except Exception as e:
             flash(f"The following error occurred: {e}")
-            return render_template("vote_response.html", vote=vote, movie_id=movie, error=e)
+            return render_template("vote_response.html", vote=vote, movie_id=movie, error=True)
         else:
             if response:
                 return render_template("vote_response.html", vote=vote, movie_id=movie)
             else:
-                return render_template("vote_response.html", vote=vote, movie_id=movie, error="Unable to register vote.")
+                flash("Unable to register vote.")
+                return render_template("vote_response.html", vote=vote, movie_id=movie, error=True)
     else:
         target = f"/login?redirect=/api/vote/{movie}/{vote}"
         return redirect(target)
+    
+@app.route("/api/watched/<movie>/<group_id>", methods=['POST', 'GET'])
+def watched_movie(movie, group_id):
+    if ('user' in session) and (session['emailVerified'] == True):
+        if request.method == 'GET':
+            try:
+                movie_service = MovieCachingService(
+                    tmdb_http_client=get_tmdb_http_client(),
+                    m2w_database=get_m2w_db(),
+                    m2w_movie_retention=SECRETS.m2w_movie_retention
+                )
+                movie_data = movie_service.get_movie_details(movie_id=movie)
+            except Exception as e:
+                return redirect("/error", error=e)
+            else:
+                return render_template('watched_movie.html', movie=movie, 
+                                       group_id=group_id, movie_title=movie_data['title'])
+        if request.method == 'POST':
+            watchmode = request.form.get('watch_mode')
+            try:
+                logged_on = session['user']
+                m2w_db = get_m2w_db()
+                tmdb_client = get_tmdb_http_client()
+                group_service = GroupManagerService(
+                    secrets=SECRETS,
+                    m2w_db=m2w_db,
+                    user_service=UserManagerService(
+                        m2w_db=m2w_db,
+                        auth=get_auth(),
+                        user_repo=TmdbUserRepository(
+                            tmdb_http_client=tmdb_client
+                        )
+                    ),
+                    movie_service=MovieCachingService(
+                        tmdb_http_client=tmdb_client,
+                        m2w_database=m2w_db,
+                        m2w_movie_retention=SECRETS.m2w_movie_retention
+                    )
+                )
+                movie_data = group_service.movie.get_movie_details(movie_id=movie)
+                if watchmode == 'alone':
+                    group_service.watch_movie_by_user(movie_id=movie, user_id=logged_on)
+                else:
+                    group_service.watch_movie_by_group(movie_id=movie, group_id=group_id)
+            except Exception as e:
+                return redirect("/error", error=e)
+            else:
+                if watchmode == 'alone':
+                    flash(f"You watched: {movie_data['title']}")
+                    return redirect("/")
+                else:
+                    flash(f"Your Group watched: {movie_data['title']}")
+                    return redirect("/")
+    
+
+
 
 # starting scheduler    
-# scheduler.init_app(app) # restore before deploy
-# scheduler.start()
+scheduler.init_app(app)
+scheduler.start()
 
 
 if __name__ == "__main__":

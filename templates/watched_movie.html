@@ -1,0 +1,15 @@
+{% extends 'generic/layout.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+  <h1>Watch Movie</h1>
+  <div>
+    <form action="/api/watched/{{movie}}/{{group_id}}" method="post">
+        <label>Choose how did you watch {{ movie_title }}:</label><br>
+        <input type="radio" id="alone" name="watch_mode" value="alone" checked="checked">
+        <label for="alone">I watched alone.</label><br>
+        <input type="radio" id="group" name="watch_mode" value="group">
+        <label for="group">I watched together with the Group.</label><br>
+        <input type="submit" value="Submit">
+      </form>
+  </div>
+{% endblock %}
