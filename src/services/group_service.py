@@ -2,7 +2,7 @@ from src.dao.m2w_database import M2WDatabase
 from src.dao.secret_manager import SecretManager
 from src.services.user_service import UserManagerService
 from src.services.movie_caching import MovieCachingService
-from typing import Literal
+from typing import Literal, Union
 from collections.abc import Generator
 
 
@@ -116,6 +116,46 @@ class GroupManagerService():
             return self._block_movie(user_id=user_id, movie_id=movie_id)
         else:
             raise InvalidVoteError(f"Vote parameter '{vote}' is unsupported.")
+        
+    def watch_movie_by_user(self, movie_id: Union[int, str], user_id: str) -> bool:
+        """Watch a movie alone.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie.
+        user_id: the M2W ID of the user.
+
+        Returns
+        -------
+        True if successful, False otherwise.
+        """
+        try:
+            self.vote_for_movie_by_user(movie_id=str(movie_id), user_id=user_id, vote='block')
+        except Exception as e:
+            raise GroupManagerServiceException(e)
+        else:
+            return True
+        
+    def watch_movie_by_group(self, movie_id: Union[int, str], group_id: str):
+        """Watch a movie with a group together.
+        
+        Parameters
+        ----------
+        movie_id: the ID of the movie.
+        group_id: the M2W ID of the group. 
+
+        Returns
+        -------
+        True if successful, False otherwise.
+        """
+        try:
+            users = self.get_all_members(group_id=group_id)
+            for user in users:
+                self.watch_movie_by_user(movie_id=movie_id, user_id=user.id)
+        except Exception as e:
+            raise GroupManagerServiceException(e)
+        else:
+            return True
         
     def get_watchgroup_data(self, group_id: str) -> dict:
         """Get the datasheet of the watchgroup.
@@ -236,8 +276,8 @@ class GroupManagerService():
                     details = self.movie.get_movie_details(movie_id=movie_id)
                     group_content[movie_id] = details
                     group_content[movie_id]['votes'] = vote
-        except Exception:
-            raise GroupManagerServiceException("Error during group content creation.")
+        except Exception as e:
+            raise GroupManagerServiceException(e)
         else:
             return group_content
         
@@ -285,24 +325,47 @@ class GroupManagerService():
                 datasheet['votes'] = self.process_votes(votes=details['votes'], primary_user=primary_user)
                 watchlist.append(datasheet)
             # sort watchlist
-            def by_title(value):
-                return value['title']
-            watchlist.sort(key=by_title)
-            def by_vote(value):
-                votes = value['votes']
-                result = len(votes['liked']) + len(votes['blocked'])
-                return result
-            watchlist.sort(key=by_vote, reverse=True)
-            def by_provider(value):
-                stream = value['providers']['stream']
-                buy_or_rent = value['providers']['buy_or_rent']
-                score = len(stream)*10 + len(buy_or_rent)
-                return score
-            watchlist.sort(key=by_provider, reverse=True)
-        except Exception:
-            raise GroupManagerServiceException("Error during group content creation.")
+            watchlist = self.default_sort_watchlist(watchlist=watchlist)
+        except Exception as e:
+            raise GroupManagerServiceException(e)
         else:
             return watchlist
+        
+    @staticmethod
+    def default_sort_watchlist(watchlist: list) -> list:
+        """Sorts the watchlist and returns the result."""
+        # sort by title ascending
+        def by_title(value):
+            return value['title']
+        watchlist.sort(key=by_title)
+        # sort by vote count descending
+        def by_vote_count(value):
+            votes = value['votes']
+            result = len(votes['liked'])
+            return result
+        watchlist.sort(key=by_vote_count, reverse=True)
+        # sort by provider availability descending
+        def by_provider(value):
+            stream = value['providers']['stream']
+            buy_or_rent = value['providers']['buy_or_rent']
+            score = 0
+            if len(stream) > 0:
+                score += 2
+            if len(buy_or_rent) > 0:
+                score += 1
+            return score
+        watchlist.sort(key=by_provider, reverse=True)
+        # sort by primary users vote descending
+        def by_my_vote(value):
+            if value['votes']['primary_vote'] is None:
+                score = 2
+            elif value['votes']['primary_vote'] == 'liked':
+                score = 1
+            else:
+                score = 0
+            return score
+        watchlist.sort(key=by_my_vote, reverse=True)
+        return watchlist
 
     @staticmethod
     def convert_genres(genres: list) -> str:
@@ -357,7 +420,7 @@ class GroupManagerService():
                 # collect stream
                 stream = local_providers.get("flatrate", False)
                 if stream:
-                    datasheet['stream'] = stream
+                    datasheet['stream'] = self.convert_provider_logo_path(stream)
                 # compile buy and rent
                 buy_or_rent = {}
                 buy = local_providers.get('buy', False)
@@ -369,7 +432,8 @@ class GroupManagerService():
                     for current in rent:
                         buy_or_rent[current["provider_id"]] = current
                 if buy_or_rent:
-                    datasheet['buy_or_rent'] = [prov for prov in buy_or_rent.values()]
+                    temp = [prov for prov in buy_or_rent.values()]
+                    datasheet['buy_or_rent'] = self.convert_provider_logo_path(temp)
         except Exception:
             return {
                 "stream":[],
@@ -377,6 +441,16 @@ class GroupManagerService():
             }
         else:
             return datasheet
+        
+    def convert_provider_logo_path(self, providers: list[dict]) -> list[dict]:
+        """Adds the URL to the logo path of each provider."""
+        for provider in providers:
+            logo_path = provider.get("logo_path", False)
+            if logo_path:
+                provider['logo_path'] = f"{self._secrets.tmdb_image}/t/p/original{logo_path}"
+            else:
+                provider['logo_path'] = ""
+        return providers
         
     def process_votes(self, votes: dict, primary_user: str) -> dict:
         """Prepares the votes in datasheet format.

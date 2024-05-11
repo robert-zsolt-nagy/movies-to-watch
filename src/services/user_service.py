@@ -235,7 +235,7 @@ class UserManagerService():
             nickname: str,
             picture: str="01.png",
             locale: str="HU"
-        ) -> dict:
+        ) -> bool:
         """Validate the sign up form and creeate the user if valid.
         
         Parameters
@@ -354,7 +354,7 @@ class UserManagerService():
         except KeyError:
             raise UserManagerException("TMDB data of user is missing.")
         else:
-            return response_watchlist["status_message"] == "Success."
+            return response_watchlist["success"]
         
     def remove_movie_from_users_watchlist(self, movie_id: str, user_id: str) -> bool:
         """Remove a movie from the movie watchlist of a user.
@@ -379,7 +379,7 @@ class UserManagerService():
         except KeyError:
             raise UserManagerException("TMDB data of user is missing.")
         else:
-            return response_watchlist["status_message"] == "Success."
+            return response_watchlist["success"]
         
     def get_blocklist(self, user_id: str) -> firestore.CollectionReference:
         """Returns the reference to the blocklist collection of a user 

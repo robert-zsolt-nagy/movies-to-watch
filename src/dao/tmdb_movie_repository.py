@@ -56,7 +56,12 @@ class TmdbMovieRepository(MovieRepository):
             path=f"/movie/{movie_id}/videos", params={"language": "en-US"}
             )
         videos = response['results']
-        return _find_best_trailer(videos)
+        try:
+            best = _find_best_trailer(videos)
+        except NoTrailerDataException:
+            return None
+        else:
+            return best 
 
     def get_watch_providers(self, movie_id: int) -> Optional[dict]:
         """Gets the watch providers for the movie.

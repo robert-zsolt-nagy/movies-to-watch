@@ -325,7 +325,7 @@
       @extend .p-2;
 
       .ext-button {
-        @extend .col-3;
+        @extend .col-4;
         @extend .p-1;
 
         a {
@@ -346,15 +346,7 @@
         @extend .ext-button;
       }
 
-      .watched-alone {
-        @extend .ext-button;
-
-        a {
-          @extend .btn-outline-dark;
-        }
-      }
-
-      .watched-together {
+      .watched-movie {
         @extend .ext-button;
 
         a {

@@ -309,8 +309,10 @@ class TestGroupManagerService(TestCase):
         #given
         m2w_db = MagicMock(M2WDatabase)
         m2w_db.group = MagicMock(M2wGroupHandler)
+        secrets = MagicMock(SecretManager)
+        secrets.tmdb_image = "TMBDi"
         under_test = GroupManagerService(
-            secrets=MagicMock(SecretManager),
+            secrets=secrets,
             m2w_db=m2w_db,
             user_service=MagicMock(UserManagerService),
             movie_service=MagicMock(MovieCachingService)
@@ -376,7 +378,7 @@ class TestGroupManagerService(TestCase):
         self.assertEqual(response, {
             "stream":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
@@ -384,19 +386,19 @@ class TestGroupManagerService(TestCase):
             ],
             "buy_or_rent":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 2,
                     "provider_name": "Notflex",
                     "display_priority": 2
                 },
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
                 },
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 3,
                     "provider_name": "Gaggle play",
                     "display_priority": 3
@@ -409,8 +411,10 @@ class TestGroupManagerService(TestCase):
         #given
         m2w_db = MagicMock(M2WDatabase)
         m2w_db.group = MagicMock(M2wGroupHandler)
+        secrets = MagicMock(SecretManager)
+        secrets.tmdb_image = "TMBDi"
         under_test = GroupManagerService(
-            secrets=MagicMock(SecretManager),
+            secrets=secrets,
             m2w_db=m2w_db,
             user_service=MagicMock(UserManagerService),
             movie_service=MagicMock(MovieCachingService)
@@ -458,19 +462,19 @@ class TestGroupManagerService(TestCase):
             "stream":[],
             "buy_or_rent":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 2,
                     "provider_name": "Notflex",
                     "display_priority": 2
                 },
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
                 },
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 3,
                     "provider_name": "Gaggle play",
                     "display_priority": 3
@@ -483,8 +487,10 @@ class TestGroupManagerService(TestCase):
         #given
         m2w_db = MagicMock(M2WDatabase)
         m2w_db.group = MagicMock(M2wGroupHandler)
+        secrets = MagicMock(SecretManager)
+        secrets.tmdb_image = "TMBDi"
         under_test = GroupManagerService(
-            secrets=MagicMock(SecretManager),
+            secrets=secrets,
             m2w_db=m2w_db,
             user_service=MagicMock(UserManagerService),
             movie_service=MagicMock(MovieCachingService)
@@ -525,7 +531,7 @@ class TestGroupManagerService(TestCase):
         self.assertEqual(response, {
             "stream":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
@@ -533,13 +539,13 @@ class TestGroupManagerService(TestCase):
             ],
             "buy_or_rent":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
                 },
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 3,
                     "provider_name": "Gaggle play",
                     "display_priority": 3
@@ -552,8 +558,10 @@ class TestGroupManagerService(TestCase):
         #given
         m2w_db = MagicMock(M2WDatabase)
         m2w_db.group = MagicMock(M2wGroupHandler)
+        secrets = MagicMock(SecretManager)
+        secrets.tmdb_image = "TMBDi"
         under_test = GroupManagerService(
-            secrets=MagicMock(SecretManager),
+            secrets=secrets,
             m2w_db=m2w_db,
             user_service=MagicMock(UserManagerService),
             movie_service=MagicMock(MovieCachingService)
@@ -594,7 +602,7 @@ class TestGroupManagerService(TestCase):
         self.assertEqual(response, {
             "stream":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
@@ -602,13 +610,13 @@ class TestGroupManagerService(TestCase):
             ],
             "buy_or_rent":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 2,
                     "provider_name": "Notflex",
                     "display_priority": 2
                 },
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
@@ -621,8 +629,10 @@ class TestGroupManagerService(TestCase):
         #given
         m2w_db = MagicMock(M2WDatabase)
         m2w_db.group = MagicMock(M2wGroupHandler)
+        secrets = MagicMock(SecretManager)
+        secrets.tmdb_image = "TMBDi"
         under_test = GroupManagerService(
-            secrets=MagicMock(SecretManager),
+            secrets=secrets,
             m2w_db=m2w_db,
             user_service=MagicMock(UserManagerService),
             movie_service=MagicMock(MovieCachingService)
@@ -649,7 +659,7 @@ class TestGroupManagerService(TestCase):
         self.assertEqual(response, {
             "stream":[
                 {
-                    "logo_path": "/logo.jpg",
+                    "logo_path": "TMBDi/t/p/original/logo.jpg",
                     "provider_id": 1,
                     "provider_name": "Prime Provider",
                     "display_priority": 1
@@ -1006,7 +1016,7 @@ class TestGroupManagerService(TestCase):
                 2:{
                     "primary_vote": "liked",
                     "liked": [1],
-                    "blocked": [1]
+                    "blocked": [1, 2]
                 },
                 3:{
                     "primary_vote": "liked",
@@ -1113,6 +1123,109 @@ class TestGroupManagerService(TestCase):
                 },
                 3:{
                     "primary_vote": "liked",
+                    "liked": [],
+                    "blocked": [1]
+                }
+            }
+            return my_votes[votes]
+        under_test.process_votes = MagicMock(side_effect=votes)
+
+        #when
+        result = under_test.get_group_content(group_id="gr1", primary_user="user1")
+        sorted_result = [elem['id'] for elem in result]
+
+        #then
+        self.assertEqual(sorted_result, [3,2,1])
+
+    def test_get_group_content_should_sort_by_primary_votes(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.get_group_votes = MagicMock(return_value="success")
+        raw ={
+            2:{
+                'id': 2,
+                'title': 'Brave the Titular',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 2,
+                'votes': 2
+            },
+            3:{
+                'id': 3,
+                'title': 'Choclate Titles',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 3,
+                'votes': 3
+            },
+            1:{
+                'id': 1,
+                'title': 'Almost the Title',
+                'poster_path': "/poster.png",
+                'release_date': '2024-01-01',
+                'genres': 'genres',
+                'runtime': 123,
+                'overview': 'The time of View is over!',
+                'official_trailer': 'ytURL/v=trailer',
+                'local_providers': 1,
+                'votes': 1
+            }
+        }
+        under_test.get_raw_group_content_from_votes = MagicMock(return_value=raw)
+        class secret_class():
+            def __init__(self) -> None:
+                self.tmdb_image = "TMDBimg"
+                self.tmdb_home = "TMDB"
+        under_test._secrets = secret_class()
+        under_test.convert_genres = MagicMock(return_value='Action, Adventure')
+        
+        def providers(providers, group_id):
+            prov = {
+                1:{
+                    "stream":[],
+                    "buy_or_rent":[1,2,3,4,5]
+                },
+                2:{
+                    "stream":[1],
+                    "buy_or_rent":[]
+                },
+                3:{
+                    "stream":[1],
+                    "buy_or_rent":[1]
+                }
+            }
+            return prov[providers]
+        under_test.process_providers = MagicMock(side_effect=providers)
+
+        def votes(votes, primary_user):
+            my_votes = {
+                1:{
+                    "primary_vote": "Blocked",
+                    "liked": [1, 2],
+                    "blocked": [1]
+                },
+                2:{
+                    "primary_vote": "liked",
+                    "liked": [1],
+                    "blocked": [1]
+                },
+                3:{
+                    "primary_vote": None,
                     "liked": [],
                     "blocked": [1]
                 }
@@ -1287,4 +1400,66 @@ class TestGroupManagerService(TestCase):
         under_test.process_providers.assert_called_with(providers="prov", group_id="gr1")
         under_test.process_votes.assert_called_with(votes='votes', primary_user="user1")
     
+    def test_watch_movie_by_user_should_return_true(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.vote_for_movie_by_user = MagicMock(return_value=True)
+
+        #when
+        response = under_test.watch_movie_by_user(movie_id=1, user_id="user_1")
+
+        #then
+        self.assertEqual(response, True)
+        under_test.vote_for_movie_by_user.assert_called_with(movie_id="1", user_id="user_1", vote='block')
+
+    def test_watch_movie_by_group_should_return_true(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.watch_movie_by_user = MagicMock(return_value=True)
+        member = MagicMock(firestore.DocumentSnapshot)
+        member.id = "mem_1"
+        under_test.get_all_members = MagicMock(return_value=[member])
+
+        #when
+        response = under_test.watch_movie_by_group(movie_id=1, group_id="gr_1")
+
+        #then
+        self.assertEqual(response, True)
+        under_test.watch_movie_by_user.assert_called_with(movie_id=1, user_id="mem_1")
+
+
         
+    # def watch_movie_by_group(self, movie_id: Union[int, str], group_id: str):
+    #     """Watch a movie with a group together.
+        
+    #     Parameters
+    #     ----------
+    #     movie_id: the ID of the movie.
+    #     group_id: the M2W ID of the group. 
+
+    #     Returns
+    #     -------
+    #     True if successful, False otherwise.
+    #     """
+    #     try:
+    #         users = self.get_all_members(group_id=group_id)
+    #         for user in users:
+    #             self.watch_movie_by_user(movie_id=movie_id, user_id=user.id)
+    #     except Exception as e:
+    #         raise GroupManagerServiceException(e)
+    #     else:
+    #         return True

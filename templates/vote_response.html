@@ -1,25 +1,40 @@
 <h5>Your vote</h5>
-{% if vote == "liked" %}
-    <div class="yes">
-        <button class="button-selected">I'm in!</button>
+{% if error %}
+    <div class="no">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-primary" role="alert">
+                {% for message in messages %}
+                <p>{{ message }}</p><br>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+        <a class="nav-link" href="/">Refresh page</a>
     </div>
 {% else %}
-    <div class="yes">
-        <button hx-get="/api/vote/{{ movie_id }}/like" hx-trigger="click" hx-target="#my_vote{{ movie_id }}"
-                hx-indicator="#indicator{{ movie_id }}" class="button-active">I'm in!
-        </button>
-    </div>
-{% endif %}
-    {% if vote == "blocked" %}
+    {% if vote == "like" %}
+        <div class="yes">
+            <button class="button-selected">I'm in!</button>
+        </div>
+    {% else %}
+        <div class="yes">
+            <button hx-get="/api/vote/{{ movie_id }}/like" hx-trigger="click" hx-target="#my_vote{{ movie_id }}"
+                    hx-indicator="#indicator{{ movie_id }}" class="button-active">I'm in!
+            </button>
+        </div>
+    {% endif %}
+    {% if vote == "block" %}
         <div class="no">
             <button class="button-selected">I'm out!</button>
-    </div>
-{% else %}
+        </div>
+    {% else %}
         <div class="no">
             <button hx-get="/api/vote/{{ movie_id }}/block" hx-trigger="click" hx-target="#my_vote{{ movie_id }}"
                     hx-indicator="#indicator{{ movie_id }}" class="button-active">I'm out!
             </button>
-    </div>
-{% endif %}
+        </div>
+    {% endif %}
     <img alt="Working..." class="htmx-indicator" id="indicator{{ movie_id }}"
          src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
+{% endif %}

@@ -404,7 +404,7 @@ class TestUserManagerService(TestCase):
                 'id':123
             }
         })
-        under_test.user_repo.add_movie_to_watchlist = MagicMock(return_value={"status_code":1, "status_message": "Success."})
+        under_test.user_repo.add_movie_to_watchlist = MagicMock(return_value={"status_code":1, "status_message": "Success.", "success": True})
 
         #when
         response = under_test.add_movie_to_users_watchlist(movie_id="1", user_id="user_1")
@@ -433,7 +433,7 @@ class TestUserManagerService(TestCase):
                 'id':123
             }
         })
-        under_test.user_repo.remove_movie_from_watchlist = MagicMock(return_value={"status_code":1, "status_message": "Success."})
+        under_test.user_repo.remove_movie_from_watchlist = MagicMock(return_value={"status_code":1, "status_message": "Item removed.", "success": True})
 
         #when
         response = under_test.remove_movie_from_users_watchlist(movie_id="1", user_id="user_1")

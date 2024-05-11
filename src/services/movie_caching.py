@@ -91,8 +91,8 @@ class MovieCachingService():
             details['official_trailer'] = self.movie_repo.get_trailer(movie_id=movie_id)
             details['local_providers'] = self.movie_repo.get_watch_providers(movie_id=movie_id)
             details['refreshed_at'] = datetime.now(UTC)
-        except Exception:
-            raise MovieNotFoundException("Movie not found.")
+        except Exception as e:
+            raise MovieNotFoundException(f"Movie {movie_id} not found on TMDB. Error:{e}")
         else:
             return details
         

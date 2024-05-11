@@ -10,10 +10,13 @@
         <div>
           <p> Email: {{ profile_data['email'] }}</p>
           <p> Nickname: {{ profile_data['nickname'] }}</p>
+          <p> Locale: {{ profile_data['locale'] }}</p>
+          <p> Profile picture: </p>
+          <p><img src="/static/img/profile-img/{{profile_data['profile_pic']}}"></p>
           {% if profile_data['tmdb_session'] == None %}
             <a class="btn btn-outline-primary" href="/link-to-tmdb">Link with TMDB account</a><br>
           {% else %}
-            <p>Your linked TMDB Account: </p>
+            <p class="fw-bold">Your linked TMDB Account: </p>
             <p>TMDB ID : {{ profile_data['tmdb_user']['id'] }}</p>
             <p>TMDB Username : {{ profile_data['tmdb_user']['username'] }}</p>
           {% endif %}

@@ -1,0 +1,26 @@
+{% extends 'generic/layout.html' %}
+{% block title %}Error{% endblock %}
+{% block content %}
+  <h1>Movies-to-watch encountered an error</h1>
+  <div class="row row-cols-lg mt-5">
+    <div class="col-lg-3">
+    </div>
+    <div class="col-lg-6 card bg-light">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-primary" role="alert">
+                {% for message in messages %}
+                <p>{{ message }}</p><br>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+      {% if error %}
+        <div class="alert alert-danger mt-3" role="alert">
+          <p> The following error occurred:</p>
+          <p> {{ error }}</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'generic/layout.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+  <h1>Watch Movie</h1>
+  <div class="row row-cols-lg mt-5">
+    <div class="col-lg-3">
+    </div>
+    <div class="col-lg-6 card bg-light">
+    <form action="/api/watched/{{movie}}/{{group_id}}" method="post">
+        <label class="form-label p-3">How did you watch {{ movie_title }} ?</label><br>
+        <div class="p-3">
+          <select class="form-select" aria-label="How did you watch" name="watch_mode">
+            <option value="alone" selected>I watched it alone.</option>
+            <option value="group">I watched it together with the Group. </option>
+          </select>
+        </div>
+        <div class="row p-3">
+          <div class="col-6">
+            <input class="btn btn-primary btn-lg w-100" type="submit" value="Submit">
+          </div>
+          <div class="col-6">
+            <button class="btn btn-secondary btn-lg w-100" type="button" onclick="history.back()">Go Back</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="col-lg-3">
+    </div>
+  </div>
+{% endblock %}
