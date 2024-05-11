@@ -28,11 +28,6 @@ else:
 # connect to database
 m2w_db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
 
-def get_firebase_error(error: HTTPError) -> str:
-    """Get the error message from a raised error. """
-    message = json.loads(error.args[1])
-    return message['error']["message"]
-
 def get_tmdb_http_client(session_: Optional[requests.Session]=None) -> TmdbHttpClient:
     return TmdbHttpClient(
         token=SECRETS.tmdb_token,
@@ -50,6 +45,24 @@ def get_auth() -> AuthenticationManager:
     return AuthenticationManager(
         config=SECRETS.firebase_config
     )
+
+def prepare_profiles(profile_pic: str) -> list:
+    result = []
+    for ix in range(42):
+        temp = ix + 1
+        if temp < 10:
+            ix_str = f'0{temp}'
+        else:
+            ix_str = str(temp)
+        elem = {
+            "id": f"img-{ix_str}",
+            "value": f"{ix_str}.png",
+            "checked": False
+        }
+        if elem['value'] == profile_pic:
+            elem["checked"]=True
+        result.append(elem)
+    return result
 
 # setting up Flask
 app = Flask(__name__)
@@ -159,7 +172,7 @@ def signup():
             password = request.form.get('password')
             confirm_password = request.form.get('password_confirm')
             nickname = request.form.get('nickname')
-            picture = "01.png"
+            picture = request.form.get('profile_image', "01.png")
             locale = "HU"
             if nickname == '':
                 nickname = email.split('@')[0]
@@ -206,7 +219,7 @@ def signup():
                 nickname=nickname
                 )
         except HTTPError as he:
-            msg = get_firebase_error(he)
+            msg = AuthenticationManager.get_authentication_error_msg(he)
             return render_template(
                 "signup.html", 
                 error=msg,
@@ -259,22 +272,43 @@ def approved():
         return render_template("error.html", error=err)
 
 
-@app.route("/profile")
+@app.route("/profile", methods=['POST', 'GET'])
 def profile():
     if "user" in session:
-        try:
-            user_service = UserManagerService(
-                m2w_db=get_m2w_db(),
-                auth=get_auth(),
-                user_repo=TmdbUserRepository(
-                    tmdb_http_client=get_tmdb_http_client()
+        logged_on = session['user']
+        if request.method == 'GET':
+            try:
+                user_service = UserManagerService(
+                    m2w_db=get_m2w_db(),
+                    auth=get_auth(),
+                    user_repo=TmdbUserRepository(
+                        tmdb_http_client=get_tmdb_http_client()
+                    )
                 )
-            )
-            user_data = user_service.get_m2w_user_profile_data(user_id=session['user'])
-        except Exception as e:
-            return render_template('error.html', error=e)
-        else:
-            return render_template('profile.html', profile_data=user_data, logged_on=session['user'])
+                user_data = user_service.get_m2w_user_profile_data(user_id=session['user'])
+                profile_pics = prepare_profiles(profile_pic=user_data.get('profile_pic', ''))
+            except Exception as e:
+                return render_template('error.html', error=e)
+            else:
+                return render_template('profile.html', profile_data=user_data, logged_on=session['user'], profile_pics=profile_pics)
+        elif request.method == 'POST':
+            try:
+                user_service = UserManagerService(
+                    m2w_db=get_m2w_db(),
+                    auth=get_auth(),
+                    user_repo=TmdbUserRepository(
+                        tmdb_http_client=get_tmdb_http_client()
+                    )
+                )
+                new_profile_pic = request.form.get("profile_image")
+                old_profile_pic = request.form.get("current_profile_pic")
+                if new_profile_pic != old_profile_pic:
+                    user_service.update_user_data(user_id=logged_on, user_data={"profile_pic":new_profile_pic})
+            except Exception as e:
+                return render_template('error.html', error=e)
+            else:
+                flash("Changes saved!")
+                return redirect("/profile")
     else:
         return redirect("/login?redirect=/profile")
     
