@@ -6,6 +6,15 @@
     <div class="col-lg-3">
     </div>
     <div class="col-lg-6 card bg-light">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-primary" role="alert">
+            {% for message in messages %}
+              <p>{{ message }}</p><br>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
       {% if profile_data %}
         <div>
           <p> Email: {{ profile_data['email'] }}</p>
@@ -13,6 +22,32 @@
           <p> Locale: {{ profile_data['locale'] }}</p>
           <p> Profile picture: </p>
           <p><img src="/static/img/profile-img/{{profile_data['profile_pic']}}"></p>
+          <form action="/profile" method="post">
+              <div class="row">
+                <div class="col-form-label">
+                  <span class="form-label pt-2">Profile image:</span><sup class="text-danger" title="Required!">*</sup>
+                </div>
+                <input type="hidden" name="current_profile_pic" value="{{ profile_data['profile_pic'] }}">
+                <div class="col">
+                  <div class="profile-image-selector">
+                    {% for elem in profile_pics %}
+                      {% if elem['checked']==True %}
+                        <input id="{{elem['id']}}" type="radio" name="profile_image" value="{{elem['value']}}" checked="checked"/>
+                        <label class="photo {{elem['id']}}" for="{{elem['id']}}"></label>
+                      {% else %}
+                        <input id="{{elem['id']}}" type="radio" name="profile_image" value="{{elem['value']}}"/>
+                        <label class="photo {{elem['id']}}" for="{{elem['id']}}"></label>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+              <div class="row pt-3">
+                <div class="col">
+                  <input class="btn btn-outline-primary w-100" type="submit" value="Save Changes">
+                </div>
+              </div>
+            </form>
           {% if profile_data['tmdb_session'] == None %}
             <a class="btn btn-outline-primary" href="/link-to-tmdb">Link with TMDB account</a><br>
           {% else %}

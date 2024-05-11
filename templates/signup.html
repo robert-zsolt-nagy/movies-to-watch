@@ -34,56 +34,149 @@
           {% if target %}
             <input type="hidden" name="redirect" value="{{ target }}">
           {% endif %}
-          <div class="row">
-            <div class="col-form-label">
-              <label class="form-label pt-2" for="email">Email:</label><sup class="text-danger"
-                                                                            title="Required!">*</sup>
+            <div class="row">
+              <div class="col-form-label">
+                <label class="form-label pt-2" for="email">Email:</label><sup class="text-danger"
+                                                                              title="Required!">*</sup>
+              </div>
+              <div class="col">
+                <input class="form-text w-100" id="email" type="email" name="email" value="">
+              </div>
             </div>
-            <div class="col">
-              <input class="form-text w-100" id="email" type="email" name="email" value={{ email }}>
+            <div class="row">
+              <div class="col-form-label">
+                <label class="form-label pt-2" for="email_confirm">Confirm Email:</label><sup class="text-danger"
+                                                                                              title="Required!">*</sup>
+              </div>
+              <div class="col">
+                <input class="form-text w-100" id="email_confirm" type="email" name="email_confirm" value="">
+              </div>
             </div>
-          </div>
-          <div class="row">
-            <div class="col-form-label">
-              <label class="form-label pt-2" for="email_confirm">Confirm Email:</label><sup class="text-danger"
-                                                                                            title="Required!">*</sup>
+            <div class="row">
+              <div class="col-form-label">
+                <label class="form-label pt-2" for="password">Password:</label><sup class="text-danger"
+                                                                                    title="Required!">*</sup>
+              </div>
+              <div class="col">
+                <input class="form-text w-100" id="password" type="password" name="password" value="">
+              </div>
             </div>
-            <div class="col">
-              <input class="form-text w-100" id="email_confirm" type="email" name="email_confirm" value={{ email_c }}>
+            <div class="row">
+              <div class="col-form-label">
+                <label class="form-label pt-2" for="password_confirm">Confirm Password:</label><sup class="text-danger"
+                                                                                                    title="Required!">*</sup>
+              </div>
+              <div class="col">
+                <input class="form-text w-100" id="password_confirm" type="password" name="password_confirm" value="">
+              </div>
             </div>
-          </div>
-          <div class="row">
-            <div class="col-form-label">
-              <label class="form-label pt-2" for="password">Password:</label><sup class="text-danger" title="Required!">*</sup>
+            <div class="row">
+              <div class="col-form-label">
+                <label class="form-label pt-2" for="nickname">Nickname:</label>
+              </div>
+              <div class="col">
+                <input class="form-text w-100" id="nickname" type="text" name="nickname" value="">
+              </div>
             </div>
-            <div class="col">
-              <input class="form-text w-100" id="password" type="password" name="password" value={{ password }}>
+            <div class="row">
+              <div class="col-form-label">
+                <span class="form-label pt-2">Profile image:</span><sup class="text-danger" title="Required!">*</sup>
+              </div>
+              <div class="col">
+                <div class="profile-image-selector">
+                  <input id="img-01" type="radio" name="profile_image" value="01.png"/>
+                  <label class="photo img-01" for="img-01"></label>
+                  <input id="img-02" type="radio" name="profile_image" value="02.png"/>
+                  <label class="photo img-02" for="img-02"></label>
+                  <input id="img-03" type="radio" name="profile_image" value="03.png"/>
+                  <label class="photo img-03" for="img-03"></label>
+                  <input id="img-04" type="radio" name="profile_image" value="04.png"/>
+                  <label class="photo img-04" for="img-04"></label>
+                  <input id="img-05" type="radio" name="profile_image" value="05.png"/>
+                  <label class="photo img-05" for="img-05"></label>
+                  <input id="img-06" type="radio" name="profile_image" value="06.png"/>
+                  <label class="photo img-06" for="img-06"></label>
+                  <input id="img-07" type="radio" name="profile_image" value="07.png"/>
+                  <label class="photo img-07" for="img-07"></label>
+                  <input id="img-08" type="radio" name="profile_image" value="08.png"/>
+                  <label class="photo img-08" for="img-08"></label>
+                  <input id="img-09" type="radio" name="profile_image" value="09.png"/>
+                  <label class="photo img-09" for="img-09"></label>
+                  <input id="img-10" type="radio" name="profile_image" value="10.png"/>
+                  <label class="photo img-10" for="img-10"></label>
+                  <input id="img-11" type="radio" name="profile_image" value="11.png"/>
+                  <label class="photo img-11" for="img-11"></label>
+                  <input id="img-12" type="radio" name="profile_image" value="12.png"/>
+                  <label class="photo img-12" for="img-12"></label>
+                  <input id="img-13" type="radio" name="profile_image" value="13.png"/>
+                  <label class="photo img-13" for="img-13"></label>
+                  <input id="img-14" type="radio" name="profile_image" value="14.png"/>
+                  <label class="photo img-14" for="img-14"></label>
+                  <input id="img-15" type="radio" name="profile_image" value="15.png"/>
+                  <label class="photo img-15" for="img-15"></label>
+                  <input id="img-16" type="radio" name="profile_image" value="16.png"/>
+                  <label class="photo img-16" for="img-16"></label>
+                  <input id="img-17" type="radio" name="profile_image" value="17.png"/>
+                  <label class="photo img-17" for="img-17"></label>
+                  <input id="img-18" type="radio" name="profile_image" value="18.png"/>
+                  <label class="photo img-18" for="img-18"></label>
+                  <input id="img-19" type="radio" name="profile_image" value="19.png"/>
+                  <label class="photo img-19" for="img-19"></label>
+                  <input id="img-20" type="radio" name="profile_image" value="20.png"/>
+                  <label class="photo img-20" for="img-20"></label>
+                  <input id="img-21" type="radio" name="profile_image" value="21.png"/>
+                  <label class="photo img-21" for="img-21"></label>
+                  <input id="img-22" type="radio" name="profile_image" value="22.png"/>
+                  <label class="photo img-22" for="img-22"></label>
+                  <input id="img-23" type="radio" name="profile_image" value="23.png"/>
+                  <label class="photo img-23" for="img-23"></label>
+                  <input id="img-24" type="radio" name="profile_image" value="24.png"/>
+                  <label class="photo img-24" for="img-24"></label>
+                  <input id="img-25" type="radio" name="profile_image" value="25.png"/>
+                  <label class="photo img-25" for="img-25"></label>
+                  <input id="img-26" type="radio" name="profile_image" value="26.png"/>
+                  <label class="photo img-26" for="img-26"></label>
+                  <input id="img-27" type="radio" name="profile_image" value="27.png"/>
+                  <label class="photo img-27" for="img-27"></label>
+                  <input id="img-28" type="radio" name="profile_image" value="28.png"/>
+                  <label class="photo img-28" for="img-28"></label>
+                  <input id="img-29" type="radio" name="profile_image" value="29.png"/>
+                  <label class="photo img-29" for="img-29"></label>
+                  <input id="img-30" type="radio" name="profile_image" value="30.png"/>
+                  <label class="photo img-30" for="img-30"></label>
+                  <input id="img-31" type="radio" name="profile_image" value="31.png"/>
+                  <label class="photo img-31" for="img-31"></label>
+                  <input id="img-32" type="radio" name="profile_image" value="32.png"/>
+                  <label class="photo img-32" for="img-32"></label>
+                  <input id="img-33" type="radio" name="profile_image" value="33.png"/>
+                  <label class="photo img-33" for="img-33"></label>
+                  <input id="img-34" type="radio" name="profile_image" value="34.png"/>
+                  <label class="photo img-34" for="img-34"></label>
+                  <input id="img-35" type="radio" name="profile_image" value="35.png"/>
+                  <label class="photo img-35" for="img-35"></label>
+                  <input id="img-36" type="radio" name="profile_image" value="36.png"/>
+                  <label class="photo img-36" for="img-36"></label>
+                  <input id="img-37" type="radio" name="profile_image" value="37.png"/>
+                  <label class="photo img-37" for="img-37"></label>
+                  <input id="img-38" type="radio" name="profile_image" value="38.png"/>
+                  <label class="photo img-38" for="img-38"></label>
+                  <input id="img-39" type="radio" name="profile_image" value="39.png"/>
+                  <label class="photo img-39" for="img-39"></label>
+                  <input id="img-40" type="radio" name="profile_image" value="40.png"/>
+                  <label class="photo img-40" for="img-40"></label>
+                  <input id="img-41" type="radio" name="profile_image" value="41.png"/>
+                  <label class="photo img-41" for="img-41"></label>
+                  <input id="img-42" type="radio" name="profile_image" value="42.png"/>
+                  <label class="photo img-42" for="img-42"></label>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="row">
-            <div class="col-form-label">
-              <label class="form-label pt-2" for="password_confirm">Confirm Password:</label><sup class="text-danger"
-                                                                                                  title="Required!">*</sup>
+            <div class="row pt-3">
+              <div class="col">
+                <input class="btn btn-outline-primary w-100" type="submit" value="Register">
+              </div>
             </div>
-            <div class="col">
-              <input class="form-text w-100" id="password_confirm" type="password" name="password_confirm"
-                     value={{ password_c }}>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-form-label">
-              <label class="form-label pt-2" for="nickname">Nickname:</label>
-            </div>
-            <div class="col">
-              <input class="form-text w-100" id="nickname" type="text" name="nickname" value={{ nickname }}>
-            </div>
-          </div>
-          <div class="row pt-3">
-            <div class="col">
-              <input class="btn btn-outline-primary w-100" type="submit" value="Register">
-            </div>
-          </div>
-        </form>
+          </form>
         <div class="pt-3">
           <p class="text-dark-emphasis fw-bolder">Already a member?</p>
           <p>Log in <a href="/login">here</a> !</p>

@@ -19,6 +19,7 @@ class AuthenticationManager():
         else:
             self.__auth = config
 
+    @staticmethod
     def get_authentication_error_msg(error: HTTPError) -> str:
         """Get the error message from a raised error. """
         message = json.loads(error.args[1])
