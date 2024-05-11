@@ -2,9 +2,7 @@
 
 const path = require('path');
 const autoprefixer = require('autoprefixer');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     mode: 'development',
@@ -21,17 +19,9 @@ module.exports = {
         hot: true
     },
     plugins: [
-        new HtmlWebpackPlugin({template: './src/index.html', filename: 'index.html'}),
-        new HtmlWebpackPlugin({template: './src/login.html', filename: 'login.html'}),
-        new HtmlWebpackPlugin({template: './src/signup.html', filename: 'signup.html'}),
         new MiniCssExtractPlugin({
             filename: '[name].css',
             chunkFilename: '[id].css'
-        }),
-        new CopyPlugin({
-            patterns: [
-                {from: 'src/img', to: 'img'}
-            ]
         })
     ],
     module: {
