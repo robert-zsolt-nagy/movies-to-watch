@@ -1,10 +1,10 @@
 import json
 from typing import Optional
+import os
 
 import pyrebase
 from flask import Flask, render_template, session, redirect, request, flash
 from flask_apscheduler import APScheduler
-from google.cloud import firestore
 from google.oauth2 import service_account
 from requests.exceptions import HTTPError
 import requests
@@ -20,7 +20,10 @@ from src.services.user_service import UserManagerService, WeakPasswordError, Ema
 from src.services.group_service import GroupManagerService
 
 # reading the secrets
-SECRETS = SecretManager()
+if os.getenv("MoviesToWatch") == "test":
+    SECRETS = SecretManager('secrets_test.toml')
+else:
+    SECRETS = SecretManager('secrets.toml')
 
 # connect to database
 m2w_db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
@@ -63,7 +66,6 @@ scheduler = APScheduler()
 def update_movie_cache():
     """Updates the movies cache regularly."""
     try:
-        print("job started")
         MovieCachingService(
             tmdb_http_client=get_tmdb_http_client(),
             m2w_database=get_m2w_db(),
@@ -427,7 +429,7 @@ def watched_movie(movie, group_id):
             else:
                 return render_template('watched_movie.html', movie=movie, 
                                        group_id=group_id, movie_title=movie_data['title'])
-        if request.method == 'POST':
+        if request.method == 'POST': 
             watchmode = request.form.get('watch_mode')
             try:
                 logged_on = session['user']
@@ -465,12 +467,12 @@ def watched_movie(movie, group_id):
                     return redirect("/")
     
 
-
-
-# starting scheduler    
-scheduler.init_app(app)
-scheduler.start()
+# starting scheduler
+if os.getenv("MoviesToWatch") != "test":
+    scheduler.init_app(app)
+    scheduler.start()
 
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)
+

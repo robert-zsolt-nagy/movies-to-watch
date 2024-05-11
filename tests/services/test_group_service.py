@@ -1016,7 +1016,7 @@ class TestGroupManagerService(TestCase):
                 2:{
                     "primary_vote": "liked",
                     "liked": [1],
-                    "blocked": [1]
+                    "blocked": [1, 2]
                 },
                 3:{
                     "primary_vote": "liked",
@@ -1400,4 +1400,66 @@ class TestGroupManagerService(TestCase):
         under_test.process_providers.assert_called_with(providers="prov", group_id="gr1")
         under_test.process_votes.assert_called_with(votes='votes', primary_user="user1")
     
+    def test_watch_movie_by_user_should_return_true(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.vote_for_movie_by_user = MagicMock(return_value=True)
+
+        #when
+        response = under_test.watch_movie_by_user(movie_id=1, user_id="user_1")
+
+        #then
+        self.assertEqual(response, True)
+        under_test.vote_for_movie_by_user.assert_called_with(movie_id="1", user_id="user_1", vote='block')
+
+    def test_watch_movie_by_group_should_return_true(self):
+        #given
+        m2w_db = MagicMock(M2WDatabase)
+        m2w_db.group = MagicMock(M2wGroupHandler)
+        under_test = GroupManagerService(
+            secrets=MagicMock(SecretManager),
+            m2w_db=m2w_db,
+            user_service=MagicMock(UserManagerService),
+            movie_service=MagicMock(MovieCachingService)
+        )
+        under_test.watch_movie_by_user = MagicMock(return_value=True)
+        member = MagicMock(firestore.DocumentSnapshot)
+        member.id = "mem_1"
+        under_test.get_all_members = MagicMock(return_value=[member])
+
+        #when
+        response = under_test.watch_movie_by_group(movie_id=1, group_id="gr_1")
+
+        #then
+        self.assertEqual(response, True)
+        under_test.watch_movie_by_user.assert_called_with(movie_id=1, user_id="mem_1")
+
+
         
+    # def watch_movie_by_group(self, movie_id: Union[int, str], group_id: str):
+    #     """Watch a movie with a group together.
+        
+    #     Parameters
+    #     ----------
+    #     movie_id: the ID of the movie.
+    #     group_id: the M2W ID of the group. 
+
+    #     Returns
+    #     -------
+    #     True if successful, False otherwise.
+    #     """
+    #     try:
+    #         users = self.get_all_members(group_id=group_id)
+    #         for user in users:
+    #             self.watch_movie_by_user(movie_id=movie_id, user_id=user.id)
+    #     except Exception as e:
+    #         raise GroupManagerServiceException(e)
+    #     else:
+    #         return True

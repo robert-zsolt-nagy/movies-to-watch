@@ -181,7 +181,7 @@ class TestTmdbMovieRepository(TestCase):
         # then exception was raised
         client.get.assert_called_with(path=f"/movie/1/videos", params={"language": "en-US"})
 
-    def test_get_trailer_should_raise_error_when_video_list_is_empty(self):
+    def test_get_trailer_should_return_none_when_video_list_is_empty(self):
         # given
         movie_id = 1
         client = TmdbHttpClient(token="ignore", base_url="ignore")
@@ -192,9 +192,10 @@ class TestTmdbMovieRepository(TestCase):
         under_test = TmdbMovieRepository(client)
 
         # when
-        self.assertRaises(NoTrailerDataException, lambda: under_test.get_trailer(movie_id))
+        response = under_test.get_trailer(movie_id)
 
-        # then exception was raised
+        # then
+        self.assertEqual(response, None)
         client.get.assert_called_with(path=f"/movie/1/videos", params={"language": "en-US"})
 
     def test_get_watch_providers_should_only_return_results(self):

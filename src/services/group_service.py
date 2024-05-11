@@ -341,7 +341,7 @@ class GroupManagerService():
         # sort by vote count descending
         def by_vote_count(value):
             votes = value['votes']
-            result = len(votes['liked']) + len(votes['blocked'])
+            result = len(votes['liked'])
             return result
         watchlist.sort(key=by_vote_count, reverse=True)
         # sort by provider availability descending

@@ -9,3 +9,5 @@ tests.py
 tests/
 __pycache__/
 .pytest_cache/
+web/
+secrets_test.toml
