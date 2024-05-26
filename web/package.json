@@ -310,7 +310,7 @@
     "supports-color": "^7.2.0",
     "supports-preserve-symlinks-flag": "^1.0.0",
     "tapable": "^2.2.1",
-    "terser": "^5.17.6",
+    "terser": "^5.30.3",
     "terser-webpack-plugin": "^5.3.9",
     "test-exclude": "^6.0.0",
     "tmpl": "^1.0.5",
