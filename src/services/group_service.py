@@ -350,9 +350,9 @@ class GroupManagerService():
             buy_or_rent = value['providers']['buy_or_rent']
             score = 0
             if len(stream) > 0:
-                score += 2
-            if len(buy_or_rent) > 0:
-                score += 1
+                score = 2
+            elif len(buy_or_rent) > 0:
+                score = 1
             return score
         watchlist.sort(key=by_provider, reverse=True)
         # sort by primary users vote descending

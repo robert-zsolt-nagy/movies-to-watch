@@ -1095,15 +1095,15 @@ class TestGroupManagerService(TestCase):
             prov = {
                 1:{
                     "stream":[],
-                    "buy_or_rent":[1,2,3,4,5]
+                    "buy_or_rent":[]
                 },
                 2:{
-                    "stream":[1],
-                    "buy_or_rent":[]
+                    "stream":[],
+                    "buy_or_rent":[1,2,3,4,5]
                 },
                 3:{
                     "stream":[1],
-                    "buy_or_rent":[1]
+                    "buy_or_rent":[]
                 }
             }
             return prov[providers]
@@ -1118,12 +1118,12 @@ class TestGroupManagerService(TestCase):
                 },
                 2:{
                     "primary_vote": "liked",
-                    "liked": [1],
+                    "liked": [1, 2],
                     "blocked": [1]
                 },
                 3:{
                     "primary_vote": "liked",
-                    "liked": [],
+                    "liked": [1, 2],
                     "blocked": [1]
                 }
             }
