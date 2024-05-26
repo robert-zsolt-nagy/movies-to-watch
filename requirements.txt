@@ -8,3 +8,4 @@ firebase-admin==6.4.0
 Pyrebase4==4.8.0
 setuptools==69.1.1
 Flask-APScheduler==1.13.1
+requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
