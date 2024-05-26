@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "config:base",
+    ":gitSignOff"
+  ],
+  "assignees": [
+    "nagyesta",
+    "robert-zsolt-nagy"
+  ],
+  "assigneesSampleSize": 2,
+  "separateMajorMinor": true,
+  "separateMinorPatch": true,
+  "github-actions": {
+    "pinDigests": true
+  }
+}
