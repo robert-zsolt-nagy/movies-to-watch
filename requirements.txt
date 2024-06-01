@@ -8,3 +8,9 @@ firebase-admin==6.4.0
 Pyrebase4==4.8.0
 setuptools==69.1.1
 Flask-APScheduler==1.13.1
+opentelemetry-api==1.25.0
+opentelemetry-sdk==1.25.0
+opentelemetry-instrumentation-flask==0.46b0   
+opentelemetry-instrumentation-logging==0.46b0
+opentelemetry-exporter-otlp==1.25.0
+opentelemetry-distro==0.46b0
