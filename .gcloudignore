@@ -13,3 +13,4 @@ web/
 secrets_test.toml
 build.ps1
 build.sh
+newrelic.ini
