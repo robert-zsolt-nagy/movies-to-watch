@@ -3,10 +3,14 @@ secrets.toml
 secrets_test.toml
 movies-to-watch-tmdb-firebase-adminsdk-l1yao-b71552193c.json
 m2w-firestore-af83353e159e.json
+newrelic.ini
+app_dev.yaml
 
 drawio/
 .vscode/
 .pytest_cache/
+static/script
+static/style
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

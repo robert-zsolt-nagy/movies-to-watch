@@ -1,13 +1,15 @@
 import json
 from typing import Optional
 import os
+import uuid
+import logging
+import requests
+from requests.exceptions import HTTPError
 
 import pyrebase
 from flask import Flask, render_template, session, redirect, request, flash
 from flask_apscheduler import APScheduler
 from google.oauth2 import service_account
-from requests.exceptions import HTTPError
-import requests
 
 from src.dao.secret_manager import SecretManager
 from src.dao.tmdb_http_client import TmdbHttpClient
@@ -19,6 +21,63 @@ from src.services.movie_caching import MovieCachingService
 from src.services.user_service import UserManagerService, WeakPasswordError, EmailMismatchError, PasswordMismatchError
 from src.services.group_service import GroupManagerService
 
+from opentelemetry.sdk.resources import Resource
+from opentelemetry import metrics, _logs
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
+# logging level #
+logging.basicConfig(level=logging.INFO)
+
+# OpenTelemetry Settings #
+if os.getenv("MoviesToWatch") == "test":
+    environ = "local"
+else:
+    environ = "prod"
+OTEL_RESOURCE_ATTRIBUTES = {
+    "service.instance.id": str(uuid.uuid1()),
+    "environment": environ
+}
+
+# OTEL Metrics #
+# Initialize metering and an exporter that can send data to an OTLP endpoint
+metrics.set_meter_provider(
+    MeterProvider(
+        resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES), 
+        metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())]
+        )
+    )
+metrics.get_meter_provider()
+tmdb_http_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="tmdb.http.duration",
+    description="measures the duration of the HTTP request to TMDB",
+    unit="ms"
+)
+m2w_database_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="m2w.firestore.duration",
+    description="measures the duration of a request to M2W firestore database.",
+    unit="ms"
+)
+# logout_counter = metrics.get_meter("opentelemetry.instrumentation.custom").create_counter(
+#     "logout.invocations", 
+#     unit="1", 
+#     description="Measures the number of times the logout method is invoked."
+#     )
+
+# Logs #
+# Initialize logging and an exporter that can send data to an OTLP endpoint by attaching OTLP handler to root logger
+_logs.set_logger_provider(LoggerProvider(resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES)))
+logging.getLogger().addHandler(
+    LoggingHandler(
+        logger_provider=_logs.get_logger_provider().add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter()))
+    )
+)
+
 # reading the secrets
 if os.getenv("MoviesToWatch") == "test":
     SECRETS = SecretManager('secrets_test.toml')
@@ -28,25 +87,32 @@ else:
 # connect to database
 m2w_db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
 
+# define helper functions
 def get_tmdb_http_client(session_: Optional[requests.Session]=None) -> TmdbHttpClient:
+    """ Returns a properly set up TmdbHttpClient instance with the specified session."""
     return TmdbHttpClient(
         token=SECRETS.tmdb_token,
         base_url=SECRETS.tmdb_API,
-        session=session_
+        session=session_,
+        histogram=tmdb_http_recorder
     )
 
 def get_m2w_db() -> M2WDatabase:
+    """ Returns a properly set up M2WDatabase instance. """
     return M2WDatabase(
         project=SECRETS.firestore_project,
-        credentials=m2w_db_cert
+        credentials=m2w_db_cert,
+        histogram=m2w_database_recorder
     )
 
 def get_auth() -> AuthenticationManager:
+    """ Returns a properly set up instance of AuthenticationManager. """
     return AuthenticationManager(
         config=SECRETS.firebase_config
     )
 
 def prepare_profiles(profile_pic: str) -> list:
+    """ Prepares a list of valid profile picture configurations for the profile page. """
     result = []
     for ix in range(42):
         temp = ix + 1
@@ -67,30 +133,36 @@ def prepare_profiles(profile_pic: str) -> list:
 # setting up Flask
 app = Flask(__name__)
 app.secret_key = SECRETS.flask_key
+FlaskInstrumentor().instrument_app(app)
 
 # setting up firebase authentication
 firebase_app = pyrebase.initialize_app(config=SECRETS.firebase_config)
 firebase_auth = firebase_app.auth()
 
-# setting up scheduler and jobs
+#################################
+# setting up scheduler and jobs #
+#################################
 scheduler = APScheduler()
 
 @scheduler.task('cron', id="update_movies", hour='*', minute='*/15')
 def update_movie_cache():
     """Updates the movies cache regularly."""
     try:
+        logging.info("Movie cache update started.")
         MovieCachingService(
             tmdb_http_client=get_tmdb_http_client(),
             m2w_database=get_m2w_db(),
             m2w_movie_retention=SECRETS.m2w_movie_retention
             ).movie_cache_update_job()
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"Movie cache error: {e}")
     else:
-        pass
+        logging.info("Movie cache update finished.")
 
 
-#setting up requests and endpoints
+#####################################
+# setting up requests and endpoints #
+#####################################
 @app.route("/error")
 def error():
     return render_template('error.html')
@@ -110,8 +182,10 @@ def root():
             user_data = user_manager.get_m2w_user_profile_data(user_id=logged_on)
             group = user_data["primary_group"]
         except Exception as e:
+            logging.error(f"Error by gathering content for index page: {e}")
             return render_template("error.html", error=e)
         else:
+            logging.debug("Rendering index page.")
             return render_template(
                 "index.html", 
                 logged_on=session['nickname'], 
@@ -130,13 +204,18 @@ def logout():
         for key in keys:
             session.pop(key)
     except KeyError:
+        # logout_counter.add(1, {"logout.valid.n": "false"})
+        logging.error("Error during logout.")
         return redirect("/")
     else:
+        # logout_counter.add(1, {"logout.valid.n": "true"})
+        logging.debug("Successful logout.")
         return redirect("/")
 
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
+    logging.debug(f"Login page requested. Method: {request.method}")
     target = request.args.get("redirect", default="/")
     if request.method == 'POST':
         try:
@@ -155,6 +234,7 @@ def login():
         except Exception as e:
             return render_template("login.html", error=e, target=target)
         else:
+            logging.debug("Successful logon.")
             return redirect(target)
     else:
         if 'user' in session:
@@ -371,8 +451,10 @@ def resend_verification():
     
 @app.route("/api/group/<group>")
 def group_content(group):
+    logging.debug(f"Calling /api/group/{group}")
     if ('user' in session) and (session['emailVerified'] == True):
         try:
+            logging.debug(f"Setting up objects for /api/group/{group}")
             logged_on = session['user']
             m2w_db = get_m2w_db()
             tmdb_client = get_tmdb_http_client()
@@ -392,6 +474,7 @@ def group_content(group):
                     m2w_movie_retention=SECRETS.m2w_movie_retention
                 )
             )
+            logging.debug(f"Gathering data for /api/group/{group}")
             movie_datasheets = group_service.get_group_content(
                 group_id=group,
                 primary_user=logged_on
@@ -399,9 +482,13 @@ def group_content(group):
         except Exception as e:
             flash("The following error occured:")
             flash(e)
+            logging.error(f"Error by preparing group data. {e}")
             return render_template("group_content.html", error=True)
         else:
+            logging.debug(f"Rendering group content for /api/group/{group}")
             return render_template("group_content.html", movies=movie_datasheets, group=group)
+        finally:
+            logging.debug(f"Group content for /api/group/{group} ready.")
     else:
         flash("You are not logged in!")
         return render_template("group_content.html", error=True)
