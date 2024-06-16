@@ -3,6 +3,10 @@ from google.cloud.firestore_v1.types.write import WriteResult
 from google.oauth2 import service_account
 from typing import Optional, Union
 from collections.abc import Generator
+import functools
+import time
+from opentelemetry.metrics._internal.instrument import Histogram
+import logging
 
 class M2WDatabaseException(Exception):
     """Base class for Exceptions of M2WDatabase"""
@@ -10,9 +14,47 @@ class M2WDatabaseException(Exception):
         """Base class for Exceptions of M2WDatabase"""
         super().__init__(message)
 
+def database_timer(recorder, method=None):
+    def outer_wrapper(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            elapsed_time = 0
+            try:
+                THIS_INSTANCE = args[0]
+                start_time = time.time()
+                result = func(*args, **kwargs)
+                elapsed_time = time.time() - start_time
+            except Exception:
+                recorder(
+                    THIS_INSTANCE, 
+                    amount=int(elapsed_time*1000), 
+                    attributes={
+                        "m2w.firestore.method": method, 
+                        "m2w.firestore.success": False
+                    }
+                    )
+                raise
+            else:
+                recorder(
+                    THIS_INSTANCE, 
+                    amount=int(elapsed_time*1000), 
+                    attributes={
+                        "m2w.firestore.method": method, 
+                        "m2w.firestore.success": True
+                    }
+                    )
+                return result
+        return wrapper
+    return outer_wrapper
+
 class M2WDatabase():
     """Bundles the firestore related methods."""
-    def __init__(self, project: str, credentials: service_account.Credentials) -> None:
+    def __init__(
+            self, 
+            project: str, 
+            credentials: service_account.Credentials,
+            histogram: Optional[Histogram] = None
+            ) -> None:
         """Bundles the methods related to the 
         firestore database of movies-to-watch.
 
@@ -20,11 +62,12 @@ class M2WDatabase():
         ----------
         project: The project which the client acts on behalf of.
         credentials: The OAuth2 Credentials to use for this client.
+        histogram: optional histogram telemetry object for registering telemetry data.
         """
         self.__db = firestore.Client(project=project, credentials=credentials)
-        self.user = M2wUserHandler(db=self.database)
-        self.movie = M2wMovieHandler(db=self.database)
-        self.group = M2wGroupHandler(db=self.database)
+        self.user = M2wUserHandler(db=self.database, histogram=histogram)
+        self.movie = M2wMovieHandler(db=self.database, histogram=histogram)
+        self.group = M2wGroupHandler(db=self.database, histogram=histogram)
 
     @property
     def database(self) -> firestore.Client:
@@ -37,7 +80,8 @@ class M2wDocumentHandler():
             self, 
             db: firestore.Client,
             collection: str,
-            kind: str="Document"
+            kind: str="Document",
+            histogram: Optional[Histogram] = None
             ) -> None:
         """Returns a represantation of a document.
 
@@ -46,10 +90,12 @@ class M2wDocumentHandler():
         db: the client for the firestore API.
         collection: the ID of the collection that contains the document.
         kind: name of what kind of document is handled.
+        histogram: optional histogram telemetry object for registering telemetry data.
         """
         self.__db = db
         self.__collection = collection
         self.__kind = kind
+        self.histogram = histogram
 
     @property
     def db(self) -> firestore.Client:
@@ -65,7 +111,22 @@ class M2wDocumentHandler():
     def kind(self) -> firestore.Client:
         """The name of what kind of document is handled."""
         return self.__kind
+    
+    def record_to_histogram(self, amount: int, attributes=None) -> None:
+        """ Records the telemetry data to the histogram attribute. 
+        
+        Parameters
+        ----------
+        amount: the amount of the measurement.
+        attributes: metedata of the measurement.
+        """
+        if self.histogram is not None:
+            try:
+                self.histogram.record(amount=amount, attributes=attributes)
+            except Exception as e:
+                logging.error(f"Error during recording histogram: {e}")
 
+    @database_timer(record_to_histogram, method="get_one")
     def get_one(self, id_: str) -> firestore.DocumentSnapshot:
         """Returns a document with ID `id_` if exists.
         
@@ -79,7 +140,8 @@ class M2wDocumentHandler():
             return doc
         else:
             raise M2WDatabaseException(f"{self.kind} does not exist.")
-        
+
+    @database_timer(record_to_histogram, method="get_all") 
     def get_all(self) -> Generator[firestore.DocumentSnapshot]:
         """Returns a stream with all documents in the collection.
         
@@ -89,6 +151,7 @@ class M2wDocumentHandler():
         """
         return self.db.collection(self.collection).stream()
     
+    @database_timer(record_to_histogram, method="set_data")
     def set_data(self, id_: str, data: dict, merge: bool=True) -> WriteResult:
         """Creates or updates a document.
         
@@ -102,6 +165,7 @@ class M2wDocumentHandler():
         """
         return self.db.collection(self.collection).document(id_).set(document_data=data, merge=merge)
     
+    @database_timer(record_to_histogram, method="delete")
     def delete(self, id_: str) -> bool:
         """Deletes a document. 
         
@@ -122,15 +186,20 @@ class M2wDocumentHandler():
 
 
 class M2wUserHandler(M2wDocumentHandler):
-    def __init__(self, db: firestore.Client) -> None:
+    def __init__(self, db: firestore.Client, histogram: Optional[Histogram] = None) -> None:
         """Returns a representation of a user.
         
         Parameters
         ----------
         db: the client for the firestore API.
+        histogram: optional histogram telemetry object for registering telemetry data.
         """
-        super().__init__(db, collection='users', kind='User')
+        super().__init__(db, collection='users', kind='User', histogram=histogram)
 
+    def record_to_histogram(self, amount: int, attributes=None) -> None:
+        return super().record_to_histogram(amount, attributes)
+
+    @database_timer(record_to_histogram, method="get_blocklist")
     def get_blocklist(self, user_id: str) -> firestore.CollectionReference:
         """Returns the reference to the blocklist collection of a user 
         with ID `user_id` if the user exists.
@@ -147,15 +216,20 @@ class M2wUserHandler(M2wDocumentHandler):
             raise M2WDatabaseException(f"{self.kind} does not exist.")
         
 class M2wMovieHandler(M2wDocumentHandler):
-    def __init__(self, db: firestore.Client) -> None:
+    def __init__(self, db: firestore.Client, histogram: Optional[Histogram] = None) -> None:
         """Returns a representation of a movie.
         
         Parameters
         ----------
         db: the client for the firestore API.
+        histogram: optional histogram telemetry object for registering telemetry data.
         """
-        super().__init__(db, collection='movies', kind="Movie")
+        super().__init__(db, collection='movies', kind="Movie", histogram=histogram)
 
+    def record_to_histogram(self, amount: int, attributes=None) -> None:
+        return super().record_to_histogram(amount, attributes)
+
+    @database_timer(record_to_histogram, method="remove_from_blocklist")
     def remove_from_blocklist(self, movie_id: str, blocklist: firestore.CollectionReference) -> bool:
         """Removes the movie from the blocklist.
         
@@ -175,6 +249,7 @@ class M2wMovieHandler(M2wDocumentHandler):
         else:
             return True
         
+    @database_timer(record_to_histogram, method="add_to_blocklist")
     def add_to_blocklist(self, movie_id: str, blocklist: firestore.CollectionReference, movie_title: Optional[str] = None) -> bool:
         """Adds a movie to the blocklist of the member.
         
@@ -203,15 +278,20 @@ class M2wMovieHandler(M2wDocumentHandler):
             return True
 
 class M2wGroupHandler(M2wDocumentHandler):
-    def __init__(self, db: firestore.Client) -> None:
+    def __init__(self, db: firestore.Client, histogram: Optional[Histogram] = None) -> None:
         """Returns a representation of a watchgroup.
         
         Parameters
         ----------
         db: the client for the firestore API.
+        histogram: optional histogram telemetry object for registering telemetry data.
         """
-        super().__init__(db, collection='groups', kind='Group')
+        super().__init__(db, collection='groups', kind='Group', histogram=histogram)
 
+    def record_to_histogram(self, amount: int, attributes=None) -> None:
+        return super().record_to_histogram(amount, attributes)
+
+    @database_timer(record_to_histogram, method="get_all_group_members")
     def get_all_group_members(self, group_id: str) -> Generator[firestore.DocumentSnapshot]:
         """Returns a stream with all member documents in the group.
         
@@ -229,7 +309,8 @@ class M2wGroupHandler(M2wDocumentHandler):
             raise M2WDatabaseException(f"{self.kind} does not exist.")
         else:
             return group_ref.collection('members').stream()
-        
+
+    @database_timer(record_to_histogram, method="add_member_to_group")    
     def add_member_to_group(self, group_id: str, user: firestore.DocumentSnapshot) -> dict:
         """Adds a user to the members of the group.
         
@@ -262,6 +343,7 @@ class M2wGroupHandler(M2wDocumentHandler):
                 "message": "OK"
             }
         
+    @database_timer(record_to_histogram, method="remove_member_from_group")
     def remove_member_from_group(self, group_id: str, user_id: str) -> bool:
         """Adds a user to the members of the group.
         
@@ -294,6 +376,7 @@ class M2wGroupHandler(M2wDocumentHandler):
                 "message": "OK"
             }
     
+    @database_timer(record_to_histogram, method="create_new")
     def create_new(self, data: dict, members: Union[list[firestore.DocumentSnapshot], firestore.DocumentSnapshot]) -> dict:
         """Creates a new group.
         
