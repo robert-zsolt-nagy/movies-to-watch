@@ -1,11 +1,14 @@
-from src.dao.tmdb_http_client import TmdbHttpClient
-from src.dao.tmdb_user_repository import TmdbUserRepository
-from src.dao.tmdb_movie_repository import TmdbMovieRepository
-from src.dao.m2w_database import M2WDatabase
+from collections.abc import Generator
 from datetime import datetime, UTC
 from typing import Union
-from collections.abc import Generator
+
+from expiringdict import ExpiringDict
 from google.cloud import firestore
+
+from src.dao.m2w_database import M2WDatabase
+from src.dao.tmdb_http_client import TmdbHttpClient
+from src.dao.tmdb_movie_repository import TmdbMovieRepository
+from src.dao.tmdb_user_repository import TmdbUserRepository
 
 
 class MovieNotFoundException(Exception):
@@ -43,6 +46,7 @@ class MovieCachingService():
         self.movie_handler = m2w_database.movie
         self.user_handler = m2w_database.user
         self.movie_retention = m2w_movie_retention
+        self.in_memory_cache = ExpiringDict(max_len=200, max_age_seconds=1200)
 
     def get_movie_details_from_cache(self, movie_id: str) -> dict:
         """Get the cached movie details from the M2W Database.
@@ -61,11 +65,14 @@ class MovieCachingService():
         cache is expired.
         """
         try:
-            movie = self.movie_handler.get_one(id_=movie_id)
-            details = movie.to_dict()
-            age = datetime.now(UTC) - details['refreshed_at']
-            if age.total_seconds() > self.movie_retention:
-                raise MovieNotFoundException("Movie not cached.")
+            details = self.in_memory_cache.get(movie_id)
+            if details is None:
+                movie = self.movie_handler.get_one(id_=movie_id)
+                details = movie.to_dict()
+                age = datetime.now(UTC) - details['refreshed_at']
+                if age.total_seconds() > self.movie_retention:
+                    raise MovieNotFoundException("Movie not cached.")
+                self.in_memory_cache[movie_id] = details
         except Exception:
             raise MovieNotFoundException("Movie not cached.")
         else:
@@ -137,10 +144,14 @@ class MovieCachingService():
         
         """
         try:
+            from_cache = self.in_memory_cache.get(movie_id)
+            if from_cache == details:
+                return True
             self.movie_handler.set_data(
                 id_=str(movie_id),
                 data=details
             )
+            self.in_memory_cache[str(movie_id)] = details
         except Exception:
             raise MovieCacheUpdateError("Error during update.")
         else:
