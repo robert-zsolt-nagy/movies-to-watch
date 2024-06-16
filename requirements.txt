@@ -1,6 +1,6 @@
 certifi==2023.11.17
 charset-normalizer==3.3.2
-idna==3.6
+idna==3.7
 Flask==3.0.2
 google-cloud-datastore==2.19.0
 google-auth==2.28.1
@@ -14,3 +14,4 @@ opentelemetry-instrumentation-flask==0.46b0
 opentelemetry-instrumentation-logging==0.46b0
 opentelemetry-exporter-otlp==1.25.0
 opentelemetry-distro==0.46b0
+requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
