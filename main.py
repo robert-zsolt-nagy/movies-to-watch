@@ -53,6 +53,16 @@ metrics.set_meter_provider(
         )
     )
 metrics.get_meter_provider()
+tmdb_http_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="tmdb.http.duration",
+    description="measures the duration of the HTTP request to TMDB",
+    unit="ms"
+)
+m2w_database_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="m2w.firestore.duration",
+    description="measures the duration of a request to M2W firestore database.",
+    unit="ms"
+)
 # logout_counter = metrics.get_meter("opentelemetry.instrumentation.custom").create_counter(
 #     "logout.invocations", 
 #     unit="1", 
@@ -83,14 +93,16 @@ def get_tmdb_http_client(session_: Optional[requests.Session]=None) -> TmdbHttpC
     return TmdbHttpClient(
         token=SECRETS.tmdb_token,
         base_url=SECRETS.tmdb_API,
-        session=session_
+        session=session_,
+        histogram=tmdb_http_recorder
     )
 
 def get_m2w_db() -> M2WDatabase:
     """ Returns a properly set up M2WDatabase instance. """
     return M2WDatabase(
         project=SECRETS.firestore_project,
-        credentials=m2w_db_cert
+        credentials=m2w_db_cert,
+        histogram=m2w_database_recorder
     )
 
 def get_auth() -> AuthenticationManager:
@@ -173,7 +185,7 @@ def root():
             logging.error(f"Error by gathering content for index page: {e}")
             return render_template("error.html", error=e)
         else:
-            logging.info("Rendering index page.")
+            logging.debug("Rendering index page.")
             return render_template(
                 "index.html", 
                 logged_on=session['nickname'], 
@@ -197,7 +209,7 @@ def logout():
         return redirect("/")
     else:
         # logout_counter.add(1, {"logout.valid.n": "true"})
-        logging.info("Successful logout.")
+        logging.debug("Successful logout.")
         return redirect("/")
 
 
@@ -222,7 +234,7 @@ def login():
         except Exception as e:
             return render_template("login.html", error=e, target=target)
         else:
-            logging.info(f"{session['nickname']} logged on.")
+            logging.debug("Successful logon.")
             return redirect(target)
     else:
         if 'user' in session:
@@ -439,10 +451,10 @@ def resend_verification():
     
 @app.route("/api/group/<group>")
 def group_content(group):
-    logging.info(f"Calling /api/group/{group}")
+    logging.debug(f"Calling /api/group/{group}")
     if ('user' in session) and (session['emailVerified'] == True):
         try:
-            logging.info(f"Setting up objects for /api/group/{group}")
+            logging.debug(f"Setting up objects for /api/group/{group}")
             logged_on = session['user']
             m2w_db = get_m2w_db()
             tmdb_client = get_tmdb_http_client()
@@ -462,7 +474,7 @@ def group_content(group):
                     m2w_movie_retention=SECRETS.m2w_movie_retention
                 )
             )
-            logging.info(f"Gathering data for /api/group/{group}")
+            logging.debug(f"Gathering data for /api/group/{group}")
             movie_datasheets = group_service.get_group_content(
                 group_id=group,
                 primary_user=logged_on
@@ -473,10 +485,10 @@ def group_content(group):
             logging.error(f"Error by preparing group data. {e}")
             return render_template("group_content.html", error=True)
         else:
-            logging.info(f"Rendering group content for /api/group/{group}")
+            logging.debug(f"Rendering group content for /api/group/{group}")
             return render_template("group_content.html", movies=movie_datasheets, group=group)
         finally:
-            logging.info(f"Group content for /api/group/{group} ready.")
+            logging.debug(f"Group content for /api/group/{group} ready.")
     else:
         flash("You are not logged in!")
         return render_template("group_content.html", error=True)
