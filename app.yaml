@@ -16,8 +16,8 @@ automatic_scaling:
   target_cpu_utilization: 0.95
   min_instances: 1
   max_instances: 1
-  min_pending_latency: 30s
-  max_pending_latency: 60s
+  min_pending_latency: 15s
+  max_pending_latency: 15s
   max_concurrent_requests: 500
 
 env_variables:
