@@ -1,6 +1,6 @@
 from collections.abc import Generator
 from datetime import datetime, UTC
-from typing import Union
+from typing import Union, Optional
 
 from expiringdict import ExpiringDict
 from google.cloud import firestore
@@ -30,7 +30,8 @@ class MovieCachingService():
             self, 
             tmdb_http_client: TmdbHttpClient, 
             m2w_database: M2WDatabase,
-            m2w_movie_retention: int = 3600
+            m2w_movie_retention: int = 3600,
+            cache: Optional[ExpiringDict] = None
             ) -> None:
         """Handles the movie caching and data retreival. 
         
@@ -39,6 +40,7 @@ class MovieCachingService():
         tmdb_http_client: the client that handles the requests with the TMDB API.
         m2w_database: bundles the firestore related methods of M2W.
         m2w_movie_retention: the retention period of cached movies in seconds.
+        cache: the in memory cache object.
 
         """
         self.user_repo = TmdbUserRepository(tmdb_http_client=tmdb_http_client)
@@ -46,7 +48,10 @@ class MovieCachingService():
         self.movie_handler = m2w_database.movie
         self.user_handler = m2w_database.user
         self.movie_retention = m2w_movie_retention
-        self.in_memory_cache = ExpiringDict(max_len=200, max_age_seconds=1200)
+        if cache is None:
+            self.in_memory_cache = ExpiringDict(max_len=200, max_age_seconds=m2w_movie_retention)
+        else:
+            self.in_memory_cache = cache
 
     def get_movie_details_from_cache(self, movie_id: str) -> dict:
         """Get the cached movie details from the M2W Database.

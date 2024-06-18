@@ -6,6 +6,7 @@ import uuid
 import logging
 import requests
 from requests.exceptions import HTTPError
+from expiringdict import ExpiringDict
 
 import pyrebase
 from flask import Flask, render_template, session, redirect, request, flash
@@ -95,6 +96,9 @@ if os.getenv("MoviesToWatch") == "test":
 else:
     SECRETS = SecretManager('secrets.toml')
 
+# set up in memory cache
+movie_item_cache = ExpiringDict(max_len=200, max_age_seconds=SECRETS.m2w_movie_retention)
+
 # connect to database
 m2w_db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
 
@@ -169,8 +173,9 @@ def update_movie_cache():
         MovieCachingService(
             tmdb_http_client=get_tmdb_http_client(),
             m2w_database=get_m2w_db(),
-            m2w_movie_retention=SECRETS.m2w_movie_retention
-        ).movie_cache_update_job()
+            m2w_movie_retention=SECRETS.m2w_movie_retention,
+            cache=movie_item_cache
+            ).movie_cache_update_job()
     except Exception as e:
         logging.error(f"Movie cache error: {e}")
     else:
@@ -553,7 +558,8 @@ def group_content(group):
                 movie_service=MovieCachingService(
                     tmdb_http_client=tmdb_client,
                     m2w_database=m2w_db,
-                    m2w_movie_retention=SECRETS.m2w_movie_retention
+                    m2w_movie_retention=SECRETS.m2w_movie_retention,
+                    cache=movie_item_cache
                 )
             )
             logging.debug(f"Gathering data for /api/group/{group}")
@@ -600,7 +606,8 @@ def vote_for_movie(movie, vote):
                 movie_service=MovieCachingService(
                     tmdb_http_client=tmdb_client,
                     m2w_database=m2w_db,
-                    m2w_movie_retention=SECRETS.m2w_movie_retention
+                    m2w_movie_retention=SECRETS.m2w_movie_retention,
+                    cache=movie_item_cache
                 )
             )
             response = group_service.vote_for_movie_by_user(
@@ -635,7 +642,8 @@ def watched_movie(movie, group_id):
                 movie_service = MovieCachingService(
                     tmdb_http_client=get_tmdb_http_client(),
                     m2w_database=get_m2w_db(),
-                    m2w_movie_retention=SECRETS.m2w_movie_retention
+                    m2w_movie_retention=SECRETS.m2w_movie_retention,
+                    cache=movie_item_cache
                 )
                 movie_data = movie_service.get_movie_details(movie_id=movie)
             except Exception as e:
@@ -664,7 +672,8 @@ def watched_movie(movie, group_id):
                     movie_service=MovieCachingService(
                         tmdb_http_client=tmdb_client,
                         m2w_database=m2w_db,
-                        m2w_movie_retention=SECRETS.m2w_movie_retention
+                        m2w_movie_retention=SECRETS.m2w_movie_retention,
+                        cache=movie_item_cache
                     )
                 )
                 movie_data = group_service.movie.get_movie_details(movie_id=movie)
