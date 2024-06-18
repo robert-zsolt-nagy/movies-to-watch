@@ -1,6 +1,7 @@
 import json
 from typing import Optional
 import os
+import time
 import uuid
 import logging
 import requests
@@ -48,10 +49,10 @@ OTEL_RESOURCE_ATTRIBUTES = {
 # Initialize metering and an exporter that can send data to an OTLP endpoint
 metrics.set_meter_provider(
     MeterProvider(
-        resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES), 
+        resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES),
         metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())]
-        )
     )
+)
 metrics.get_meter_provider()
 tmdb_http_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
     name="tmdb.http.duration",
@@ -61,6 +62,16 @@ tmdb_http_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").c
 m2w_database_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
     name="m2w.firestore.duration",
     description="measures the duration of a request to M2W firestore database.",
+    unit="ms"
+)
+uptime_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="service.uptime",
+    description="measures the uptime of the current instance.",
+    unit="sec"
+)
+endpoint_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="http.endpoint.request.duration",
+    description="measures the duration of a request measured at the HTTP endpoint.",
     unit="ms"
 )
 # logout_counter = metrics.get_meter("opentelemetry.instrumentation.custom").create_counter(
@@ -87,8 +98,9 @@ else:
 # connect to database
 m2w_db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
 
+
 # define helper functions
-def get_tmdb_http_client(session_: Optional[requests.Session]=None) -> TmdbHttpClient:
+def get_tmdb_http_client(session_: Optional[requests.Session] = None) -> TmdbHttpClient:
     """ Returns a properly set up TmdbHttpClient instance with the specified session."""
     return TmdbHttpClient(
         token=SECRETS.tmdb_token,
@@ -96,6 +108,7 @@ def get_tmdb_http_client(session_: Optional[requests.Session]=None) -> TmdbHttpC
         session=session_,
         histogram=tmdb_http_recorder
     )
+
 
 def get_m2w_db() -> M2WDatabase:
     """ Returns a properly set up M2WDatabase instance. """
@@ -105,11 +118,13 @@ def get_m2w_db() -> M2WDatabase:
         histogram=m2w_database_recorder
     )
 
+
 def get_auth() -> AuthenticationManager:
     """ Returns a properly set up instance of AuthenticationManager. """
     return AuthenticationManager(
         config=SECRETS.firebase_config
     )
+
 
 def prepare_profiles(profile_pic: str) -> list:
     """ Prepares a list of valid profile picture configurations for the profile page. """
@@ -126,9 +141,10 @@ def prepare_profiles(profile_pic: str) -> list:
             "checked": False
         }
         if elem['value'] == profile_pic:
-            elem["checked"]=True
+            elem["checked"] = True
         result.append(elem)
     return result
+
 
 # setting up Flask
 app = Flask(__name__)
@@ -144,6 +160,7 @@ firebase_auth = firebase_app.auth()
 #################################
 scheduler = APScheduler()
 
+
 @scheduler.task('cron', id="update_movies", hour='*', minute='*/15')
 def update_movie_cache():
     """Updates the movies cache regularly."""
@@ -153,11 +170,28 @@ def update_movie_cache():
             tmdb_http_client=get_tmdb_http_client(),
             m2w_database=get_m2w_db(),
             m2w_movie_retention=SECRETS.m2w_movie_retention
-            ).movie_cache_update_job()
+        ).movie_cache_update_job()
     except Exception as e:
         logging.error(f"Movie cache error: {e}")
     else:
         logging.info("Movie cache update finished.")
+
+
+@scheduler.task('cron', id="report_uptime", hour='*', minute='*/1')
+def report_system_uptime():
+    """Reports the system uptime of the instance."""
+    amount = time.monotonic()
+    uptime_recorder.record(amount=amount, attributes={})
+
+
+def report_call(start: float, method: str, endpoint: str, outcome: str):
+    """ Records the telemetry data to the histogram attribute. """
+    duration_ms = time.time() - start
+    endpoint_recorder.record(amount=duration_ms, attributes={
+        "method": method,
+        "endpoint": endpoint,
+        "status": outcome
+    })
 
 
 #####################################
@@ -165,10 +199,13 @@ def update_movie_cache():
 #####################################
 @app.route("/error")
 def error():
+    report_call(start=time.time(), method=request.method, endpoint=request.endpoint, outcome="success")
     return render_template('error.html')
+
 
 @app.route("/", methods=['POST', 'GET'])
 def root():
+    start = time.time()
     if 'user' in session:
         try:
             logged_on = session['user']
@@ -183,22 +220,26 @@ def root():
             group = user_data["primary_group"]
         except Exception as e:
             logging.error(f"Error by gathering content for index page: {e}")
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("error.html", error=e)
         else:
             logging.debug("Rendering index page.")
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
             return render_template(
-                "index.html", 
-                logged_on=session['nickname'], 
+                "index.html",
+                logged_on=session['nickname'],
                 verified=session['emailVerified'],
                 tmdb_linked=user_data['tmdb_session'],
                 group=group
-                )
+            )
     else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
         return redirect("/login")
-    
-        
+
+
 @app.route("/logout")
 def logout():
+    start = time.time()
     try:
         keys = list(session.keys())
         for key in keys:
@@ -206,15 +247,18 @@ def logout():
     except KeyError:
         # logout_counter.add(1, {"logout.valid.n": "false"})
         logging.error("Error during logout.")
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
         return redirect("/")
     else:
         # logout_counter.add(1, {"logout.valid.n": "true"})
         logging.debug("Successful logout.")
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
         return redirect("/")
 
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
+    start = time.time()
     logging.debug(f"Login page requested. Method: {request.method}")
     target = request.args.get("redirect", default="/")
     if request.method == 'POST':
@@ -232,19 +276,24 @@ def login():
             for k, v in user.items():
                 session[k] = v
         except Exception as e:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("login.html", error=e, target=target)
         else:
             logging.debug("Successful logon.")
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
             return redirect(target)
     else:
         if 'user' in session:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="already_logged_in")
             return redirect(target)
         else:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
             return render_template("login.html", target=target)
 
 
 @app.route("/signup", methods=['POST', 'GET'])
 def signup():
+    start = time.time()
     if request.method == 'POST':
         try:
             email = request.form.get('email')
@@ -273,60 +322,69 @@ def signup():
                 locale=locale
             )
         except EmailMismatchError:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="email_mismatch_error")
             return render_template(
-                "signup.html", 
+                "signup.html",
                 error="Emails don't match!",
                 email=email,
                 email_c=confirm_email,
                 password=password,
                 password_c=confirm_password,
                 nickname=nickname
-                )
+            )
         except PasswordMismatchError:
+            report_call(start=start, method=request.method, endpoint=request.endpoint,
+                        outcome="password_mismatch_error")
             return render_template(
-                "signup.html", 
+                "signup.html",
                 error="Passwords don't match!",
                 email=email,
                 email_c=confirm_email,
                 nickname=nickname
-                )
+            )
         except WeakPasswordError:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="weak_password_error")
             return render_template(
-                "signup.html", 
+                "signup.html",
                 error="Password must contain at least 6 characters!",
                 email=email,
                 email_c=confirm_email,
                 nickname=nickname
-                )
+            )
         except HTTPError as he:
             msg = AuthenticationManager.get_authentication_error_msg(he)
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="http_error")
             return render_template(
-                "signup.html", 
+                "signup.html",
                 error=msg,
                 email=email,
                 email_c=confirm_email,
                 password=password,
                 password_c=confirm_password,
                 nickname=nickname
-                )
+            )
         except Exception as e:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template(
-                "signup.html", 
+                "signup.html",
                 error=e,
                 email=email,
                 email_c=confirm_email,
                 password=password,
                 password_c=confirm_password,
                 nickname=nickname
-                )
+            )
         else:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
             return render_template("signup.html", success=response)
     else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
         return render_template("signup.html")
 
 
 @app.route("/approved")
 def approved():
+    start = time.time()
     approval = request.args.get("approved")
     request_token = request.args.get("request_token")
     try:
@@ -343,17 +401,22 @@ def approved():
                 user_service.update_user_data(user_id=session['user'], user_data={"tmdb_session": tmdb_session})
                 user_service.update_tmdb_user_cache(user_id=session['user'])
             except Exception as err:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="approve_error")
                 return render_template("approved.html", success=False, error=err)
             else:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
                 return render_template("approved.html", success=True)
         else:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="invalid_session")
             return render_template("approved.html", success=False, error="Session not approved or invalid.")
     except Exception as err:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="generic_error")
         return render_template("error.html", error=err)
 
 
 @app.route("/profile", methods=['POST', 'GET'])
 def profile():
+    start = time.time()
     if "user" in session:
         logged_on = session['user']
         if request.method == 'GET':
@@ -368,8 +431,10 @@ def profile():
                 user_data = user_service.get_m2w_user_profile_data(user_id=session['user'])
                 profile_pics = prepare_profiles(profile_pic=user_data.get('profile_pic', ''))
             except Exception as e:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 return render_template('error.html', error=e)
             else:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
                 return render_template('profile.html', profile_data=user_data, logged_on=session['user'], profile_pics=profile_pics)
         elif request.method == 'POST':
             try:
@@ -383,17 +448,22 @@ def profile():
                 new_profile_pic = request.form.get("profile_image")
                 old_profile_pic = request.form.get("current_profile_pic")
                 if new_profile_pic != old_profile_pic:
-                    user_service.update_user_data(user_id=logged_on, user_data={"profile_pic":new_profile_pic})
+                    user_service.update_user_data(user_id=logged_on, user_data={"profile_pic": new_profile_pic})
             except Exception as e:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 return render_template('error.html', error=e)
             else:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
                 flash("Changes saved!")
                 return redirect("/profile")
     else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
         return redirect("/login?redirect=/profile")
-    
+
+
 @app.route("/link-to-tmdb")
 def link_to_tmdb():
+    start = time.time()
     if ('user' in session) and (session['emailVerified'] == True):
         try:
             user_service = UserManagerService(
@@ -410,15 +480,19 @@ def link_to_tmdb():
             session['request_payload'] = json.dumps(response["tmdb_request_token"])
             permission_URL = response["permission_URL"]
         except Exception as e:
-            return render_template('error.html',  error=e)
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
+            return render_template('error.html', error=e)
         else:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
             return redirect(permission_URL)
     else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
         return redirect("/login?redirect=/link-to-tmdb")
-    
+
 
 @app.route("/resend-verification")
 def resend_verification():
+    start = time.time()
     if 'user' in session:
         if session['emailVerified'] == False:
             try:
@@ -436,21 +510,29 @@ def resend_verification():
                     firebase_auth.send_email_verification(id_token=session['idToken'])
             except Exception as e:
                 flash(f"The following error occured: {e}")
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 redirect('/error')
             else:
+                status = "success"
                 if account_data['emailVerified']:
                     flash("Your email verification is already complete!")
                 else:
                     flash("Please check your mailbox you should receive a verification email shortly!")
+                    status = "already_complete"
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome=status)
             return redirect('/error')
         else:
             flash("Your email verification is already complete!")
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="already_complete")
             return redirect('/error')
     else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
         return redirect("/login?redirect=/resend-verification")
-    
+
+
 @app.route("/api/group/<group>")
 def group_content(group):
+    start = time.time()
     logging.debug(f"Calling /api/group/{group}")
     if ('user' in session) and (session['emailVerified'] == True):
         try:
@@ -483,18 +565,23 @@ def group_content(group):
             flash("The following error occured:")
             flash(e)
             logging.error(f"Error by preparing group data. {e}")
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("group_content.html", error=True)
         else:
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
             logging.debug(f"Rendering group content for /api/group/{group}")
             return render_template("group_content.html", movies=movie_datasheets, group=group)
         finally:
             logging.debug(f"Group content for /api/group/{group} ready.")
     else:
         flash("You are not logged in!")
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="not_logged_in")
         return render_template("group_content.html", error=True)
-    
+
+
 @app.route("/api/vote/<movie>/<vote>")
 def vote_for_movie(movie, vote):
+    start = time.time()
     if ('user' in session) and (session['emailVerified'] == True):
         try:
             logged_on = session['user']
@@ -523,19 +610,25 @@ def vote_for_movie(movie, vote):
             )
         except Exception as e:
             flash(f"The following error occurred: {e}")
+            report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("vote_response.html", vote=vote, movie_id=movie, error=True)
         else:
             if response:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
                 return render_template("vote_response.html", vote=vote, movie_id=movie)
             else:
                 flash("Unable to register vote.")
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="failed")
                 return render_template("vote_response.html", vote=vote, movie_id=movie, error=True)
     else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
         target = f"/login?redirect=/api/vote/{movie}/{vote}"
         return redirect(target)
-    
+
+
 @app.route("/api/watched/<movie>/<group_id>", methods=['POST', 'GET'])
 def watched_movie(movie, group_id):
+    start = time.time()
     if ('user' in session) and (session['emailVerified'] == True):
         if request.method == 'GET':
             try:
@@ -546,11 +639,13 @@ def watched_movie(movie, group_id):
                 )
                 movie_data = movie_service.get_movie_details(movie_id=movie)
             except Exception as e:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 return redirect("/error", error=e)
             else:
-                return render_template('watched_movie.html', movie=movie, 
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
+                return render_template('watched_movie.html', movie=movie,
                                        group_id=group_id, movie_title=movie_data['title'])
-        if request.method == 'POST': 
+        if request.method == 'POST':
             watchmode = request.form.get('watch_mode')
             try:
                 logged_on = session['user']
@@ -578,22 +673,23 @@ def watched_movie(movie, group_id):
                 else:
                     group_service.watch_movie_by_group(movie_id=movie, group_id=group_id)
             except Exception as e:
+                report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 return redirect("/error", error=e)
             else:
                 if watchmode == 'alone':
                     flash(f"You watched: {movie_data['title']}")
+                    report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success_alone")
                     return redirect("/")
                 else:
                     flash(f"Your Group watched: {movie_data['title']}")
+                    report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success_group")
                     return redirect("/")
-    
+
 
 # starting scheduler
 if os.getenv("MoviesToWatch") != "test":
     scheduler.init_app(app)
     scheduler.start()
 
-
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8080, debug=True)
-
