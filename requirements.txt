@@ -16,4 +16,4 @@ opentelemetry-instrumentation-logging==0.46b0
 opentelemetry-exporter-otlp==1.25.0
 opentelemetry-distro==0.46b0
 requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
-psutil==5.9.8
+psutil==6.0.0
