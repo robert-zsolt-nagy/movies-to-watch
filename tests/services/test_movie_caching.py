@@ -166,7 +166,7 @@ class TestMovieCachingService(TestCase):
             tmdb_http_client=tmdb,
             m2w_database=m2w
         )
-        under_test.get_movie_details_from_cache = MagicMock(return_value="cached_movie")
+        under_test.get_movie_details_from_cache = MagicMock(return_value={'refreshed_at':datetime.now(UTC)})
         under_test.get_movie_details_from_tmdb = MagicMock(return_value="tmdb_movie")
         
         #when

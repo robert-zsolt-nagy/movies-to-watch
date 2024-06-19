@@ -1,5 +1,6 @@
 import json
 from typing import Optional
+import psutil
 import os
 import time
 import uuid
@@ -35,6 +36,7 @@ from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
 # logging level #
 logging.basicConfig(level=logging.INFO)
+process_started_at = time.time()
 
 # OpenTelemetry Settings #
 if os.getenv("MoviesToWatch") == "test":
@@ -65,15 +67,30 @@ m2w_database_recorder = metrics.get_meter("opentelemetry.instrumentation.custom"
     description="measures the duration of a request to M2W firestore database.",
     unit="ms"
 )
-uptime_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+system_uptime_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
     name="service.uptime",
     description="measures the uptime of the current instance.",
     unit="sec"
 )
+process_uptime_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="service.process.uptime",
+    description="measures the uptime of the current python process.",
+    unit="sec"
+)
+cpu_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="service.cpu",
+    description="measures CPU usage of the current python process.",
+    unit="percent"
+)
+memory_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
+    name="service.memory",
+    description="measures memory usage of the current python process.",
+    unit="percent"
+)
 endpoint_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
     name="http.endpoint.request.duration",
     description="measures the duration of a request measured at the HTTP endpoint.",
-    unit="ms"
+    unit="sec"
 )
 # logout_counter = metrics.get_meter("opentelemetry.instrumentation.custom").create_counter(
 #     "logout.invocations", 
@@ -185,14 +202,20 @@ def update_movie_cache():
 @scheduler.task('cron', id="report_uptime", hour='*', minute='*/1')
 def report_system_uptime():
     """Reports the system uptime of the instance."""
-    amount = time.monotonic()
-    uptime_recorder.record(amount=amount, attributes={})
+    system_uptime = time.monotonic()
+    system_uptime_recorder.record(amount=system_uptime, attributes={"pid": os.getpid()})
+    process_uptime = time.time() - process_started_at
+    process_uptime_recorder.record(amount=process_uptime, attributes={"pid": os.getpid()})
+    cpu_percent = psutil.cpu_percent()
+    cpu_recorder.record(amount=cpu_percent, attributes={"pid": os.getpid()})
+    used_ram_percent = psutil.virtual_memory().percent
+    memory_recorder.record(amount=used_ram_percent, attributes={"pid": os.getpid()})
 
 
 def report_call(start: float, method: str, endpoint: str, outcome: str):
     """ Records the telemetry data to the histogram attribute. """
-    duration_ms = time.time() - start
-    endpoint_recorder.record(amount=duration_ms, attributes={
+    duration = time.time() - start
+    endpoint_recorder.record(amount=duration, attributes={
         "method": method,
         "endpoint": endpoint,
         "status": outcome
