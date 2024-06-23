@@ -31,6 +31,7 @@ class MovieCachingService():
             tmdb_http_client: TmdbHttpClient, 
             m2w_database: M2WDatabase,
             m2w_movie_retention: int = 3600,
+            m2w_update_frequency: int = 900,
             cache: Optional[ExpiringDict] = None
             ) -> None:
         """Handles the movie caching and data retreival. 
@@ -48,6 +49,7 @@ class MovieCachingService():
         self.movie_handler = m2w_database.movie
         self.user_handler = m2w_database.user
         self.movie_retention = m2w_movie_retention
+        self.update_frequency = m2w_update_frequency
         if cache is None:
             self.in_memory_cache = ExpiringDict(max_len=200, max_age_seconds=m2w_movie_retention)
         else:
@@ -189,7 +191,11 @@ class MovieCachingService():
                 return True
             
         try:
-            _ = self.get_movie_details_from_cache(movie_id=str(movie_id))
+            cached_value = self.get_movie_details_from_cache(movie_id=str(movie_id))
+            # check if the entry will be expired by the next run
+            age = datetime.now(UTC) - cached_value['refreshed_at']
+            if age.total_seconds() > (self.movie_retention - self.update_frequency):
+                raise MovieNotFoundException("Movie not cached.")
         except MovieNotFoundException:
             try:
                 tmdb_details = self.get_movie_details_from_tmdb(movie_id=int(movie_id))
