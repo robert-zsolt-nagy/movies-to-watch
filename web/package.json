@@ -222,7 +222,7 @@
     "map-cache": "^0.2.2",
     "maxmin": "^3.0.0",
     "merge-stream": "^2.0.0",
-    "micromatch": "^4.0.6",
+    "micromatch": "^4.0.8",
     "mime-db": "^1.52.0",
     "mime-types": "^2.1.35",
     "mimic-fn": "^2.1.0",
