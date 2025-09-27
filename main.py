@@ -215,7 +215,7 @@ if SECRETS.auth_store != "neo4j":
 scheduler = APScheduler()
 
 
-@scheduler.task('cron', id="update_movies", hour='*', minute='*/2')
+@scheduler.task('cron', id="update_movies", hour='*', minute='*/15')
 def update_movie_cache():
     """Updates the movie cache regularly."""
     try:

@@ -1,8 +1,13 @@
+import logging
+
 from neo4j import Record
 from requests.exceptions import HTTPError
 import json
 import pyrebase
 from typing import Union
+
+from src.services.user_service import UserManagerException
+
 
 class BaseAccountInfo:
     def __init__(self, email_verified: bool, last_refresh_at: str) -> None:
@@ -21,7 +26,7 @@ class AuthUser:
 
     @classmethod
     def from_response(cls, response: dict):
-        user = response["user"]
+        user = response
         return cls(
             user_id=user["localId"],
             email=user["email"],
@@ -170,9 +175,18 @@ class FirebaseAuthenticationManager(AuthenticationManager):
         -------
         AuthUser
             An authenticated user.
+
+        Raises
+        ------
+        UserManagerException
+            If the authentication fails.
         """
-        response = self.__auth.sign_in_with_email_and_password(email=email, password=password)
-        return AuthUser.from_response(response)
+        try:
+            response = self.__auth.sign_in_with_email_and_password(email=email, password=password)
+            return AuthUser.from_response(response)
+        except Exception as e:
+            logging.error(f"Error signing in: {e}")
+            raise UserManagerException("Error signing in")
     
     def get_account_info(self, id_token: str) -> BaseAccountInfo:
         """Gets the account information of a signed-in user.
@@ -209,8 +223,12 @@ class FirebaseAuthenticationManager(AuthenticationManager):
         AuthUser
             The data of the created user.
         """
-        response = self.__auth.create_user_with_email_and_password(email=email, password=password)
-        return AuthUser.from_response(response)
+        try:
+            response = self.__auth.create_user_with_email_and_password(email=email, password=password)
+            return AuthUser.from_response(response)
+        except Exception as e:
+            logging.error(f"Error creating user: {e}")
+            raise UserManagerException("Error creating user.")
 
     def update_profile(self, id_token, display_name = None, photo_url = None, delete_attribute = None):
         """Updates a profile with new data.
