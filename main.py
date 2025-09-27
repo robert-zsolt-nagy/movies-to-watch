@@ -20,9 +20,8 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
-from requests.exceptions import HTTPError
 
-from src.dao.authentication_manager import AuthenticationManager, FirebaseAuthenticationManager
+from src.dao.authentication_manager import AuthenticationManager, FirebaseAuthenticationManager, AuthException
 from src.dao.m2w_graph_db_repository_auth import Neo4jAuthenticationManager
 from src.dao.secret_manager import SecretManager
 from src.dao.tmdb_http_client import TmdbHttpClient
@@ -397,12 +396,11 @@ def signup():
                 email_c=confirm_email,
                 nickname=nickname
             )
-        except HTTPError as he:
-            msg = AuthenticationManager.get_authentication_error_msg(he)
+        except AuthException as e:
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="http_error")
             return render_template(
                 "signup.html",
-                error=msg,
+                error=e,
                 email=email,
                 email_c=confirm_email,
                 password=password,

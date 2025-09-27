@@ -1,7 +1,6 @@
 from neo4j import Driver
-from requests.exceptions import HTTPError
 
-from src.dao.authentication_manager import AuthenticationManager, AuthUser, BaseAccountInfo
+from src.dao.authentication_manager import AuthenticationManager, AuthUser, BaseAccountInfo, AuthException
 from src.dao.m2w_graph_db_entities import M2WDatabaseException, TmdbUser, User
 from src.dao.m2w_graph_db_repository_users import get_one_user, get_one_tmdb_user, save_or_update_tmdb_user, \
     save_or_update_user
@@ -203,9 +202,8 @@ class UserManagerService:
             account_info = self.auth.get_account_info(id_token=user.id_token)
             response = user.to_dict(account_info=account_info)
             self.update_tmdb_user_cache(user_id=user.user_id)
-        except HTTPError as he:
-            msg = self.auth.get_authentication_error_msg(he)
-            raise UserManagerException(msg)
+        except AuthException as e:
+            raise UserManagerException(e)
         else:
             return response
 
@@ -329,7 +327,7 @@ class UserManagerService:
             if password and confirm_password don't match.
         WeakPasswordError:
             if the password is shorter than 6 characters.
-        HttpError:
+        AuthException:
             if firebase raises INVALID_EMAIL, MISSING_PASSWORD, INVALID_LOGIN_CREDENTIALS,
             EMAIL_EXISTS or WEAK_PASSWORD
 
