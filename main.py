@@ -215,7 +215,7 @@ if SECRETS.auth_store != "neo4j":
 scheduler = APScheduler()
 
 
-@scheduler.task('cron', id="update_movies", hour='*', minute='*/15')
+@scheduler.task('cron', id="update_movies", hour='*', minute='*/2')
 def update_movie_cache():
     """Updates the movie cache regularly."""
     try:
@@ -322,6 +322,7 @@ def login():
             for k, v in user.items():
                 session[k] = v
         except Exception as e:
+            logging.error(f"Error during logging in: {e}")
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("login.html", error=e, target=target)
         else:
@@ -660,6 +661,8 @@ def watched_movie(movie, group_id):
                     report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success_group")
                     return redirect("/")
 
+
+update_movie_cache()
 
 # starting scheduler
 if os.getenv("MoviesToWatch") != "test":

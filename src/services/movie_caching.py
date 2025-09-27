@@ -1,6 +1,8 @@
+import logging
 from datetime import datetime
 
 from neo4j import Driver
+from werkzeug.http import parse_age
 
 from src.dao.m2w_graph_db_entities import VoteValue, Availability, Provider, AvailabilityType
 from src.dao.m2w_graph_db_repository_availabilities import save_movie_availabilities
@@ -169,6 +171,7 @@ class MovieCachingService:
             session = self.db.session()
             tx = session.begin_transaction()
             total = count_tmdb_users(tx=tx)
+            logging.info(f"Processing data for {total} users.")
         except Exception:
             if tx is not None:
                 tx.rollback()
@@ -206,6 +209,7 @@ class MovieCachingService:
             if session is not None:
                 session.close()
             movie_ids = set()
+            logging.info(f"Processing batch for users {offset} - {offset + len(users)}.")
             for user in users:
                 movie_ids = movie_ids.union(self._update_movie_cache_based_on_user_watchlist(user))
             return movie_ids
@@ -221,20 +225,23 @@ class MovieCachingService:
                 session_id=user.session
             )
             movie_ids = []
+            logging.info(f"Updating watchlist cache for {user.user_id}.")
             for movie in watchlist:
                 movie_ids.append(movie['id'])
             update_needed_for_ids = keep_movie_ids_where_update_is_needed(tx=tx, movie_ids=movie_ids)
+            logging.info(f"Update needed for {len(update_needed_for_ids)} movies out of {len(movie_ids)}.")
             # save the missing movies and update the outdated ones
             for movie_id in update_needed_for_ids:
                 tmdb_movie = self.get_movie_details_from_tmdb(movie_id=movie_id)
                 save_or_update_movie(tx=tx, movie=tmdb_movie.to_entity())
             # since the movie was on the user's watchlist, we can vote for it
+            logging.info(f"Saving votes for {len(movie_ids)} movies of {user.user_id}.")
             for movie_id in movie_ids:
                 vote_for_movie(tx=tx, user_id=user.user_id, movie_id=movie_id, vote_value=VoteValue.YEAH)
         except Exception as e:
             if tx is not None:
                 tx.rollback()
-            raise MovieCacheUpdateError(f"Error during updating movie cache based on the user's watchlist: {e}")
+            raise MovieCacheUpdateError(f"Error during updating movie cache based on the {user.user_id} user's watchlist: {e}")
         else:
             tx.commit()
             return set(movie_ids)
@@ -248,6 +255,7 @@ class MovieCachingService:
         try:
             session = self.db.session()
             tx = session.begin_transaction()
+            logging.info("Removing obsolete movies.")
             delete_details_of_obsolete_movies(tx=tx)
         except Exception as e:
             if tx is not None:
@@ -265,6 +273,7 @@ class MovieCachingService:
         try:
             session = self.db.session()
             tx = session.begin_transaction()
+            logging.info(f"Updating availabilities for {len(movie_ids)} movies.")
             filters = get_all_provider_filters(tx=tx)
             filters_by_location = {}
             for f in filters:
