@@ -660,8 +660,6 @@ def watched_movie(movie, group_id):
                     return redirect("/")
 
 
-update_movie_cache()
-
 # starting scheduler
 if os.getenv("MoviesToWatch") != "test":
     scheduler.init_app(app)
