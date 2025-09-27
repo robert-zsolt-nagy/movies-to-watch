@@ -256,8 +256,6 @@ class GroupManagerService:
             votes = get_all_votes_of_watchlist(tx=tx, user_ids=user_ids, movie_ids=movie_ids)
             availabilities = get_all_availabilities_for_movies(
                 tx=tx, movie_ids=movie_ids, provider_filters=watchlist.provider_filters)
-            availabilities = self._keep_one_availability_per_provider(
-                availabilities=availabilities, provider_filters=watchlist.provider_filters)
             watch_history = get_all_watch_history_of_watchlist(tx=tx, user_ids=user_ids, movie_ids=movie_ids)
             # fix logo paths
             for a in availabilities:
@@ -269,6 +267,8 @@ class GroupManagerService:
                 for availability in availabilities:
                     if availability.movie_id == movie.movie_id:
                         relevant_availabilities.append(availability)
+                relevant_availabilities = self._keep_one_availability_per_provider(
+                    availabilities=relevant_availabilities, provider_filters=watchlist.provider_filters)
                 relevant_votes = []
                 for vote in votes:
                     if vote.movie_id == movie.movie_id:
