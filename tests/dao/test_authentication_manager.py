@@ -22,14 +22,12 @@ class TestAuthenticationManager(TestCase):
         # given
         auth = Auth(api_key="ignore", requests=None, credentials="ignore")
         auth.sign_in_with_email_and_password = MagicMock(return_value={
-            "user": {
-                'localId': 'localId',
-                'email': 'email',
-                'displayName': 'displayName',
-                'idToken': 'idToken',
-                'refreshToken': 'refreshToken',
-                'expiresIn': 'expiresIn'
-            }
+            'localId': 'localId',
+            'email': 'email',
+            'displayName': 'displayName',
+            'idToken': 'idToken',
+            'refreshToken': 'refreshToken',
+            'expiresIn': 'expiresIn'
         })
         under_test = FirebaseAuthenticationManager(config=auth)
 
@@ -86,14 +84,12 @@ class TestAuthenticationManager(TestCase):
         # given
         auth = Auth(api_key="ignore", requests=None, credentials="ignore")
         auth.create_user_with_email_and_password = MagicMock(return_value={
-            "user": {
-                'localId': 'localId',
-                'email': 'email',
-                'displayName': 'displayName',
-                'idToken': 'idToken',
-                'refreshToken': 'refreshToken',
-                'expiresIn': 'expiresIn'
-            }
+            'localId': 'localId',
+            'email': 'email',
+            'displayName': 'displayName',
+            'idToken': 'idToken',
+            'refreshToken': 'refreshToken',
+            'expiresIn': 'expiresIn'
         })
         under_test = FirebaseAuthenticationManager(config=auth)
 

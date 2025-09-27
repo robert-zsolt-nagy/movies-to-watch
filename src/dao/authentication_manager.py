@@ -1,8 +1,17 @@
+import logging
+
 from neo4j import Record
 from requests.exceptions import HTTPError
 import json
 import pyrebase
 from typing import Union
+
+class AuthException(Exception):
+    """Base class for Exceptions to Auth"""
+
+    def __init__(self, message: str):
+        """Base class for Exceptions to Auth"""
+        super().__init__(message)
 
 class BaseAccountInfo:
     def __init__(self, email_verified: bool, last_refresh_at: str) -> None:
@@ -21,14 +30,13 @@ class AuthUser:
 
     @classmethod
     def from_response(cls, response: dict):
-        user = response["user"]
         return cls(
-            user_id=user["localId"],
-            email=user["email"],
-            display_name=user["displayName"],
-            id_token=user["idToken"],
-            refresh_token=user["refreshToken"],
-            expires_in=user["expiresIn"]
+            user_id=response["localId"],
+            email=response["email"],
+            display_name=response["displayName"],
+            id_token=response["idToken"],
+            refresh_token=response["refreshToken"],
+            expires_in=response["expiresIn"]
         )
 
     @classmethod
@@ -170,9 +178,21 @@ class FirebaseAuthenticationManager(AuthenticationManager):
         -------
         AuthUser
             An authenticated user.
+
+        Raises
+        ------
+        AuthException
+            If the authentication fails.
         """
-        response = self.__auth.sign_in_with_email_and_password(email=email, password=password)
-        return AuthUser.from_response(response)
+        try:
+            response = self.__auth.sign_in_with_email_and_password(email=email, password=password)
+            return AuthUser.from_response(response)
+        except HTTPError as he:
+            msg = self.get_authentication_error_msg(he)
+            raise AuthException(msg)
+        except Exception as e:
+            logging.error(f"Error signing in: {e}")
+            raise AuthException("Error signing in")
     
     def get_account_info(self, id_token: str) -> BaseAccountInfo:
         """Gets the account information of a signed-in user.
@@ -208,9 +228,21 @@ class FirebaseAuthenticationManager(AuthenticationManager):
         -------
         AuthUser
             The data of the created user.
+
+        Raises
+        ------
+        AuthException
+            If the authentication fails.
         """
-        response = self.__auth.create_user_with_email_and_password(email=email, password=password)
-        return AuthUser.from_response(response)
+        try:
+            response = self.__auth.create_user_with_email_and_password(email=email, password=password)
+            return AuthUser.from_response(response)
+        except HTTPError as he:
+            msg = self.get_authentication_error_msg(he)
+            raise AuthException(msg)
+        except Exception as e:
+            logging.error(f"Error creating user: {e}")
+            raise AuthException("Error creating user.")
 
     def update_profile(self, id_token, display_name = None, photo_url = None, delete_attribute = None):
         """Updates a profile with new data.

@@ -30,6 +30,9 @@ class Genre:
             parts[1]
         )
 
+    def __str__(self):
+        return self.name
+
 class Vote:
     def __init__(self,
                  user_id: str, movie_id: int, vote: VoteValue, updated_at: datetime = datetime.now()):
@@ -50,6 +53,9 @@ class Vote:
             vote=vote,
             updated_at=updated_at)
 
+    def __str__(self):
+        return f"{self.user_id} {self.movie_id} {self.vote.value}"
+
 
 class WatchHistory:
     def __init__(self,
@@ -67,6 +73,9 @@ class WatchHistory:
             user_id=user_id,
             movie_id=movie_id,
             updated_at=updated_at)
+
+    def __str__(self):
+        return f"{self.user_id} {self.movie_id}"
 
 
 class Provider:
@@ -90,6 +99,9 @@ class Provider:
             logo_path=logo_path,
             updated_at=updated_at)
 
+    def __str__(self):
+        return f"{self.provider_id} {self.name} {self.logo_path}"
+
 
 class ProviderFilter:
     def __init__(self,
@@ -111,6 +123,9 @@ class ProviderFilter:
             location=location,
             priority=priority,
             updated_at=updated_at)
+
+    def __str__(self):
+        return f"{self.provider_id} {self.location} {self.priority}"
 
 
 class AvailabilityType(Enum):
@@ -143,6 +158,9 @@ class Availability:
             location=location,
             watch_type=watch_type,
             updated_at=updated_at)
+
+    def __str__(self):
+        return f"{self.movie_id} {self.provider} {self.watch_type} {self.location}"
 
 
 class Movie:
@@ -190,6 +208,9 @@ class Movie:
             status=status,
             updated_at=updated_at)
 
+    def __str__(self):
+        return f"{self.movie_id} {self.title} {self.genres}"
+
 
 class User:
     def __init__(self,
@@ -212,6 +233,9 @@ class User:
             profile_pic=record["u_profile_pic"],
             updated_at=record["u_updated_at"]
         )
+
+    def __str__(self):
+        return f"{self.user_id}"
 
 
 class WatchList:
@@ -236,6 +260,9 @@ class WatchList:
             name=name,
             provider_filters=[],
             updated_at=updated_at)
+
+    def __str__(self):
+        return f"{self.watchlist_id} {self.name} {self.provider_filters} {self.users}"
 
 
 class TmdbUser:
@@ -265,3 +292,7 @@ class TmdbUser:
             username=record["t_username"],
             updated_at=record["t_updated_at"]
         )
+
+    def __str__(self):
+        return f"{self.user_id} ${self.tmdb_id}"
+

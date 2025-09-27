@@ -148,7 +148,7 @@ def get_all_movies_for_watchlist(tx: Transaction, watchlist_id: UUID) -> list[Mo
     try:
         records = tx.run(
             query="""
-                MATCH (:Watchlist {id: $watchlist_id})-[:MEMBER]->(:User)-[:VOTED]->(m:Movie)
+                MATCH (:Watchlist {id: $watchlist_id})-[:MEMBER]->(:User)-[:VOTED {vote: "yeah"}]->(m:Movie)
                 WITH DISTINCT m
                 ORDER BY m.title
                 RETURN
