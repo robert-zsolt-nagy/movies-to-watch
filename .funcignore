@@ -21,6 +21,7 @@ movies-to-watch-tmdb-firebase-adminsdk-l1yao-b71552193c.json
 newrelic.ini
 README.md
 renovate.json
+requirements.txt
 secrets.toml
 secrets_test.toml
 test-requirements.txt
