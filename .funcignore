@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 .venv
 .vscode
+db/
 drawio
 static/
 templates/
