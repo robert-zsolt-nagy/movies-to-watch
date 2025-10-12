@@ -4,10 +4,11 @@ from datetime import datetime
 from neo4j import Driver
 from werkzeug.http import parse_age
 
+from src.dao.authentication_manager import AuthException
 from src.dao.m2w_graph_db_entities import VoteValue, Availability, Provider, AvailabilityType
 from src.dao.m2w_graph_db_repository_availabilities import save_movie_availabilities
 from src.dao.m2w_graph_db_repository_movies import get_one_movie_by_id, keep_movie_ids_where_update_is_needed, \
-    save_or_update_movie, delete_details_of_obsolete_movies
+    save_or_update_movie, delete_details_of_obsolete_movies, assert_movie_cache_needs_update
 from src.dao.m2w_graph_db_repository_users import count_tmdb_users, get_tmdb_users
 from src.dao.m2w_graph_db_repository_votes_and_watch_status import vote_for_movie
 from src.dao.m2w_graph_db_repository_watchlists import get_all_provider_filters
@@ -150,19 +151,26 @@ class MovieCachingService:
         return self.get_movie_details_from_cache(movie_id=movie_id).title
 
     # TODO: test me
-    def movie_cache_update_job(self) -> bool:
+    def movie_cache_update_job(self, api_token: str) -> bool:
         """
         Caches the details of every movie from every user's watchlist.
-        
+
+        Parameters
+        ----------
+        api_token: str
+            The API token provided by the end user.
+
         Returns
         -------
         bool
             True if successful.
-        
+
         Raises
         ------
         MovieCacheUpdateError
             in case of any error.
+        AuthException
+            if the API token is invalid.
         """
         session = None
         tx = None
@@ -170,8 +178,19 @@ class MovieCachingService:
         try:
             session = self.db.session()
             tx = session.begin_transaction()
-            total = count_tmdb_users(tx=tx)
-            logging.info(f"Processing data for {total} users.")
+            if not assert_movie_cache_needs_update(tx=tx, token=api_token):
+                logging.info("Movie cache update is not necessary.")
+                total = 0
+            else:
+                logging.info("Token is valid.")
+                total = count_tmdb_users(tx=tx)
+                logging.info(f"Processing data for {total} users.")
+        except AuthException as e:
+            if tx is not None:
+                tx.rollback()
+            if session is not None:
+                session.close()
+            raise e
         except Exception:
             if tx is not None:
                 tx.rollback()
@@ -183,6 +202,8 @@ class MovieCachingService:
                 tx.commit()
             if session is not None:
                 session.close()
+            if total <= 0:
+                return False
             page_size = 20
             for offset in range(0, total, page_size):
                 movie_ids = movie_ids.union(self._update_movie_cache_for_users(offset=offset, limit=page_size))
