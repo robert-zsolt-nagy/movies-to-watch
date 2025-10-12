@@ -8,7 +8,7 @@ from typing import Optional
 import psutil
 import pyrebase
 import requests
-from flask import Flask, render_template, session, redirect, request, flash
+from flask import Flask, render_template, session, redirect, request, flash, Response
 from flask_apscheduler import APScheduler
 from neo4j import Driver, GraphDatabase
 from opentelemetry import metrics, _logs
@@ -212,18 +212,6 @@ if SECRETS.auth_store != "neo4j":
 # setting up scheduler and jobs #
 #################################
 scheduler = APScheduler()
-
-
-@scheduler.task('cron', id="update_movies", hour='*', minute='*/15')
-def update_movie_cache():
-    """Updates the movie cache regularly."""
-    try:
-        logging.info("Movie cache update started.")
-        get_movie_service().movie_cache_update_job()
-    except Exception as e:
-        logging.error(f"Movie cache error: {e}")
-    else:
-        logging.info("Movie cache update finished.")
 
 
 @scheduler.task('cron', id="report_uptime", hour='*', minute='*/1')
@@ -659,6 +647,35 @@ def watched_movie(movie, group_id):
                     report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success_group")
                     return redirect("/")
 
+@app.route("/api/refresh-cache", methods=['GET'])
+def refresh_movie_cache():
+    """Updates the movie cache regularly."""
+    api_token = request.headers.get(key="X-M2W-API-Token")
+    if api_token is None:
+        logging.error("API token is missing.")
+        resp = Response(response="API Token is missing.", status=401)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
+    try:
+        logging.info("Movie cache update started.")
+        if not get_movie_service().movie_cache_update_job(api_token=api_token):
+            logging.error("Movie cache update was not necessary.")
+            raise Exception("Movie cache update was not necessary.")
+    except AuthException:
+        logging.error("API token is invalid.")
+        resp = Response(response="API Token is invalid.", status=401)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
+    except Exception as e:
+        logging.error(f"Movie cache error: {e}")
+        resp = Response(response=f"Movie cache error: {e}", status=500)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
+    else:
+        logging.info("Movie cache update finished.")
+        resp = Response(response=None, status=200)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
 
 # starting scheduler
 if os.getenv("MoviesToWatch") != "test":

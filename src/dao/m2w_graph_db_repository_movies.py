@@ -3,7 +3,9 @@ from datetime import datetime, timedelta, date
 from uuid import UUID
 
 from neo4j import Transaction
+from neo4j.exceptions import ResultNotSingleError
 
+from src.dao.authentication_manager import AuthException
 from src.dao.m2w_graph_db_entities import Movie, M2WDatabaseException, Genre
 
 
@@ -355,3 +357,55 @@ def keep_movie_ids_where_update_is_needed(tx: Transaction, movie_ids: list[int])
         logging.error(f"Failed to find movies where update is needed: {e}")
         raise M2WDatabaseException("Unable to find movies where update is needed.")
 
+def assert_movie_cache_needs_update(tx: Transaction, token: str) -> bool:
+    """
+    Checks that the given token is valid and the movie cache was not updated recently.
+
+    Parameters
+    ----------
+    tx: Transaction
+        The Neo4j transaction object.
+    token: str
+        The token to check.
+
+    Returns
+    -------
+    bool
+        True if the movie cache needs to be updated. False otherwise.
+
+    Raises
+    ------
+    M2WDatabaseException:
+        If the given token is invalid.
+    """
+    try:
+        result = tx.run(
+            query="""
+                MATCH (t:ApiToken {token: $token})
+                RETURN t.updated_at AS updated_at
+            """,
+            parameters={
+                "token": token,
+            }
+        )
+        record = result.single(strict=True)
+        if record['updated_at'] > datetime.now() - timedelta(minutes=14) :
+            return False
+        else:
+            tx.run(
+                query="""
+                    MATCH (t:ApiToken {token: $token})
+                    SET t.updated_at = $now
+                """,
+                parameters={
+                    "token": token,
+                    "now": datetime.now(),
+                }
+            )
+            return True
+    except ResultNotSingleError as e:
+        logging.error(f"Token not found: {e}")
+        raise AuthException("Token not found.")
+    except Exception as e:
+        logging.error(f"Failed to verify token: {e}")
+        raise M2WDatabaseException("Unable to verify token.")
