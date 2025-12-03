@@ -2,7 +2,7 @@
 
 echo ">generate assets"
 mkdir -p web/dist
-if ! npm install --prefix web > web/dist/install-log.txt; then
+if ! npm install --ignore-scripts --prefix web > web/dist/install-log.txt; then
   echo "ERROR: npm install failed:"
   cat web/dist/install-log.txt
   echo "exiting..."

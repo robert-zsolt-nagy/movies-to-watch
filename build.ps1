@@ -1,7 +1,7 @@
 Write-Output ">generate assets"
 $null = New-Item ".\web\dist" -ItemType Directory -ea 0
 cd web
-npm install > dist\install-log.txt
+npm install --ignore-scripts > dist\install-log.txt
 if (-not $?)
 {
     Write-Output  "ERROR: npm install failed:"
