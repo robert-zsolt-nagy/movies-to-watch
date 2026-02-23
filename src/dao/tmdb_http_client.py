@@ -1,8 +1,13 @@
+import functools
 import json
-from typing import Any, Optional
-import requests
-from datetime import datetime
+import logging
+import re
 import time
+from datetime import datetime
+from typing import Any, Optional
+
+import requests
+from opentelemetry.metrics._internal.instrument import Histogram
 
 
 class TmdbHttpClientException(Exception):
@@ -47,16 +52,40 @@ def _process_response(response: requests.Response) -> Any:
         raise TmdbHttpClientException(f"Response with status:{response.status_code}")
 
 
+def generalize_path(path: str):
+    """ Identify IDs in the request path and replace them with placeholders. """
+    pattern = r"/\d+"
+    temp = path
+    try:
+        matches = re.findall(pattern=pattern, string=temp)
+        for match in matches:
+            temp = temp.replace(match, "/[ID]")
+    except Exception as e:
+        logging.warning(f"Exception during generalizing request path: {temp}")
+        return path
+    else:
+        return temp
+
 class TmdbHttpClient:
     """Handle the requests with the TMDB API"""
-    def __init__(self, token: str, base_url: str = "https://api.themoviedb.org/3", session: Optional[requests.Session] = None):
+    def __init__(
+            self, 
+            token: str, 
+            base_url: str = "https://api.themoviedb.org/3", 
+            session: Optional[requests.Session] = None,
+            histogram: Optional[Histogram] = None):
         """Bundle all requests to the TMDB API
         
         Parameters
         ----------
-        token: the bearer token for accessing the TMDB API.
-        base_url: the base URL of the TMDB API.
-        session: the session object used for connection pooling.
+        token:
+            the bearer token for accessing the TMDB API.
+        base_url:
+            the base URL of the TMDB API.
+        session:
+            the session object used for connection pooling.
+        histogram:
+            optional histogram telemetry object for registering telemetry data.
         """
         self.__base_url = base_url
         self.__token = token
@@ -64,18 +93,79 @@ class TmdbHttpClient:
             self.__session = requests.Session()
         else:
             self.__session = session
+        self.histogram = histogram
 
+    def record_to_histogram(self, amount: int, attributes=None) -> None:
+        """ Records the telemetry data to the histogram attribute. 
+        
+        Parameters
+        ----------
+        amount: the amount of the measurement.
+        attributes: metedata of the measurement.
+        """
+        if self.histogram is not None:
+            try:
+                self.histogram.record(amount=amount, attributes=attributes)
+            except Exception as e:
+                logging.error(f"Error during recording histogram: {e}")
+
+    @staticmethod
+    def request_timer(recorder, method=None):
+        def outer_wrapper(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                elapsed_time = 0
+                path = ""
+                this_instance = None
+                try:
+                    this_instance = args[0]
+                    path = kwargs['path']
+                    path = generalize_path(path=path)
+                    start_time = time.time()
+                    result = func(*args, **kwargs)
+                    elapsed_time = time.time() - start_time
+                except Exception:
+                    recorder(
+                        this_instance,
+                        amount=int(elapsed_time*1000), 
+                        attributes={
+                            "tmdb.request.method": method, 
+                            "tmdb.success": False,
+                            "tmdb.path": path
+                        }
+                        )
+                    raise
+                else:
+                    recorder(
+                        this_instance,
+                        amount=int(elapsed_time*1000), 
+                        attributes={
+                            "tmdb.request.method": method, 
+                            "tmdb.success": True,
+                            "tmdb.path": path
+                        }
+                        )
+                    return result
+            return wrapper
+        return outer_wrapper
+
+    @request_timer(record_to_histogram, method="GET")
     def get(self, path: str, params: Optional[dict] = None, additional_headers: Optional[dict] = None) -> Any:
         """Sends a GET request.
         
         Parameters
         ----------
-        path: the specific API path
-        params: the parameters of the request
-        additional_headers: the additional headers of the request
+        path:
+            the specific API path
+        params:
+            the parameters of the request
+        additional_headers:
+            the additional headers of the request
 
-        Returns:
-        The response decoded as json.
+        Returns
+        -------
+        Any
+            The response decoded as JSON.
         """
         default_headers = self.__get_default_headers()
         headers = self.__consolidate_headers(default_headers, additional_headers)
@@ -83,6 +173,7 @@ class TmdbHttpClient:
         response = self.__session.get(url=url, params=params, headers=headers)
         return _process_response(response)
 
+    @request_timer(record_to_histogram, method="POST")
     def post(
             self, 
             path: str, 
@@ -95,14 +186,20 @@ class TmdbHttpClient:
         
         Parameters
         ----------
-        path: the specific API path
-        content_type: the content type of the request.
-        payload: the payload delivered by the request.
-        additional_headers: the additional headers of the request.
-        params: the parameters of the request
+        path:
+            the specific API path
+        content_type:
+            the content type of the request.
+        payload:
+            the payload delivered by the request.
+        additional_headers:
+            the additional headers of the request.
+        params:
+            the parameters of the request
 
-        Returns:
-        The response decoded as json.
+        Returns
+        -------
+            The response decoded as JSON.
         """
         default_headers = self.__get_default_headers()
         headers = self.__consolidate_headers(default_headers, {"Content-Type":content_type}, additional_headers)
@@ -110,6 +207,7 @@ class TmdbHttpClient:
         response = self.__session.post(url=url, json=payload, headers=headers, params=params)
         return _process_response(response)
 
+    @request_timer(record_to_histogram, method="DELETE")
     def delete(self, path: str, params: Optional[dict] = None, additional_headers: Optional[dict] = None) -> Any:
         """Sends a DELETE request.
         
@@ -119,8 +217,10 @@ class TmdbHttpClient:
         params: the parameters of the request
         additional_headers: the additional headers of the request
 
-        Returns:
-        The response decoded as json.
+        Returns
+        -------
+        Any
+            The response decoded as JSON.
         """
         default_headers = self.__get_default_headers()
         headers = self.__consolidate_headers(default_headers, additional_headers)
@@ -129,15 +229,32 @@ class TmdbHttpClient:
         return _process_response(response)
 
     def __get_default_headers(self) -> dict:
-        """Returns a dictionary with the default headers."""
+        """Returns a dictionary with the default headers.
+
+        Returns
+        -------
+        dict
+            The default headers
+        """
         return {
             "accept": "application/json",
             "Authorization": f"Bearer {self.__token}"
         }
-    
-    def __consolidate_headers(self, *args: Optional[dict]) -> dict:
+
+    @staticmethod
+    def __consolidate_headers(*args: Optional[dict]) -> dict:
         """Consolidate the received headers into a single header
         and return it.
+
+        Parameters
+        ----------
+        *args:
+            the headers to be consolidated.
+
+        Returns
+        -------
+        dict
+            The merged headers.
         """
         headers = [arg for arg in args if arg is not None]
         result = {}

@@ -33,13 +33,17 @@ class TestSecretManager(TestCase):
                     'databaseURL': ""
                 }
             },
-            'firestore': {
-                'project': "project",
-                'certificate': "certificate.json"
+            'auth': {
+                'store': "firebase"
             },
             'm2w': {
                 'base_URL': "http://127.0.0.1:8080",
                 'movie_retention': 3600
+            },
+            'neo4j': {
+                'uri': "bolt://127.0.0.1:7687",
+                'user': "neo4j",
+                'password': "password"
             }
         }
 
@@ -50,13 +54,14 @@ class TestSecretManager(TestCase):
         self.assertEqual(secrets, content)
         self.assertEqual(under_test.tmdb_rate_limit, content['tmdb']['rate_limit'])
         self.assertEqual(under_test.tmdb_token, content['tmdb']['auth']['bearer_token'])
-        self.assertEqual(under_test.tmdb_API, content['tmdb']['URLs']['API_base_URL'])
+        self.assertEqual(under_test.tmdb_api, content['tmdb']['URLs']['API_base_URL'])
         self.assertEqual(under_test.tmdb_home, content['tmdb']['URLs']['home_URL'])
         self.assertEqual(under_test.tmdb_image, content['tmdb']['URLs']['image_URL'])
         self.assertEqual(under_test.flask_key, content['flask']['secret_key'])
+        self.assertEqual(under_test.auth_store, content['auth']['store'])
         self.assertEqual(under_test.firebase_cert, content['firebase']['certificate'])
         self.assertEqual(under_test.firebase_config, content['firebase']['config'])
-        self.assertEqual(under_test.firestore_cert, content['firestore']['certificate'])
-        self.assertEqual(under_test.firestore_project, content['firestore']['project'])
-        self.assertEqual(under_test.m2w_base_URL, content['m2w']['base_URL'])
-        self.assertEqual(under_test.m2w_movie_retention, content['m2w']['movie_retention'])
+        self.assertEqual(under_test.m2w_base_url, content['m2w']['base_URL'])
+        self.assertEqual(under_test.neo4j_uri, content['neo4j']['uri'])
+        self.assertEqual(under_test.neo4j_user, content['neo4j']['user'])
+        self.assertEqual(under_test.neo4j_pass, content['neo4j']['password'])

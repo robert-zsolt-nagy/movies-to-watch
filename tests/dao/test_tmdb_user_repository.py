@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from src.dao.tmdb_http_client import TmdbHttpClient, TmdbHttpClientException
-from src.dao.tmdb_user_repository import TmdbUserRepository, TmdbUserRepositoryException
+from src.dao.tmdb_user_repository import TmdbUserRepository, TmdbUserRepositoryException, TmdbRequestToken
 from datetime import datetime, timedelta, UTC
 
 class TestTmdbUserRepository(TestCase):
@@ -24,7 +24,7 @@ class TestTmdbUserRepository(TestCase):
         self.assertIsInstance(context.exception, TmdbUserRepositoryException)
         client.get.assert_called_with(path="/authentication/token/new")
 
-    def test_create_request_token_should_return_dicitonary(self):
+    def test_create_request_token_should_return_token(self):
         # given
         client = TmdbHttpClient(token="ignore", base_url="ignore")
         client.get = MagicMock(return_value={
@@ -38,23 +38,27 @@ class TestTmdbUserRepository(TestCase):
         response = under_test.create_request_token()
 
         # then exception was raised
-        self.assertEqual(response, {
+        self.assertEqual(response.to_dict(), {
             "success": True,
             "expires_at": "2016-08-26 17:04:39 UTC",
             "request_token": "token"
         })
         client.get.assert_called_with(path="/authentication/token/new")
 
-    def test_get_user_permission_URL_should_raise_error_if_expired(self):
+    def test_get_user_permission_url_should_raise_error_if_expired(self):
         # given
         client = TmdbHttpClient(token="ignore", base_url="ignore")
         under_test = TmdbUserRepository(tmdb_http_client=client)
 
         # when 
         with self.assertRaises(TmdbUserRepositoryException) as context:
-            under_test.get_user_permission_URL(
+            token = TmdbRequestToken(
                 request_token="token",
-                expires_at="2016-08-26 17:04:39 UTC",
+                success=True,
+                expires_at="2016-08-26 17:04:39 UTC"
+            )
+            under_test.get_user_permission_url(
+                request_token=token,
                 tmdb_url="ignore"
             )
 
@@ -69,32 +73,27 @@ class TestTmdbUserRepository(TestCase):
         expires_at = expires_at.strftime("%Y-%m-%d %H:%M:%S UTC")
 
         # when 
-        response = under_test.get_user_permission_URL(
-            request_token="token",
-            expires_at=expires_at,
+        response = under_test.get_user_permission_url(
+            request_token=TmdbRequestToken(request_token="token", success=True, expires_at=expires_at),
             tmdb_url="ignore"
         )
 
         # then
         self.assertEqual(response, "ignore/authenticate/token")
 
-    def test_get_user_permission_URL_should_handle_redirect_and_success_arguments(self):
+    def test_get_user_permission_url_should_handle_redirect_and_success_arguments(self):
         # given
         client = TmdbHttpClient(token="ignore", base_url="ignore")
         under_test = TmdbUserRepository(tmdb_http_client=client)
         expires_at = datetime.now(UTC) + timedelta(days=1)
         expires_at = expires_at.strftime("%Y-%m-%d %H:%M:%S UTC")
-        payload = {
-            "success": True,
-            "expires_at": expires_at,
-            "request_token": "token"
-        }
+        token = TmdbRequestToken(request_token="token", success=True, expires_at=expires_at)
 
         # when 
-        response = under_test.get_user_permission_URL(
+        response = under_test.get_user_permission_url(
             redirect_to="target",
             tmdb_url="ignore",
-            **payload
+            request_token=token
         )
 
         # then
@@ -111,13 +110,12 @@ class TestTmdbUserRepository(TestCase):
 
         # when 
         with self.assertRaises(TmdbUserRepositoryException) as context:
-            under_test.create_session_id(
-                request_token={
-                    "success": True,
-                    "expires_at": "2016-08-26 17:04:39 UTC",
-                    "request_token": "token"
-                }
+            token = TmdbRequestToken(
+                request_token="token",
+                success=True,
+                expires_at="2016-08-26 17:04:39 UTC"
             )
+            under_test.create_session_id(request_token=token)
 
         # then
         self.assertIsInstance(context.exception, TmdbUserRepositoryException)
@@ -135,13 +133,12 @@ class TestTmdbUserRepository(TestCase):
 
         # when 
         with self.assertRaises(TmdbUserRepositoryException) as context:
-            under_test.create_session_id(
-                request_token={
-                    "success": True,
-                    "expires_at": expires_at,
-                    "request_token": "token"
-                }
+            token = TmdbRequestToken(
+                request_token="token",
+                success=True,
+                expires_at=expires_at
             )
+            under_test.create_session_id(request_token=token)
 
         # then
         self.assertIsInstance(context.exception, TmdbUserRepositoryException)
@@ -156,15 +153,14 @@ class TestTmdbUserRepository(TestCase):
         expires_at = datetime.now(UTC) + timedelta(days=1)
         expires_at = expires_at.strftime("%Y-%m-%d %H:%M:%S UTC")
         under_test = TmdbUserRepository(tmdb_http_client=client)
-
-        # when 
-        response = under_test.create_session_id(
-            request_token={
-                "success": True,
-                "expires_at": expires_at,
-                "request_token": "token"
-            }
+        token = TmdbRequestToken(
+            request_token="token",
+            success=True,
+            expires_at=expires_at
         )
+
+        # when
+        response = under_test.create_session_id(request_token=token)
 
         # then
         self.assertEqual(response, "session")
