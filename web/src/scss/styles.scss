@@ -346,11 +346,20 @@
         @extend .ext-button;
       }
 
-      .watched-movie {
+      .watched-movie:not(.watched) {
         @extend .ext-button;
 
         a {
           @extend .btn-outline-dark;
+        }
+      }
+
+      .watched-movie.watched {
+        @extend .ext-button;
+
+        a {
+          @extend .btn-dark;
+          color: white;
         }
       }
     }
@@ -392,6 +401,15 @@
           img {
             @extend .img-badge;
             max-height: 5em;
+          }
+
+          .badge-text {
+            right: 0;
+            position: relative;
+            bottom: 0.8em;
+            background-color: darkslategrey;
+            width: 100%;
+            max-width: 100%;
           }
         }
       }
