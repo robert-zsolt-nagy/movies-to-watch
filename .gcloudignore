@@ -13,3 +13,10 @@ web/
 secrets_test.toml
 build.ps1
 build.sh
+newrelic.ini
+app.yaml
+app_dev.yaml
+test-requirements.txt
+function_app.py
+.funcignore
+azure-requirements.txt

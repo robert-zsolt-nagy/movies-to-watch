@@ -21,7 +21,7 @@
             <a class="btn btn-outline-primary" href="/profile">Go to Profile page</a>
           </div>
         {% elif group %}
-          <div hx-get="/api/group/{{ group }}" hx-trigger="load" hx-indicator="#indicator" hx-target="#index_content"
+          <div hx-get="/api/group/{{ group.watchlist_id.hex }}" hx-trigger="load" hx-indicator="#indicator" hx-target="#index_content"
                class="alert alert-light" role="alert">
             <div id="indicator" class="text-center">
               <p>Your groups list is loading...</p>
