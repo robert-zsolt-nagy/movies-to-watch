@@ -1,0 +1,43 @@
+databaseChangeLog:
+- changeSet:
+    id: create_default_providers
+    author: nagyesta
+    changes:
+    - cypher: 'MERGE (p:Provider {id: 8}) SET p.name = "Netflix", p.logo_path = "/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 119}) SET p.name = "Amazon Prime Video", p.logo_path = "/pvske1MyAoymrs5bguRfVqYiM9a.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 2}) SET p.name = "Apple TV", p.logo_path = "/9ghgSC0MA082EL6HLCW3GalykFD.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 350}) SET p.name = "Apple TV+", p.logo_path = "/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 3}) SET p.name = "Google Play Movies", p.logo_path = "/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 35}) SET p.name = "Rakuten TV", p.logo_path = "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 1899}) SET p.name = "HBO Max", p.logo_path = "/jbe4gVSfRlbPTdESXhEKpornsfu.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 337}) SET p.name = "Disney Plus", p.logo_path = "/97yvRBw1GzX7fXprcF80er19ot.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 701}) SET p.name = "FilmBox+", p.logo_path = "/fbveJTcro9Xw2KuPIIoPPePHiwy.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 1773}) SET p.name = "SkyShowtime", p.logo_path = "/h0ZYcYHicKQ4Ixm5nOjqvwni5NG.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 188}) SET p.name = "YouTube Premium", p.logo_path = "/rMb93u1tBeErSYLv79zSTR07UdO.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 538}) SET p.name = "Plex", p.logo_path = "/vLZKlXUNDcZR7ilvfY9Wr9k80FZ.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 2285}) SET p.name = "JustWatchTV", p.logo_path = "/uCMLyl8jGIbInVyDeCeV6kpciFm.jpg", p.updated_at = localdatetime()'
+    - cypher: 'MERGE (p:Provider {id: 73}) SET p.name = "Tubi TV", p.logo_path = "/zLYr7OPvpskMA4S79E3vlCi71iC.jpg", p.updated_at = localdatetime()'
+- changeSet:
+    id: create_default_watchlist
+    author: nagyesta
+    changes:
+    - cypher: 'MERGE (w:Watchlist {id: replace(toString(randomUUID()), "-", "")}) SET w.name = "Default", w.updated_at = localdatetime()'
+- changeSet:
+    id: assign_default_providers_to_watchlist
+    author: nagyesta
+    changes:
+    - cypher: 'MATCH (p:Provider {id: 8})   ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 119}) ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 2})   ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 350}) ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 3})   ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 35})  ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 1899}),(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 337}) ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 701}) ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 1773}),(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 188}) ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 538}) ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 2285}),(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "HU"}]->(p) SET f.priority = 0, f.updated_at = localdatetime()'
+    - cypher: 'MATCH (p:Provider {id: 73})  ,(w:Watchlist {name: "Default"}) MERGE (w)-[f:FOLLOWS {location: "US"}]->(p) SET f.priority = 1, f.updated_at = localdatetime()'
+
