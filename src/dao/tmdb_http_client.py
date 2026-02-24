@@ -1,12 +1,14 @@
-import json
-from typing import Any, Optional
-import requests
-from datetime import datetime
-import time
-from opentelemetry.metrics._internal.instrument import Histogram
 import functools
-import re
+import json
 import logging
+import re
+import time
+from datetime import datetime
+from typing import Any, Optional
+
+import requests
+from opentelemetry.metrics._internal.instrument import Histogram
+
 
 class TmdbHttpClientException(Exception):
     """Base class for Exceptions of TmdbHttpClient"""
@@ -76,10 +78,14 @@ class TmdbHttpClient:
         
         Parameters
         ----------
-        token: the bearer token for accessing the TMDB API.
-        base_url: the base URL of the TMDB API.
-        session: the session object used for connection pooling.
-        historgram: optional histogram telemetry object for registering telemetry data.
+        token:
+            the bearer token for accessing the TMDB API.
+        base_url:
+            the base URL of the TMDB API.
+        session:
+            the session object used for connection pooling.
+        histogram:
+            optional histogram telemetry object for registering telemetry data.
         """
         self.__base_url = base_url
         self.__token = token
@@ -109,8 +115,10 @@ class TmdbHttpClient:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 elapsed_time = 0
+                path = ""
+                this_instance = None
                 try:
-                    THIS_INSTANCE = args[0]
+                    this_instance = args[0]
                     path = kwargs['path']
                     path = generalize_path(path=path)
                     start_time = time.time()
@@ -118,7 +126,7 @@ class TmdbHttpClient:
                     elapsed_time = time.time() - start_time
                 except Exception:
                     recorder(
-                        THIS_INSTANCE, 
+                        this_instance,
                         amount=int(elapsed_time*1000), 
                         attributes={
                             "tmdb.request.method": method, 
@@ -129,7 +137,7 @@ class TmdbHttpClient:
                     raise
                 else:
                     recorder(
-                        THIS_INSTANCE, 
+                        this_instance,
                         amount=int(elapsed_time*1000), 
                         attributes={
                             "tmdb.request.method": method, 
@@ -147,12 +155,17 @@ class TmdbHttpClient:
         
         Parameters
         ----------
-        path: the specific API path
-        params: the parameters of the request
-        additional_headers: the additional headers of the request
+        path:
+            the specific API path
+        params:
+            the parameters of the request
+        additional_headers:
+            the additional headers of the request
 
-        Returns:
-        The response decoded as json.
+        Returns
+        -------
+        Any
+            The response decoded as JSON.
         """
         default_headers = self.__get_default_headers()
         headers = self.__consolidate_headers(default_headers, additional_headers)
@@ -173,14 +186,20 @@ class TmdbHttpClient:
         
         Parameters
         ----------
-        path: the specific API path
-        content_type: the content type of the request.
-        payload: the payload delivered by the request.
-        additional_headers: the additional headers of the request.
-        params: the parameters of the request
+        path:
+            the specific API path
+        content_type:
+            the content type of the request.
+        payload:
+            the payload delivered by the request.
+        additional_headers:
+            the additional headers of the request.
+        params:
+            the parameters of the request
 
-        Returns:
-        The response decoded as json.
+        Returns
+        -------
+            The response decoded as JSON.
         """
         default_headers = self.__get_default_headers()
         headers = self.__consolidate_headers(default_headers, {"Content-Type":content_type}, additional_headers)
@@ -198,8 +217,10 @@ class TmdbHttpClient:
         params: the parameters of the request
         additional_headers: the additional headers of the request
 
-        Returns:
-        The response decoded as json.
+        Returns
+        -------
+        Any
+            The response decoded as JSON.
         """
         default_headers = self.__get_default_headers()
         headers = self.__consolidate_headers(default_headers, additional_headers)
@@ -208,15 +229,32 @@ class TmdbHttpClient:
         return _process_response(response)
 
     def __get_default_headers(self) -> dict:
-        """Returns a dictionary with the default headers."""
+        """Returns a dictionary with the default headers.
+
+        Returns
+        -------
+        dict
+            The default headers
+        """
         return {
             "accept": "application/json",
             "Authorization": f"Bearer {self.__token}"
         }
-    
-    def __consolidate_headers(self, *args: Optional[dict]) -> dict:
+
+    @staticmethod
+    def __consolidate_headers(*args: Optional[dict]) -> dict:
         """Consolidate the received headers into a single header
         and return it.
+
+        Parameters
+        ----------
+        *args:
+            the headers to be consolidated.
+
+        Returns
+        -------
+        dict
+            The merged headers.
         """
         headers = [arg for arg in args if arg is not None]
         result = {}

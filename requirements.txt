@@ -1,4 +1,4 @@
-certifi==2023.11.17
+certifi==2024.7.4
 charset-normalizer==3.3.2
 idna==3.7
 Flask==3.0.2
@@ -6,7 +6,7 @@ google-cloud-datastore==2.19.0
 google-auth==2.28.1
 firebase-admin==6.4.0
 Pyrebase4==4.8.0
-setuptools==69.1.1
+setuptools==78.1.1
 Flask-APScheduler==1.13.1
 expiringdict==1.2.2
 opentelemetry-api==1.25.0
@@ -16,7 +16,10 @@ opentelemetry-instrumentation-logging==0.46b0
 opentelemetry-exporter-otlp==1.25.0
 opentelemetry-distro==0.46b0
 requests>=2.32.4 # not directly required, pinned by Snyk to avoid a vulnerability
-cryptography>=42.0.8 # not directly required, pinned by Snyk to avoid a vulnerability
+cryptography>=46.0.5 # not directly required, pinned by Snyk to avoid a vulnerability
 grpcio>=1.53.2 # not directly required, pinned by Snyk to avoid a vulnerability
 jwcrypto>=1.5.6 # not directly required, pinned by Snyk to avoid a vulnerability
 psutil==6.0.0
+neo4j==5.28.2
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
+pyasn1>=0.6.2 # not directly required, pinned by Snyk to avoid a vulnerability
