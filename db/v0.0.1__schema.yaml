@@ -1,0 +1,57 @@
+databaseChangeLog:
+- changeSet:
+    id: initial_watchlist_constraints
+    author: nagyesta
+    changes:
+    - cypher: 'CREATE CONSTRAINT watchlist_id_is_not_null IF NOT EXISTS FOR (w:Watchlist) REQUIRE w.id IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT watchlist_name_is_not_null IF NOT EXISTS FOR (w:Watchlist) REQUIRE w.name IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT watchlist_updated_at_is_not_null IF NOT EXISTS FOR (w:Watchlist) REQUIRE w.updated_at IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT watchlist_id_is_unique IF NOT EXISTS FOR (w:Watchlist) REQUIRE w.id IS UNIQUE'
+- changeSet:
+    id: initial_user_constraints
+    author: nagyesta
+    changes:
+    - cypher: 'CREATE CONSTRAINT user_id_is_not_null IF NOT EXISTS FOR (u:User) REQUIRE u.id IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT user_email_is_not_null IF NOT EXISTS FOR (u:User) REQUIRE u.email IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT user_profile_pic_is_not_null IF NOT EXISTS FOR (u:User) REQUIRE u.profile_pic IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT user_updated_at_is_not_null IF NOT EXISTS FOR (u:User) REQUIRE u.updated_at IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT user_id_is_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE'
+    - cypher: 'CREATE CONSTRAINT user_email_is_unique IF NOT EXISTS FOR (u:User) REQUIRE u.email IS UNIQUE'
+- changeSet:
+    id: initial_tmdb_user_constraints
+    author: nagyesta
+    changes:
+    - cypher: 'CREATE CONSTRAINT tmdb_user_id_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.id IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_include_adult_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.include_adult IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_iso_3166_1_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.iso_3166_1 IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_iso_639_1_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.iso_639_1 IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_name_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.name IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_session_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.session IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_username_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.username IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_updated_at_is_not_null IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.updated_at IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT tmdb_user_id_is_unique IF NOT EXISTS FOR (t:TmdbUser) REQUIRE t.id IS UNIQUE'
+- changeSet:
+    id: provider_constraints
+    author: nagyesta
+    changes:
+    - cypher: 'CREATE CONSTRAINT provider_id_is_not_null IF NOT EXISTS FOR (p:Provider) REQUIRE p.id IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT provider_logo_path_is_not_null IF NOT EXISTS FOR (p:Provider) REQUIRE p.logo_path IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT provider_name_is_not_null IF NOT EXISTS FOR (p:Provider) REQUIRE p.name IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT provider_updated_at_is_not_null IF NOT EXISTS FOR (p:Provider) REQUIRE p.updated_at IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT provider_id_is_unique IF NOT EXISTS FOR (p:Provider) REQUIRE p.id IS UNIQUE'
+- changeSet:
+    id: movie_constraints
+    author: nagyesta
+    changes:
+    - cypher: 'CREATE CONSTRAINT movie_id_is_not_null IF NOT EXISTS FOR (m:Movie) REQUIRE m.id IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT movie_id_is_unique IF NOT EXISTS FOR (m:Movie) REQUIRE m.id IS UNIQUE'
+- changeSet:
+    id: genre_constraints
+    author: nagyesta
+    changes:
+    - cypher: 'CREATE CONSTRAINT genre_id_is_not_null IF NOT EXISTS FOR (g:Genre) REQUIRE g.id IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT genre_name_is_not_null IF NOT EXISTS FOR (g:Genre) REQUIRE g.name IS NOT NULL'
+    - cypher: 'CREATE CONSTRAINT genre_id_is_unique IF NOT EXISTS FOR (g:Genre) REQUIRE g.id IS UNIQUE'
+
+
+      
