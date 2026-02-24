@@ -11,3 +11,17 @@ handlers:
   # the entire handlers section) when there are no static files defined.
 - url: /.*
   script: auto
+
+automatic_scaling:
+  target_cpu_utilization: 0.95
+  min_instances: 1
+  max_instances: 1
+  min_pending_latency: 15s
+  max_pending_latency: 15s
+  max_concurrent_requests: 500
+
+env_variables:
+  OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp.eu01.nr-data.net"
+  OTEL_SERVICE_NAME: "movies_to_watch"
+  OTEL_EXPORTER_OTLP_HEADERS: "api-key=NEW_RELIC_LICENSE_KEY"
+  OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT: 4095
