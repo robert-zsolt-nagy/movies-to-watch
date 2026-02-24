@@ -1,23 +1,26 @@
 Write-Output ">generate assets"
 $null = New-Item ".\web\dist" -ItemType Directory -ea 0
-npm install --prefix web > web\dist\install-log.txt
+cd web
+npm ci --ignore-scripts > dist\install-log.txt
 if (-not $?)
 {
     Write-Output  "ERROR: npm install failed:"
-    Get-Content web/dist/install-log.txt
+    Get-Content dist/install-log.txt
     Write-Output  "exiting..."
+    cd ..
     exit 1
 }
 
-npm run build --prefix web > web/dist/build-log.txt
+npm run build > dist/build-log.txt
 if (-not $?)
 {
     Write-Output  "ERROR: npm build failed:"
-    Get-Content web/dist/build-log.txt
+    Get-Content dist/build-log.txt
     Write-Output  "exiting..."
+    cd ..
     exit 1
 }
-
+cd ..
 Write-Output  ">copy generated assets"
 $null = New-Item ".\static\style" -ItemType Directory -ea 0
 $null = New-Item ".\static\script" -ItemType Directory -ea 0
