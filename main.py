@@ -653,7 +653,7 @@ def refresh_movie_cache():
     api_token = request.headers.get(key="X-M2W-API-Token")
     if api_token is None:
         logging.error("API token is missing.")
-        resp = Response(response="API Token is missing.", status=401)
+        resp = Response(response=json.dumps({"error": "API Token is missing."}), status=401)
         resp.headers["Content-Type"] = "application/json"
         return resp
     try:
@@ -663,17 +663,17 @@ def refresh_movie_cache():
             raise Exception("Movie cache update was not necessary.")
     except AuthException:
         logging.error("API token is invalid.")
-        resp = Response(response="API Token is invalid.", status=401)
+        resp = Response(response=json.dumps({"error": "API Token is invalid."}), status=401)
         resp.headers["Content-Type"] = "application/json"
         return resp
     except Exception as e:
         logging.error(f"Movie cache error: {e}")
-        resp = Response(response=f"Movie cache error: {e}", status=500)
+        resp = Response(response=json.dumps({"error": e}), status=500)
         resp.headers["Content-Type"] = "application/json"
         return resp
     else:
         logging.info("Movie cache update finished.")
-        resp = Response(response=None, status=200)
+        resp = Response(response=json.dumps({"status": "Update finished."}) , status=200)
         resp.headers["Content-Type"] = "application/json"
         return resp
 
