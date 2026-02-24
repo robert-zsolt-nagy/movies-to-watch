@@ -15,7 +15,7 @@
     </div>
 {% else %}
   {% for movie in movies %}
-    <div id="movie-{{ movie['id'] }}" class="movie-container">
+    <div id="movie-{{ movie['movie_id'] }}" class="movie-container">
       <div class="movie-card">
         <div class="movie-header">
           <div class="first-col poster">
@@ -25,8 +25,8 @@
             <h3 class="movie-title">{{ movie['title'] }}</h3>
             <div class="minor-details-row">
               <div class="released">{{ movie['release_date'] }}</div>
-              <div class="genre">{{ movie['genres'] }}</div>
-              <div class="runtime">{{ movie['runtime'] }} mins</div>
+              <div class="genre">{{ movie['genre_names'] }}</div>
+              <div class="runtime">{{ movie['duration'] }} mins</div>
             </div>
             <h5>Overview</h5>
             <div class="text-body">{{ movie['overview'] }}</div>
@@ -44,11 +44,17 @@
             </div>
             {% endif %}
             <div class="tmdb">
-              <a href="{{ movie['tmdb'] }}" target="_blank">Go to<br/>TMDB</a>
+              <a href="{{ movie['tmdb_link'] }}" target="_blank">Go to<br/>TMDB</a>
             </div>
+            {% if movie['watched'] %}
+            <div class="watched-movie watched">
+              <a href="/api/watched/{{ movie['movie_id'] }}/{{group}}">Watched<br/>this</a>
+            </div>
+            {% else %}
             <div class="watched-movie">
-              <a href="/api/watched/{{ movie['id'] }}/{{group}}">Watched<br/>this</a>
+              <a href="/api/watched/{{ movie['movie_id'] }}/{{group}}">Watched<br/>this</a>
             </div>
+            {% endif %}
           </div>
           <div class="providers">
             {% if movie['providers']['stream']|length > 0 %}
@@ -57,8 +63,9 @@
                 <div class="items">
                   {% for elem in movie['providers']['stream'] %}
                     <div class="badge">
-                      <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
-                           title="{{ elem['provider_name'] }}">
+                      <img alt="{{ elem['provider']['name'] }} logo" src="{{ elem['provider']['logo_path'] }}"
+                           title="{{ elem['provider']['name'] }} - {{ elem['location'] }}">
+                      <div class="badge-text">{{ elem['location'] }}</div>
                     </div>
                   {% endfor %}
                 </div>
@@ -70,8 +77,9 @@
                 <div class="items">
                   {% for elem in movie['providers']['buy_or_rent'] %}
                     <div class="badge">
-                      <img alt="{{ elem['provider_name'] }} logo" src="{{ elem['logo_path'] }}"
-                           title="{{ elem['provider_name'] }}">
+                      <img alt="{{ elem['provider']['name'] }} logo" src="{{ elem['provider']['logo_path'] }}"
+                           title="{{ elem['provider']['name'] }} - {{ elem['location'] }}">
+                        <div class="badge-text">{{ elem['location'] }}</div>
                     </div>
                   {% endfor %}
                 </div>
@@ -87,8 +95,8 @@
               <div class="badges">
                 {% for vote in movie['votes']['liked'] %}
                     <div class="badge">
-                      <img alt="{{ vote['nickname'] }}" title="{{ vote['nickname'] }}"
-                           src="/static/img/profile-img/{{vote['profile_pic']}}">
+                      <img alt="{{ vote['user_nickname'] }}" title="{{ vote['user_nickname'] }}"
+                           src="/static/img/profile-img/{{vote['user_profile_pic']}}">
                     </div>
                 {% endfor %}
               </div>
@@ -98,14 +106,14 @@
               <div class="badges">
                 {% for vote in movie['votes']['blocked'] %}
                     <div class="badge">
-                      <img alt="{{ vote['nickname'] }}" title="{{ vote['nickname'] }}"
-                           src="/static/img/profile-img/{{vote['profile_pic']}}">
+                      <img alt="{{ vote['user_nickname'] }}" title="{{ vote['user_nickname'] }}"
+                           src="/static/img/profile-img/{{vote['user_profile_pic']}}">
                     </div>
                 {% endfor %}
               </div>
             </div>
           </div>
-          <div id="my_vote{{ movie['id'] }}" class="your-vote">
+          <div id="my_vote{{ movie['movie_id'] }}" class="your-vote">
             <h5>Your vote</h5>
             {% if movie['votes']['primary_vote'] == 'liked' %}
               <div class="yes">
@@ -113,8 +121,8 @@
               </div>
             {% else %}
               <div class="yes">
-                <button hx-get="/api/vote/{{ movie['id'] }}/like" hx-trigger="click"
-                        hx-target="#my_vote{{ movie['id'] }}" hx-indicator="#indicator{{ movie['id'] }}"
+                <button hx-get="/api/vote/{{ movie['movie_id'] }}/like" hx-trigger="click"
+                        hx-target="#my_vote{{ movie['movie_id'] }}" hx-indicator="#indicator{{ movie['movie_id'] }}"
                         class="button-active">I'm in!
                 </button>
               </div>
@@ -125,13 +133,13 @@
               </div>
             {% else %}
               <div class="no">
-                <button hx-get="/api/vote/{{ movie['id'] }}/block" hx-trigger="click"
-                        hx-target="#my_vote{{ movie['id'] }}" hx-indicator="#indicator{{ movie['id'] }}"
+                <button hx-get="/api/vote/{{ movie['movie_id'] }}/block" hx-trigger="click"
+                        hx-target="#my_vote{{ movie['movie_id'] }}" hx-indicator="#indicator{{ movie['movie_id'] }}"
                         class="button-active">I'm out!
                 </button>
               </div>
             {% endif %}
-            <img alt="Working..." class="htmx-indicator" id="indicator{{ movie['id'] }}"
+            <img alt="Working..." class="htmx-indicator" id="indicator{{ movie['movie_id'] }}"
                  src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
           </div>
         </div>
