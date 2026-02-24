@@ -16,3 +16,7 @@ build.sh
 newrelic.ini
 app.yaml
 app_dev.yaml
+test-requirements.txt
+function_app.py
+.funcignore
+azure-requirements.txt
