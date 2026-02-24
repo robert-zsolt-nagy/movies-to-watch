@@ -1,6 +1,8 @@
 import tomllib
+from typing import Any
 
-class SecretManager():
+
+class SecretManager:
     """ Reads and manages the external secrets."""
 
     def __init__(self, secret_storage: str='secrets.toml') -> None:
@@ -9,8 +11,8 @@ class SecretManager():
             self.__SECRETS = tomllib.load(vault)
 
     @property
-    def secrets(self) -> str:
-        """ All of the secrets."""
+    def secrets(self) -> dict[str, Any]:
+        """ All the secrets."""
         return self.__SECRETS
     
     @property
@@ -24,7 +26,7 @@ class SecretManager():
         return self.__SECRETS['tmdb']['auth']['bearer_token']
     
     @property
-    def tmdb_API(self) -> str:
+    def tmdb_api(self) -> str:
         """ The base URL for the tmdb API."""
         return self.__SECRETS['tmdb']['URLs']['API_base_URL']
     
@@ -37,7 +39,12 @@ class SecretManager():
     def tmdb_image(self) -> str:
         """ The base URL for the tmdb image storage."""
         return self.__SECRETS['tmdb']['URLs']['image_URL']
-    
+
+    @property
+    def auth_store(self) -> str:
+        """ Defines which store to use for authentication."""
+        return self.__SECRETS['auth']['store']
+
     @property
     def firebase_cert(self) -> str:
         """ The path to the firebase certificate."""
@@ -49,26 +56,31 @@ class SecretManager():
         return self.__SECRETS['firebase']['config']
     
     @property
-    def firestore_cert(self) -> str:
-        """ The path to the firebase certificate."""
-        return self.__SECRETS['firestore']['certificate']
-    
-    @property
-    def firestore_project(self) -> str:
-        """ The path to the firebase certificate."""
-        return self.__SECRETS['firestore']['project']
-    
-    @property
-    def m2w_base_URL(self) -> str:
+    def m2w_base_url(self) -> str:
         """ The base movies-to-watch URL."""
         return self.__SECRETS['m2w']['base_URL']
-    
-    @property
-    def m2w_movie_retention(self) -> str:
-        """ The base movies-to-watch URL."""
-        return self.__SECRETS['m2w']['movie_retention']
     
     @property
     def flask_key(self) -> str:
         """ The base movies-to-watch URL."""
         return self.__SECRETS['flask']['secret_key']
+
+    @property
+    def neo4j_uri(self) -> str:
+        """ The Neo4j DB URL."""
+        return self.__SECRETS['neo4j']['uri']
+
+    @property
+    def neo4j_user(self) -> str:
+        """ The Neo4j DB username."""
+        return self.__SECRETS['neo4j']['user']
+
+    @property
+    def neo4j_pass(self) -> str:
+        """ The Neo4j DB password."""
+        return self.__SECRETS['neo4j']['password']
+
+    @property
+    def use_neo4j_for_(self) -> str:
+        """ The Neo4j DB password."""
+        return self.__SECRETS['neo4j']['password']

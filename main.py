@@ -1,42 +1,41 @@
 import json
-from typing import Optional
-import psutil
+import logging
 import os
 import time
 import uuid
-import logging
-import requests
-from requests.exceptions import HTTPError
-from expiringdict import ExpiringDict
+from typing import Optional
 
+import psutil
 import pyrebase
-from flask import Flask, render_template, session, redirect, request, flash
+import requests
+from flask import Flask, render_template, session, redirect, request, flash, Response
 from flask_apscheduler import APScheduler
-from google.oauth2 import service_account
-
-from src.dao.secret_manager import SecretManager
-from src.dao.tmdb_http_client import TmdbHttpClient
-from src.dao.m2w_database import M2WDatabase
-from src.dao.authentication_manager import AuthenticationManager
-from src.dao.tmdb_user_repository import TmdbUserRepository
-
-from src.services.movie_caching import MovieCachingService
-from src.services.user_service import UserManagerService, WeakPasswordError, EmailMismatchError, PasswordMismatchError
-from src.services.group_service import GroupManagerService
-
-from opentelemetry.sdk.resources import Resource
+from neo4j import Driver, GraphDatabase
 from opentelemetry import metrics, _logs
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
+
+from src.dao.authentication_manager import AuthenticationManager, FirebaseAuthenticationManager, AuthException
+from src.dao.m2w_graph_db_repository_auth import Neo4jAuthenticationManager
+from src.dao.secret_manager import SecretManager
+from src.dao.tmdb_http_client import TmdbHttpClient
+from src.dao.tmdb_user_repository import TmdbUserRepository, TmdbRequestToken
+from src.services.group_service import GroupManagerService
+from src.services.m2w_dtos import VoteValueDto
+from src.services.movie_caching import MovieCachingService
+from src.services.user_service import UserManagerService, WeakPasswordError, EmailMismatchError, PasswordMismatchError
 
 # logging level #
 logging.basicConfig(level=logging.INFO)
 process_started_at = time.time()
+neo4j_log = logging.getLogger("neo4j")
+neo4j_log.setLevel(logging.WARNING)
 
 # OpenTelemetry Settings #
 if os.getenv("MoviesToWatch") == "test":
@@ -50,12 +49,19 @@ OTEL_RESOURCE_ATTRIBUTES = {
 
 # OTEL Metrics #
 # Initialize metering and an exporter that can send data to an OTLP endpoint
-metrics.set_meter_provider(
-    MeterProvider(
-        resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES),
-        metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())]
+if environ != "local":
+    metrics.set_meter_provider(
+        MeterProvider(
+            resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES),
+            metric_readers=[PeriodicExportingMetricReader(OTLPMetricExporter())]
+        )
     )
-)
+else:
+    metrics.set_meter_provider(
+        MeterProvider(
+            resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES)
+        )
+    )
 metrics.get_meter_provider()
 tmdb_http_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").create_histogram(
     name="tmdb.http.duration",
@@ -100,12 +106,13 @@ endpoint_recorder = metrics.get_meter("opentelemetry.instrumentation.custom").cr
 
 # Logs #
 # Initialize logging and an exporter that can send data to an OTLP endpoint by attaching OTLP handler to root logger
-_logs.set_logger_provider(LoggerProvider(resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES)))
-logging.getLogger().addHandler(
-    LoggingHandler(
-        logger_provider=_logs.get_logger_provider().add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter()))
+if environ != "local":
+    _logs.set_logger_provider(LoggerProvider(resource=Resource.create(OTEL_RESOURCE_ATTRIBUTES)))
+    logging.getLogger().addHandler(
+        LoggingHandler(
+            logger_provider=_logs.get_logger_provider().add_log_record_processor(BatchLogRecordProcessor(OTLPLogExporter()))
+        )
     )
-)
 
 # reading the secrets
 if os.getenv("MoviesToWatch") == "test":
@@ -113,38 +120,60 @@ if os.getenv("MoviesToWatch") == "test":
 else:
     SECRETS = SecretManager('secrets.toml')
 
-# set up in memory cache
-movie_item_cache = ExpiringDict(max_len=200, max_age_seconds=SECRETS.m2w_movie_retention)
-
 # connect to database
-m2w_db_cert = service_account.Credentials.from_service_account_file(SECRETS.firestore_cert)
+def connect_to_neo4j() -> Driver:
+    """ Returns a properly set-up Driver instance. """
+    uri = SECRETS.neo4j_uri
+    auth = (SECRETS.neo4j_user, SECRETS.neo4j_pass)
 
+    driver = GraphDatabase.driver(uri=uri, auth=auth)
+    driver.verify_connectivity()
+    return driver
+
+db_driver = connect_to_neo4j()
 
 # define helper functions
 def get_tmdb_http_client(session_: Optional[requests.Session] = None) -> TmdbHttpClient:
     """ Returns a properly set up TmdbHttpClient instance with the specified session."""
     return TmdbHttpClient(
         token=SECRETS.tmdb_token,
-        base_url=SECRETS.tmdb_API,
+        base_url=SECRETS.tmdb_api,
         session=session_,
         histogram=tmdb_http_recorder
     )
 
 
-def get_m2w_db() -> M2WDatabase:
-    """ Returns a properly set up M2WDatabase instance. """
-    return M2WDatabase(
-        project=SECRETS.firestore_project,
-        credentials=m2w_db_cert,
-        histogram=m2w_database_recorder
+
+def get_group_service(user_service: UserManagerService) -> GroupManagerService:
+    return GroupManagerService(
+        secrets=SECRETS,
+        db=db_driver,
+        user_service=user_service
     )
 
+
+def get_movie_service() -> MovieCachingService:
+    return MovieCachingService(
+        tmdb_http_client=get_tmdb_http_client(),
+        db=db_driver
+    )
+
+
+def get_user_service() -> UserManagerService:
+    return UserManagerService(
+        db=db_driver,
+        auth=get_auth(),
+        user_repo=TmdbUserRepository(
+            tmdb_http_client=get_tmdb_http_client()
+        )
+    )
 
 def get_auth() -> AuthenticationManager:
-    """ Returns a properly set up instance of AuthenticationManager. """
-    return AuthenticationManager(
-        config=SECRETS.firebase_config
-    )
+    """ Returns a properly configured instance of AuthenticationManager. """
+    if SECRETS.auth_store != "neo4j":
+        return FirebaseAuthenticationManager(config=SECRETS.firebase_config)
+    else:
+        return Neo4jAuthenticationManager(driver=db_driver)
 
 
 def prepare_profiles(profile_pic: str) -> list:
@@ -172,9 +201,12 @@ app = Flask(__name__)
 app.secret_key = SECRETS.flask_key
 FlaskInstrumentor().instrument_app(app)
 
-# setting up firebase authentication
-firebase_app = pyrebase.initialize_app(config=SECRETS.firebase_config)
-firebase_auth = firebase_app.auth()
+firebase_app = None
+firebase_auth = None
+if SECRETS.auth_store != "neo4j":
+    # setting up firebase authentication
+    firebase_app = pyrebase.initialize_app(config=SECRETS.firebase_config)
+    firebase_auth = firebase_app.auth()
 
 #################################
 # setting up scheduler and jobs #
@@ -182,34 +214,18 @@ firebase_auth = firebase_app.auth()
 scheduler = APScheduler()
 
 
-@scheduler.task('cron', id="update_movies", hour='*', minute='*/15')
-def update_movie_cache():
-    """Updates the movies cache regularly."""
-    try:
-        logging.info("Movie cache update started.")
-        MovieCachingService(
-            tmdb_http_client=get_tmdb_http_client(),
-            m2w_database=get_m2w_db(),
-            m2w_movie_retention=SECRETS.m2w_movie_retention,
-            cache=movie_item_cache
-            ).movie_cache_update_job()
-    except Exception as e:
-        logging.error(f"Movie cache error: {e}")
-    else:
-        logging.info("Movie cache update finished.")
-
-
 @scheduler.task('cron', id="report_uptime", hour='*', minute='*/1')
 def report_system_uptime():
     """Reports the system uptime of the instance."""
-    system_uptime = time.monotonic()
-    system_uptime_recorder.record(amount=system_uptime, attributes={"pid": os.getpid()})
-    process_uptime = time.time() - process_started_at
-    process_uptime_recorder.record(amount=process_uptime, attributes={"pid": os.getpid()})
-    cpu_percent = psutil.cpu_percent()
-    cpu_recorder.record(amount=cpu_percent, attributes={"pid": os.getpid()})
-    used_ram_percent = psutil.virtual_memory().percent
-    memory_recorder.record(amount=used_ram_percent, attributes={"pid": os.getpid()})
+    if environ != "local":
+        system_uptime = time.monotonic()
+        system_uptime_recorder.record(amount=system_uptime, attributes={"pid": os.getpid()})
+        process_uptime = time.time() - process_started_at
+        process_uptime_recorder.record(amount=process_uptime, attributes={"pid": os.getpid()})
+        cpu_percent = psutil.cpu_percent()
+        cpu_recorder.record(amount=cpu_percent, attributes={"pid": os.getpid()})
+        used_ram_percent = psutil.virtual_memory().percent
+        memory_recorder.record(amount=used_ram_percent, attributes={"pid": os.getpid()})
 
 
 def report_call(start: float, method: str, endpoint: str, outcome: str):
@@ -237,15 +253,10 @@ def root():
     if 'user' in session:
         try:
             logged_on = session['user']
-            user_manager = UserManagerService(
-                m2w_db=get_m2w_db(),
-                auth=get_auth(),
-                user_repo=TmdbUserRepository(
-                    tmdb_http_client=get_tmdb_http_client()
-                )
-            )
-            user_data = user_manager.get_m2w_user_profile_data(user_id=logged_on)
-            group = user_data["primary_group"]
+            user_service = get_user_service()
+            group_service = get_group_service(user_service=user_service)
+            group = group_service.get_primary_group_for_m2w_user(user_id=logged_on)
+            user_data = user_service.get_m2w_user_profile_data(user_id=logged_on)
         except Exception as e:
             logging.error(f"Error by gathering content for index page: {e}")
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
@@ -257,7 +268,7 @@ def root():
                 "index.html",
                 logged_on=session['nickname'],
                 verified=session['emailVerified'],
-                tmdb_linked=user_data['tmdb_session'],
+                tmdb_linked=user_data.tmdb_user.session if user_data.tmdb_user else None,
                 group=group
             )
     else:
@@ -293,17 +304,12 @@ def login():
         try:
             email = request.form.get('email')
             password = request.form.get('password')
-            user_service = UserManagerService(
-                m2w_db=get_m2w_db(),
-                auth=get_auth(),
-                user_repo=TmdbUserRepository(
-                    tmdb_http_client=get_tmdb_http_client()
-                )
-            )
+            user_service = get_user_service()
             user = user_service.sign_in_and_update_tmdb_cache(email=email, password=password)
             for k, v in user.items():
                 session[k] = v
         except Exception as e:
+            logging.error(f"Error during logging in: {e}")
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("login.html", error=e, target=target)
         else:
@@ -323,6 +329,11 @@ def login():
 def signup():
     start = time.time()
     if request.method == 'POST':
+        email = ""
+        confirm_email = ""
+        password = ""
+        confirm_password = ""
+        nickname = ""
         try:
             email = request.form.get('email')
             confirm_email = request.form.get('email_confirm')
@@ -333,13 +344,7 @@ def signup():
             locale = "HU"
             if nickname == '':
                 nickname = email.split('@')[0]
-            user_service = UserManagerService(
-                m2w_db=get_m2w_db(),
-                auth=get_auth(),
-                user_repo=TmdbUserRepository(
-                    tmdb_http_client=get_tmdb_http_client()
-                )
-            )
+            user_service = get_user_service()
             response = user_service.sign_up_user(
                 email=email,
                 confirm_email=confirm_email,
@@ -379,12 +384,11 @@ def signup():
                 email_c=confirm_email,
                 nickname=nickname
             )
-        except HTTPError as he:
-            msg = AuthenticationManager.get_authentication_error_msg(he)
+        except AuthException as e:
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="http_error")
             return render_template(
                 "signup.html",
-                error=msg,
+                error=e,
                 email=email,
                 email_c=confirm_email,
                 password=password,
@@ -416,18 +420,13 @@ def approved():
     approval = request.args.get("approved")
     request_token = request.args.get("request_token")
     try:
-        if (request_token == session['request_payload']) and (approval == "true"):
+        token_from_session = None
+        if session['tmdb_request_token'] is not None:
+            token_from_session = TmdbRequestToken.from_response(json.loads(session['tmdb_request_token']))
+        if (token_from_session is not None) and (request_token == token_from_session.request_token) and (approval == "true"):
             try:
-                user_service = UserManagerService(
-                    m2w_db=get_m2w_db(),
-                    auth=get_auth(),
-                    user_repo=TmdbUserRepository(
-                        tmdb_http_client=get_tmdb_http_client()
-                    )
-                )
-                tmdb_session = user_service.create_tmdb_session_for_user(request_token=request_token)
-                user_service.update_user_data(user_id=session['user'], user_data={"tmdb_session": tmdb_session})
-                user_service.update_tmdb_user_cache(user_id=session['user'])
+                user_service = get_user_service()
+                user_service.create_tmdb_session_for_user(user_id=session['user'], request_token=token_from_session)
             except Exception as err:
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="approve_error")
                 return render_template("approved.html", success=False, error=err)
@@ -449,34 +448,23 @@ def profile():
         logged_on = session['user']
         if request.method == 'GET':
             try:
-                user_service = UserManagerService(
-                    m2w_db=get_m2w_db(),
-                    auth=get_auth(),
-                    user_repo=TmdbUserRepository(
-                        tmdb_http_client=get_tmdb_http_client()
-                    )
-                )
+                user_service = get_user_service()
                 user_data = user_service.get_m2w_user_profile_data(user_id=session['user'])
-                profile_pics = prepare_profiles(profile_pic=user_data.get('profile_pic', ''))
+                profile_pics = prepare_profiles(profile_pic=user_data.profile_pic)
             except Exception as e:
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 return render_template('error.html', error=e)
             else:
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
-                return render_template('profile.html', profile_data=user_data, logged_on=session['user'], profile_pics=profile_pics)
+                return render_template('profile.html', profile_data=user_data, logged_on=session['user'],
+                                       profile_pics=profile_pics)
         elif request.method == 'POST':
             try:
-                user_service = UserManagerService(
-                    m2w_db=get_m2w_db(),
-                    auth=get_auth(),
-                    user_repo=TmdbUserRepository(
-                        tmdb_http_client=get_tmdb_http_client()
-                    )
-                )
+                user_service = get_user_service()
                 new_profile_pic = request.form.get("profile_image")
                 old_profile_pic = request.form.get("current_profile_pic")
                 if new_profile_pic != old_profile_pic:
-                    user_service.update_user_data(user_id=logged_on, user_data={"profile_pic": new_profile_pic})
+                    user_service.update_profile_picture(user_id=logged_on, profile_pic=new_profile_pic)
             except Exception as e:
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 return render_template('error.html', error=e)
@@ -484,6 +472,9 @@ def profile():
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
                 flash("Changes saved!")
                 return redirect("/profile")
+        else:
+            # this should never happen because the method is checked
+            return None
     else:
         report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
         return redirect("/login?redirect=/profile")
@@ -494,25 +485,21 @@ def link_to_tmdb():
     start = time.time()
     if ('user' in session) and (session['emailVerified'] == True):
         try:
-            user_service = UserManagerService(
-                m2w_db=get_m2w_db(),
-                auth=get_auth(),
-                user_repo=TmdbUserRepository(
-                    tmdb_http_client=get_tmdb_http_client()
-                )
-            )
-            response = user_service.init_link_user_profile_to_tmdb(
-                redirect_to=f'{SECRETS.m2w_base_URL}/approved',
+            user_service = get_user_service()
+            token = user_service.get_tmdb_request_token()
+            permission_url = user_service.get_tmdb_permission_url(
+                tmdb_request_token=token,
+                redirect_to=f'{SECRETS.m2w_base_url}/approved',
                 tmdb_url=SECRETS.tmdb_home
             )
-            session['request_payload'] = json.dumps(response["tmdb_request_token"])
-            permission_URL = response["permission_URL"]
+            session['tmdb_request_token'] = json.dumps(token.to_dict())
+            permission_url = permission_url
         except Exception as e:
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template('error.html', error=e)
         else:
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
-            return redirect(permission_URL)
+            return redirect(permission_url)
     else:
         report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
         return redirect("/login?redirect=/link-to-tmdb")
@@ -522,27 +509,21 @@ def link_to_tmdb():
 def resend_verification():
     start = time.time()
     if 'user' in session:
-        if session['emailVerified'] == False:
+        if not session['emailVerified']:
             try:
-                user_service = UserManagerService(
-                    m2w_db=get_m2w_db(),
-                    auth=get_auth(),
-                    user_repo=TmdbUserRepository(
-                        tmdb_http_client=get_tmdb_http_client()
-                    )
-                )
-                account_data = user_service.get_firebase_user_account_info(user_idtoken=session['idToken'])
-                if account_data['emailVerified']:
-                    session['emailVerified'] = account_data['emailVerified']
+                user_service = get_user_service()
+                account_data = user_service.get_firebase_user_account_info(user_id_token=session['idToken'])
+                if account_data.email_verified:
+                    session['emailVerified'] = account_data.email_verified
                 else:
                     firebase_auth.send_email_verification(id_token=session['idToken'])
             except Exception as e:
-                flash(f"The following error occured: {e}")
+                flash(f"The following error occurred: {e}")
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
                 redirect('/error')
             else:
                 status = "success"
-                if account_data['emailVerified']:
+                if account_data.email_verified:
                     flash("Your email verification is already complete!")
                 else:
                     flash("Please check your mailbox you should receive a verification email shortly!")
@@ -566,33 +547,15 @@ def group_content(group):
         try:
             logging.debug(f"Setting up objects for /api/group/{group}")
             logged_on = session['user']
-            m2w_db = get_m2w_db()
-            tmdb_client = get_tmdb_http_client()
-            group_service = GroupManagerService(
-                secrets=SECRETS,
-                m2w_db=m2w_db,
-                user_service=UserManagerService(
-                    m2w_db=m2w_db,
-                    auth=get_auth(),
-                    user_repo=TmdbUserRepository(
-                        tmdb_http_client=tmdb_client
-                    )
-                ),
-                movie_service=MovieCachingService(
-                    tmdb_http_client=tmdb_client,
-                    m2w_database=m2w_db,
-                    m2w_movie_retention=SECRETS.m2w_movie_retention,
-                    cache=movie_item_cache
-                )
-            )
+            user_service = get_user_service()
+            group_service = get_group_service(user_service=user_service)
             logging.debug(f"Gathering data for /api/group/{group}")
             movie_datasheets = group_service.get_group_content(
-                group_id=group,
-                primary_user=logged_on
+                group_id=uuid.UUID(hex=group),
+                current_user_id=logged_on
             )
         except Exception as e:
-            flash("The following error occured:")
-            flash(e)
+            flash(f"The following error occurred: {e}")
             logging.error(f"Error by preparing group data. {e}")
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("group_content.html", error=True)
@@ -614,31 +577,15 @@ def vote_for_movie(movie, vote):
     if ('user' in session) and (session['emailVerified'] == True):
         try:
             logged_on = session['user']
-            m2w_db = get_m2w_db()
-            tmdb_client = get_tmdb_http_client()
-            group_service = GroupManagerService(
-                secrets=SECRETS,
-                m2w_db=m2w_db,
-                user_service=UserManagerService(
-                    m2w_db=m2w_db,
-                    auth=get_auth(),
-                    user_repo=TmdbUserRepository(
-                        tmdb_http_client=tmdb_client
-                    )
-                ),
-                movie_service=MovieCachingService(
-                    tmdb_http_client=tmdb_client,
-                    m2w_database=m2w_db,
-                    m2w_movie_retention=SECRETS.m2w_movie_retention,
-                    cache=movie_item_cache
-                )
-            )
+            user_service = get_user_service()
+            group_service = get_group_service(user_service=user_service)
             response = group_service.vote_for_movie_by_user(
-                movie_id=movie,
+                movie_id=int(movie),
                 user_id=logged_on,
-                vote=vote
+                vote=VoteValueDto.from_request(vote)
             )
         except Exception as e:
+            logging.error(f"Error during vote for movie {movie}. {e}")
             flash(f"The following error occurred: {e}")
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
             return render_template("vote_response.html", vote=vote, movie_id=movie, error=True)
@@ -662,61 +609,73 @@ def watched_movie(movie, group_id):
     if ('user' in session) and (session['emailVerified'] == True):
         if request.method == 'GET':
             try:
-                movie_service = MovieCachingService(
-                    tmdb_http_client=get_tmdb_http_client(),
-                    m2w_database=get_m2w_db(),
-                    m2w_movie_retention=SECRETS.m2w_movie_retention,
-                    cache=movie_item_cache
-                )
-                movie_data = movie_service.get_movie_details(movie_id=movie)
+                movie_service = get_movie_service()
+                title = movie_service.get_movie_title(movie_id=int(movie))
             except Exception as e:
+                logging.error(f"Error during vote for movie {movie}. {e}")
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
-                return redirect("/error", error=e)
+                flash(f"The following error occurred: {e}")
+                return redirect(location="/error")
             else:
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
                 return render_template('watched_movie.html', movie=movie,
-                                       group_id=group_id, movie_title=movie_data['title'])
+                                       group_id=group_id, movie_title=title)
         if request.method == 'POST':
-            watchmode = request.form.get('watch_mode')
+            watch_mode = request.form.get('watch_mode')
             try:
                 logged_on = session['user']
-                m2w_db = get_m2w_db()
-                tmdb_client = get_tmdb_http_client()
-                group_service = GroupManagerService(
-                    secrets=SECRETS,
-                    m2w_db=m2w_db,
-                    user_service=UserManagerService(
-                        m2w_db=m2w_db,
-                        auth=get_auth(),
-                        user_repo=TmdbUserRepository(
-                            tmdb_http_client=tmdb_client
-                        )
-                    ),
-                    movie_service=MovieCachingService(
-                        tmdb_http_client=tmdb_client,
-                        m2w_database=m2w_db,
-                        m2w_movie_retention=SECRETS.m2w_movie_retention,
-                        cache=movie_item_cache
-                    )
-                )
-                movie_data = group_service.movie.get_movie_details(movie_id=movie)
-                if watchmode == 'alone':
-                    group_service.watch_movie_by_user(movie_id=movie, user_id=logged_on)
+                user_service = get_user_service()
+                movie_service = get_movie_service()
+                group_service = get_group_service(user_service=user_service)
+                title = movie_service.get_movie_title(movie_id=int(movie))
+                if watch_mode == 'alone':
+                    group_service.watch_movie_by_user(movie_id=int(movie), user_id=logged_on)
                 else:
-                    group_service.watch_movie_by_group(movie_id=movie, group_id=group_id)
+                    group_service.watch_movie_by_group(movie_id=int(movie), user_id=logged_on, group_id=uuid.UUID(hex=group_id))
             except Exception as e:
+                logging.error(f"Error during vote for movie {movie}. {e}")
                 report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="error")
-                return redirect("/error", error=e)
+                flash(f"The following error occurred: {e}")
+                return redirect("/error")
             else:
-                if watchmode == 'alone':
-                    flash(f"You watched: {movie_data['title']}")
+                if watch_mode == 'alone':
+                    flash(f"You watched: {title}")
                     report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success_alone")
                     return redirect("/")
                 else:
-                    flash(f"Your Group watched: {movie_data['title']}")
+                    flash(f"Your Group watched: {title}")
                     report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success_group")
                     return redirect("/")
 
+@app.route("/api/refresh-cache", methods=['GET'])
+def refresh_movie_cache():
+    """Updates the movie cache regularly."""
+    api_token = request.headers.get(key="X-M2W-API-Token")
+    if api_token is None:
+        logging.error("API token is missing.")
+        resp = Response(response=json.dumps({"error": "API Token is missing."}), status=401)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
+    try:
+        logging.info("Movie cache update started.")
+        if not get_movie_service().movie_cache_update_job(api_token=api_token):
+            logging.error("Movie cache update was not necessary.")
+            raise Exception("Movie cache update was not necessary.")
+    except AuthException:
+        logging.error("API token is invalid.")
+        resp = Response(response=json.dumps({"error": "API Token is invalid."}), status=401)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
+    except Exception as e:
+        logging.error(f"Movie cache error: {e}")
+        resp = Response(response=json.dumps({"error": e}), status=500)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
+    else:
+        logging.info("Movie cache update finished.")
+        resp = Response(response=json.dumps({"status": "Update finished."}) , status=200)
+        resp.headers["Content-Type"] = "application/json"
+        return resp
 
 # starting scheduler
 if os.getenv("MoviesToWatch") != "test":
