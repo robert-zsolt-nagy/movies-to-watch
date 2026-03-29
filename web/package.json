@@ -312,7 +312,7 @@
     "tapable": "^2.2.1",
     "terser": "^5.30.3",
     "terser-webpack-plugin": "^5.3.9",
-    "test-exclude": "^6.0.0",
+    "test-exclude": "^7.0.0",
     "tmpl": "^1.0.5",
     "to-fast-properties": "^2.0.0",
     "to-regex-range": "^5.0.1",
