@@ -169,17 +169,23 @@ def mark_movie_as_watched(tx: Transaction, user_id: str, movie_id: int):
     try:
         tx.run(
             query="""
-                MATCH (u:User {id: $user_id}),(m:Movie {id: $movie_id})
+                MATCH (u:User {id: $user_id})-[v:VOTED {vote: "yeah"}]->(m:Movie {id: $movie_id})
                 MERGE (u)-[w:WATCHED]->(m)
                 SET w.updated_at = $updated_at
-                WITH u, m
-                MATCH (u)-[v:VOTED]->(m)
-                DELETE v
             """,
             parameters={
                 "user_id": user_id,
                 "movie_id": movie_id,
                 "updated_at": datetime.now()
+        })
+        tx.run(
+            query="""
+                MATCH (u:User {id: $user_id})-[v:VOTED]->(m:Movie {id: $movie_id})
+                DELETE v
+            """,
+            parameters={
+                "user_id": user_id,
+                "movie_id": movie_id
         })
     except ResultNotSingleError as e:
         logging.debug(f"Failed to mark movie as watched: {e}")
