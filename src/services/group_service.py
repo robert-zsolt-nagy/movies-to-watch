@@ -1,4 +1,6 @@
 from uuid import UUID
+from datetime import date
+from typing import Union
 
 from neo4j import Driver, Transaction
 
@@ -9,7 +11,7 @@ from src.dao.m2w_graph_db_repository_votes_and_watch_status import vote_for_movi
     get_all_votes_of_watchlist, get_all_watch_history_of_watchlist
 from src.dao.m2w_graph_db_repository_watchlists import get_watchlist_details, get_primary_watchlist_id
 from src.dao.secret_manager import SecretManager
-from src.services.m2w_dtos import VoteValueDto, MovieDto, ProviderDto, WatchListDto
+from src.services.m2w_dtos import VoteValueDto, MovieDto, ProviderDto, WatchListDto, InterestWatchlistFilter, ProviderWatchlistFilter, ReleasedWatchlistFilter
 from src.services.user_service import UserManagerService
 
 
@@ -19,7 +21,6 @@ class GroupManagerServiceException(Exception):
 
 class InvalidVoteError(GroupManagerServiceException):
     """Vote parameter is not supported."""
-
 
 class GroupManagerService:
     """Handles the watch group administration and data retrieval."""
@@ -219,7 +220,11 @@ class GroupManagerService:
                 session.close()
 
     # TODO: test me
-    def get_group_content(self, group_id: UUID, current_user_id: str) -> list[MovieDto]:
+    def get_group_content(
+            self, 
+            group_id: UUID, 
+            current_user_id: str,
+            filters: dict) -> list[MovieDto]:
         """Get the content of the group with votes and availability included.
 
         Parameters
@@ -285,6 +290,10 @@ class GroupManagerService:
                     watch_history=relevant_watches,
                     current_user_id=current_user_id
                 ))
+            movie_dtos = self.filter_watchlist(
+                movie_dtos,
+                **filters
+                )
             movie_dtos = self.default_sort_watchlist(movie_dtos)
         except Exception as e:
             if tx is not None:
@@ -341,6 +350,131 @@ class GroupManagerService:
             return score
 
         watchlist.sort(key=by_my_vote, reverse=True)
+        return watchlist
+    
+    @staticmethod
+    def filter_watchlist(
+        watchlist: list[MovieDto],
+        released: ReleasedWatchlistFilter = ReleasedWatchlistFilter.ALL,
+        interest: InterestWatchlistFilter = InterestWatchlistFilter.ALL,
+        provider: Union[ProviderWatchlistFilter, str] = ProviderWatchlistFilter.ALL
+        ) -> list[MovieDto]:
+        """Filter the watchlist and return the result.
+        
+        Filters are optional, apply filters only if they are provided.
+        Apply multiple filters with AND relation.
+
+        Parameters
+        ----------
+        watchlist: 
+            A list of MovieDto objects that represent the movie list to be filtered.
+        released: 
+            Filter for only released movies.
+        interest:
+            Filter for interest based on the cast votes.
+        provider:
+            Filter for provider. Accepts a concrete provider name or aggregate filters. 
+        
+        Returns
+        -------
+        list[MovieDto]:
+            The filtered list.
+        """
+
+        # filter for released
+        def released_filter(movie):
+            result = False
+            if movie.release_date and (movie.release_date <= date.today()):
+                result = True
+            return result
+        
+        if released == ReleasedWatchlistFilter.RELEASED:
+            watchlist = list(filter(released_filter, watchlist))
+        
+        # filter for solo interest
+        def solo_interest_filter(movie):
+            if (movie.votes.get("primary_vote") == "liked"
+                and not movie.votes.get("liked")):
+                return True
+            else:
+                return False
+            
+        if interest == InterestWatchlistFilter.SOLO:
+            watchlist = list(filter(solo_interest_filter, watchlist))
+            
+        # filter for partial interest
+        def partial_interest_filter(movie):
+            if (movie.votes.get("primary_vote") == "liked"
+                and movie.votes.get("liked")
+                and movie.votes.get("blocked")
+                ):
+                return True
+            else:
+                return False
+            
+        if interest == InterestWatchlistFilter.PARTIAL:
+            watchlist = list(filter(partial_interest_filter, watchlist))
+            
+        # filter for full group interest
+        def full_interest_filter(movie):
+            if (movie.votes.get("primary_vote") == "liked"
+                and movie.votes.get("liked")
+                and not movie.votes.get("blocked")
+                ):
+                return True
+            else:
+                return False
+            
+        if interest == InterestWatchlistFilter.FULL:
+            watchlist = list(filter(full_interest_filter, watchlist))
+
+        # filter for stream availability
+        def stream_provider_filter(movie):
+            if movie.providers.get("stream"):
+                return True
+            else:
+                return False
+            
+        if provider == ProviderWatchlistFilter.STREAM:
+            watchlist = list(filter(stream_provider_filter, watchlist))
+            
+        # filter for buy_or_rent availability
+        def buy_or_rent_provider_filter(movie):
+            if movie.providers.get("buy_or_rent"):
+                return True
+            else:
+                return False
+            
+        if provider == ProviderWatchlistFilter.BUY_OR_RENT:
+            watchlist = list(filter(buy_or_rent_provider_filter, watchlist))
+            
+        # filter for any availability
+        def any_provider_filter(movie):
+            if movie.providers.get("stream") or movie.providers.get("buy_or_rent"):
+                return True
+            else:
+                return False
+            
+        if provider == ProviderWatchlistFilter.ANY:
+            watchlist = list(filter(any_provider_filter, watchlist))
+            
+        # filter for specific provider availability
+        def specific_provider_filter(movie):
+            stream = movie.providers.get("stream")
+            buy_or_rent = movie.providers.get("buy_or_rent")
+            if stream:
+                for elem in stream:
+                    if elem.provider.name == provider:
+                        return True
+            if buy_or_rent:
+                for elem in buy_or_rent:
+                    if elem.provider.name == provider:
+                        return True
+            return False
+        
+        if provider not in ProviderWatchlistFilter:
+            watchlist = list(filter(specific_provider_filter, watchlist))
+
         return watchlist
 
     def _convert_provider_logo_path(self, provider: ProviderDto) -> ProviderDto:

@@ -107,6 +107,7 @@ def get_all_votes_of_watchlist(tx: Transaction, user_ids: list[str], movie_ids: 
 def get_all_watch_history_of_watchlist(tx: Transaction, user_ids: list[str], movie_ids: list[int]) -> List[WatchHistory]:
     """
     Get all watch history for a watchlist.
+    
     Parameters
     ----------
     tx : Transaction

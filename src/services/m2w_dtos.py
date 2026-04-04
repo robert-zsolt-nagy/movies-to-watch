@@ -1,5 +1,5 @@
 from datetime import date
-from enum import Enum
+from enum import Enum, StrEnum
 from uuid import UUID
 
 from src.dao.m2w_graph_db_entities import VoteValue, Vote, WatchHistory, Provider, ProviderFilter, AvailabilityType, \
@@ -415,3 +415,22 @@ class WatchListDto:
             users=users,
             provider_filters=provider_filters
         )
+
+class InterestWatchlistFilter(StrEnum):
+    """Valid values for interest filters."""
+    SOLO = "solo"
+    PARTIAL = "partial"
+    FULL = "full"
+    ALL = "all"
+
+class ProviderWatchlistFilter(StrEnum):
+    """Valid values for provider filters."""
+    STREAM = "stream"
+    BUY_OR_RENT = "buy_or_rent"
+    ANY = "any"
+    ALL = "all"
+
+class ReleasedWatchlistFilter(StrEnum):
+    """Valid values for released filters."""
+    ALL = "all"
+    RELEASED = "released"

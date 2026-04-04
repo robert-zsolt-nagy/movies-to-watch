@@ -248,10 +248,23 @@ def error():
 
 
 @app.route("/", methods=['POST', 'GET'])
+@app.route("/watchlist", methods=['POST', 'GET'])
 def root():
     start = time.time()
     if 'user' in session:
         try:
+            # f_released = request.args.get("released", "all", type=str)
+            # f_interest = request.args.get("interest", "all", type=str)
+            # f_provider = request.args.get("provider", "all", type=str)
+            
+            if 'watchlist_filter' not in session:
+                logging.debug('Initialize watchlist filter in session.')
+                filters = {
+                    "released": "all",
+                    "interest": "all",
+                    "provider": "all"
+                }
+                session['watchlist_filter'] = filters
             logged_on = session['user']
             user_service = get_user_service()
             group_service = get_group_service(user_service=user_service)
@@ -549,10 +562,13 @@ def group_content(group):
             logged_on = session['user']
             user_service = get_user_service()
             group_service = get_group_service(user_service=user_service)
+            logging.debug(f"Reading filters from the session")
+            filters = session['watchlist_filter']
             logging.debug(f"Gathering data for /api/group/{group}")
             movie_datasheets = group_service.get_group_content(
                 group_id=uuid.UUID(hex=group),
-                current_user_id=logged_on
+                current_user_id=logged_on,
+                filters=filters
             )
         except Exception as e:
             flash(f"The following error occurred: {e}")
@@ -646,6 +662,43 @@ def watched_movie(movie, group_id):
                     flash(f"Your Group watched: {title}")
                     report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success_group")
                     return redirect("/")
+                
+@app.route("/api/set-watchlist-filter", methods=['POST'])
+def set_watchlist_filter():
+    start = time.time()
+    if ('user' in session) and (session['emailVerified'] == True):
+        interest = request.form.get('interest_filter')
+        provider = request.form.get('provider_filter')
+        released = request.form.get('released_filter')
+        filters = {
+            "released": released,
+            "interest": interest,
+            "provider": provider
+        }
+        session['watchlist_filter'] = filters
+        logging.info(f"{interest=}, {provider=}, {released=}")
+        flash(f"Filtered: {interest=}, {provider=}, {released=}")
+        return redirect("/watchlist")
+    else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
+        return redirect("/login")
+    
+@app.route("/api/reset-watchlist-filter", methods=['GET'])
+def reset_watchlist_filter():
+    start = time.time()
+    if ('user' in session) and (session['emailVerified'] == True):
+        logging.debug('Initialize watchlist filter in session.')
+        filters = {
+            "released": "all",
+            "interest": "all",
+            "provider": "all"
+        }
+        session['watchlist_filter'] = filters
+        flash(f"Filters removed")
+        return redirect("/watchlist")
+    else:
+        report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
+        return redirect("/login")
 
 @app.route("/api/refresh-cache", methods=['GET'])
 def refresh_movie_cache():
