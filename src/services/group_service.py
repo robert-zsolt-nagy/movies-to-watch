@@ -11,7 +11,7 @@ from src.dao.m2w_graph_db_repository_votes_and_watch_status import vote_for_movi
     get_all_votes_of_watchlist, get_all_watch_history_of_watchlist
 from src.dao.m2w_graph_db_repository_watchlists import get_watchlist_details, get_primary_watchlist_id
 from src.dao.secret_manager import SecretManager
-from src.services.m2w_dtos import VoteValueDto, MovieDto, ProviderDto, WatchListDto, InterestWatchlistFilter, ProviderWatchlistFilter, ReleasedWatchlistFilter
+from src.services.m2w_dtos import VoteValueDto, MovieDto, ProviderDto, WatchListDto, InterestWatchlistFilter, ProviderWatchlistFilter, ReleasedWatchlistFilter, PrimaryVoteWatchlistFilter
 from src.services.user_service import UserManagerService
 
 
@@ -224,7 +224,8 @@ class GroupManagerService:
             self, 
             group_id: UUID, 
             current_user_id: str,
-            filters: dict) -> list[MovieDto]:
+            # filters: dict
+            ) -> list[MovieDto]:
         """Get the content of the group with votes and availability included.
 
         Parameters
@@ -290,10 +291,10 @@ class GroupManagerService:
                     watch_history=relevant_watches,
                     current_user_id=current_user_id
                 ))
-            movie_dtos = self.filter_watchlist(
-                movie_dtos,
-                **filters
-                )
+            # movie_dtos = self.filter_watchlist(
+            #     movie_dtos,
+            #     **filters
+            #     )
             movie_dtos = self.default_sort_watchlist(movie_dtos)
         except Exception as e:
             if tx is not None:
@@ -357,7 +358,8 @@ class GroupManagerService:
         watchlist: list[MovieDto],
         released: ReleasedWatchlistFilter = ReleasedWatchlistFilter.ALL,
         interest: InterestWatchlistFilter = InterestWatchlistFilter.ALL,
-        provider: Union[ProviderWatchlistFilter, str] = ProviderWatchlistFilter.ALL
+        provider: Union[ProviderWatchlistFilter, str] = ProviderWatchlistFilter.ALL,
+        primary: PrimaryVoteWatchlistFilter = PrimaryVoteWatchlistFilter.ALL
         ) -> list[MovieDto]:
         """Filter the watchlist and return the result.
         
@@ -374,6 +376,8 @@ class GroupManagerService:
             Filter for interest based on the cast votes.
         provider:
             Filter for provider. Accepts a concrete provider name or aggregate filters. 
+        voted:
+            Filter for primary vote status.
         
         Returns
         -------
@@ -475,7 +479,52 @@ class GroupManagerService:
         if provider not in ProviderWatchlistFilter:
             watchlist = list(filter(specific_provider_filter, watchlist))
 
+        # filter for voted
+        def voted_filter(movie):
+            vote = movie.votes.get('primary_vote')
+            if vote:
+                return True
+            else:
+                return False
+            
+        if primary == PrimaryVoteWatchlistFilter.VOTED:
+            watchlist = list(filter(voted_filter, watchlist))
+
+        # filter for not voted
+        def not_voted_filter(movie):
+            vote = movie.votes.get('primary_vote')
+            if vote is None:
+                return True
+            else:
+                return False
+            
+        if primary == PrimaryVoteWatchlistFilter.TO_VOTE:
+            watchlist = list(filter(not_voted_filter, watchlist))
+
         return watchlist
+
+    @staticmethod
+    def get_providers_from_watchlist(watchlist: list[MovieDto]) -> list[ProviderDto]:
+        """Get a list of providers from watchlist.
+        
+        Parameters
+        ----------
+        watchlist: 
+            A list of MovieDto objects that hold the provider data.
+
+        Returns
+        -------
+        list[ProviderDto]:
+            The list of the unique providers.
+        """
+        providers = {}
+        for movie in watchlist:
+            for stream in movie.providers['stream']:
+                providers[stream.provider.provider_id] = stream.provider
+            for buy_or_rent in movie.providers['buy_or_rent']:
+                providers[buy_or_rent.provider.provider_id] = buy_or_rent.provider
+        result = sorted(list(providers.values()), key=lambda p: p.name)
+        return result
 
     def _convert_provider_logo_path(self, provider: ProviderDto) -> ProviderDto:
         """Adds the URL to the logo path of each provider.

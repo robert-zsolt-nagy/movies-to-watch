@@ -5,6 +5,7 @@ from uuid import UUID
 from src.dao.m2w_graph_db_entities import VoteValue, Vote, WatchHistory, Provider, ProviderFilter, AvailabilityType, \
     Availability, Movie, User, WatchList, TmdbUser, Genre
 
+from flask import request
 
 class VoteValueDto(Enum):
     YEAH = "yeah"
@@ -434,3 +435,36 @@ class ReleasedWatchlistFilter(StrEnum):
     """Valid values for released filters."""
     ALL = "all"
     RELEASED = "released"
+
+class PrimaryVoteWatchlistFilter(StrEnum):
+    """Valid values for released filters."""
+    ALL = "all"
+    VOTED = "voted"
+    TO_VOTE = "to_vote"
+
+class WatchlistFilterDto(dict):
+    """Contains the filters for a movie watchlist."""
+
+    def __init__(
+            self,
+            released: str = "all",
+            interest: str = "all",
+            provider: str = "all"
+            ):
+        super().__init__(
+            released=released,
+            interest=interest,
+            provider=provider
+        )
+
+    @classmethod
+    def from_request(cls, form: object):
+        interest = form.get('interest_filter', 'all')
+        provider = form.get('provider_filter', 'all')
+        released = form.get('released_filter', 'all')
+        return WatchlistFilterDto(
+            released=released,
+            interest=interest,
+            provider=provider
+        )
+

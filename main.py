@@ -27,7 +27,7 @@ from src.dao.secret_manager import SecretManager
 from src.dao.tmdb_http_client import TmdbHttpClient
 from src.dao.tmdb_user_repository import TmdbUserRepository, TmdbRequestToken
 from src.services.group_service import GroupManagerService
-from src.services.m2w_dtos import VoteValueDto
+from src.services.m2w_dtos import VoteValueDto, PrimaryVoteWatchlistFilter
 from src.services.movie_caching import MovieCachingService
 from src.services.user_service import UserManagerService, WeakPasswordError, EmailMismatchError, PasswordMismatchError
 
@@ -568,7 +568,17 @@ def group_content(group):
             movie_datasheets = group_service.get_group_content(
                 group_id=uuid.UUID(hex=group),
                 current_user_id=logged_on,
-                filters=filters
+                # filters=filters
+            )
+            to_vote_datasheets = group_service.filter_watchlist(
+                watchlist=movie_datasheets,
+                primary=PrimaryVoteWatchlistFilter.TO_VOTE
+            )
+            providers = group_service.get_providers_from_watchlist(watchlist=movie_datasheets)
+            movie_datasheets = group_service.filter_watchlist(
+                watchlist=movie_datasheets,
+                primary=PrimaryVoteWatchlistFilter.VOTED,
+                **filters
             )
         except Exception as e:
             flash(f"The following error occurred: {e}")
@@ -578,7 +588,13 @@ def group_content(group):
         else:
             report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="success")
             logging.debug(f"Rendering group content for /api/group/{group}")
-            return render_template("group_content.html", movies=movie_datasheets, group=group)
+            return render_template(
+                "group_content.html", 
+                movies=movie_datasheets, 
+                group=group, 
+                tovote=to_vote_datasheets,
+                providers=providers
+                )
         finally:
             logging.debug(f"Group content for /api/group/{group} ready.")
     else:
@@ -667,9 +683,9 @@ def watched_movie(movie, group_id):
 def set_watchlist_filter():
     start = time.time()
     if ('user' in session) and (session['emailVerified'] == True):
-        interest = request.form.get('interest_filter')
-        provider = request.form.get('provider_filter')
-        released = request.form.get('released_filter')
+        interest = request.form.get('interest_filter', 'all')
+        provider = request.form.get('provider_filter', 'all')
+        released = request.form.get('released_filter', 'all')
         filters = {
             "released": released,
             "interest": interest,
