@@ -214,6 +214,52 @@
   filter: brightness(1.2) grayscale(.2) opacity(.9);
 }
 
+//watchlist-filter
+.watchlist-filter input {
+  margin: 0;
+  padding: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.watchlist-filter input:active + .filter-badge {
+  opacity: .9;
+}
+
+.watchlist-filter input:checked + .filter-badge {
+  border: 2px solid $primary;
+  border-radius: 3px;
+  -webkit-filter: none;
+  -moz-filter: none;
+  filter: none;
+}
+
+.filter-badge {
+  @extend .img-badge;
+  cursor: pointer;
+  background-size: contain;
+  background-repeat: no-repeat;
+  display: inline-block;
+  // width: 2em;
+  // height: 2em;
+  -webkit-transition: all 100ms ease-in;
+  -moz-transition: all 100ms ease-in;
+  transition: all 100ms ease-in;
+  -webkit-filter: brightness(1.3) grayscale(.5) opacity(.7);
+  -moz-filter: brightness(1.3) grayscale(.5) opacity(.7);
+  filter: brightness(1.3) grayscale(.5) opacity(.7);
+}
+
+.filter-badge:hover {
+  border: 2px solid $secondary;
+  border-radius: 3px;
+  -webkit-filter: brightness(1.2) grayscale(.2) opacity(.9);
+  -moz-filter: brightness(1.2) grayscale(.2) opacity(.9);
+  filter: brightness(1.2) grayscale(.2) opacity(.9);
+}
+
+
 //generic
 .img-badge {
   @extend .img-fluid;
@@ -231,6 +277,24 @@
   @extend .ps-1;
   @extend .pt-1;
 
+}
+
+.filter-row {
+  @extend .row;
+  @extend .mt-5;
+  @extend .ms-1;
+  @extend .p-0;
+  @extend .pe-1;
+}
+
+.filter-container {
+  @extend .col-12;
+  @extend .m-0;
+  @extend .p-0;
+  @extend .ps-1;
+  @extend .pt-1;
+  @extend .card;
+  @extend .bg-light;
 }
 
 //movie list

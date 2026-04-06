@@ -461,6 +461,16 @@ class GroupManagerService:
             
         if provider == ProviderWatchlistFilter.ANY:
             watchlist = list(filter(any_provider_filter, watchlist))
+
+        # filter for no availability
+        def no_provider_filter(movie):
+            if not (movie.providers.get("stream") or movie.providers.get("buy_or_rent")):
+                return True
+            else:
+                return False
+            
+        if provider == ProviderWatchlistFilter.NO:
+            watchlist = list(filter(no_provider_filter, watchlist))
             
         # filter for specific provider availability
         def specific_provider_filter(movie):

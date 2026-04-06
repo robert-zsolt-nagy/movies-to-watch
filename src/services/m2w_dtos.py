@@ -430,6 +430,7 @@ class ProviderWatchlistFilter(StrEnum):
     BUY_OR_RENT = "buy_or_rent"
     ANY = "any"
     ALL = "all"
+    NO = "no"
 
 class ReleasedWatchlistFilter(StrEnum):
     """Valid values for released filters."""

@@ -14,179 +14,232 @@
         <a class="nav-link" href="/">Refresh page</a>
     </div>
 {% else %}
-  {% for movie in tovote %}
-    <div id="movie-{{ movie['movie_id'] }}" class="movie-container">
-      <div class="movie-card">
-        <div class="movie-header">
-          <div class="first-col poster">
-            <img alt="Poster of {{ movie['title'] }}" src="{{ movie['poster_path'] }}">
-          </div>
-          <div class="second-col">
-            <h3 class="movie-title">{{ movie['title'] }}</h3>
-            <div class="minor-details-row">
-              <div class="released">{{ movie['release_date'] }}</div>
-              <div class="genre">{{ movie['genre_names'] }}</div>
-              <div class="runtime">{{ movie['duration'] }} mins</div>
+  {% if tovote %}
+  <h2>Movies without your vote</h2>
+    {% for movie in tovote %}
+      <div id="movie-{{ movie['movie_id'] }}" class="movie-container">
+        <div class="movie-card">
+          <div class="movie-header">
+            <div class="first-col poster">
+              <img alt="Poster of {{ movie['title'] }}" src="{{ movie['poster_path'] }}">
             </div>
-            <h5>Overview</h5>
-            <div class="text-body">{{ movie['overview'] }}</div>
-          </div>
-        </div>
-        <div class="refs-and-status">
-          <div class="ext-ref-buttons">
-            {% if movie['official_trailer'] %}
-            <div class="trailer">
-              <a href="{{ movie['official_trailer'] }}" target="_blank">Watch<br/>trailer</a>
-            </div>
-            {% else %}
-            <div class="trailer">
-              <a href="#" target="_blank" class="disabled">No<br/>trailer</a>
-            </div>
-            {% endif %}
-            <div class="tmdb">
-              <a href="{{ movie['tmdb_link'] }}" target="_blank">Go to<br/>TMDB</a>
-            </div>
-            {% if movie['watched'] %}
-            <div class="watched-movie watched">
-              <a href="/api/watched/{{ movie['movie_id'] }}/{{group}}">Watched<br/>this</a>
-            </div>
-            {% else %}
-            <div class="watched-movie">
-              <a href="/api/watched/{{ movie['movie_id'] }}/{{group}}">Watched<br/>this</a>
-            </div>
-            {% endif %}
-          </div>
-          <div class="providers">
-            {% if movie['providers']['stream']|length > 0 %}
-              <div class="section">
-                <p>Stream</p>
-                <div class="items">
-                  {% for elem in movie['providers']['stream'] %}
-                    <div class="badge">
-                      <img alt="{{ elem['provider']['name'] }} logo" src="{{ elem['provider']['logo_path'] }}"
-                           title="{{ elem['provider']['name'] }} - {{ elem['location'] }}">
-                      <div class="badge-text">{{ elem['location'] }}</div>
-                    </div>
-                  {% endfor %}
-                </div>
+            <div class="second-col">
+              <h3 class="movie-title">{{ movie['title'] }}</h3>
+              <div class="minor-details-row">
+                <div class="released">{{ movie['release_date'] }}</div>
+                <div class="genre">{{ movie['genre_names'] }}</div>
+                <div class="runtime">{{ movie['duration'] }} mins</div>
               </div>
-            {% endif %}
-            {% if movie['providers']['buy_or_rent']|length > 0 %}
-              <div class="section">
-                <p>Buy or rent</p>
-                <div class="items">
-                  {% for elem in movie['providers']['buy_or_rent'] %}
-                    <div class="badge">
-                      <img alt="{{ elem['provider']['name'] }} logo" src="{{ elem['provider']['logo_path'] }}"
-                           title="{{ elem['provider']['name'] }} - {{ elem['location'] }}">
+              <h5>Overview</h5>
+              <div class="text-body">{{ movie['overview'] }}</div>
+            </div>
+          </div>
+          <div class="refs-and-status">
+            <div class="ext-ref-buttons">
+              {% if movie['official_trailer'] %}
+              <div class="trailer">
+                <a href="{{ movie['official_trailer'] }}" target="_blank">Watch<br/>trailer</a>
+              </div>
+              {% else %}
+              <div class="trailer">
+                <a href="#" target="_blank" class="disabled">No<br/>trailer</a>
+              </div>
+              {% endif %}
+              <div class="tmdb">
+                <a href="{{ movie['tmdb_link'] }}" target="_blank">Go to<br/>TMDB</a>
+              </div>
+              {% if movie['watched'] %}
+              <div class="watched-movie watched">
+                <a href="/api/watched/{{ movie['movie_id'] }}/{{group}}">Watched<br/>this</a>
+              </div>
+              {% else %}
+              <div class="watched-movie">
+                <a href="/api/watched/{{ movie['movie_id'] }}/{{group}}">Watched<br/>this</a>
+              </div>
+              {% endif %}
+            </div>
+            <div class="providers">
+              {% if movie['providers']['stream']|length > 0 %}
+                <div class="section">
+                  <p>Stream</p>
+                  <div class="items">
+                    {% for elem in movie['providers']['stream'] %}
+                      <div class="badge">
+                        <img alt="{{ elem['provider']['name'] }} logo" src="{{ elem['provider']['logo_path'] }}"
+                            title="{{ elem['provider']['name'] }} - {{ elem['location'] }}">
                         <div class="badge-text">{{ elem['location'] }}</div>
-                    </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+              {% if movie['providers']['buy_or_rent']|length > 0 %}
+                <div class="section">
+                  <p>Buy or rent</p>
+                  <div class="items">
+                    {% for elem in movie['providers']['buy_or_rent'] %}
+                      <div class="badge">
+                        <img alt="{{ elem['provider']['name'] }} logo" src="{{ elem['provider']['logo_path'] }}"
+                            title="{{ elem['provider']['name'] }} - {{ elem['location'] }}">
+                          <div class="badge-text">{{ elem['location'] }}</div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="votes">
+            <h5>Votes from others</h5>
+            <div class="tally">
+              <div class="cast-yes">
+                <p><i data-feather="check"></i> Yes</p>
+                <div class="badges">
+                  {% for vote in movie['votes']['liked'] %}
+                      <div class="badge">
+                        <img alt="{{ vote['user_nickname'] }}" title="{{ vote['user_nickname'] }}"
+                            src="/static/img/profile-img/{{vote['user_profile_pic']}}">
+                      </div>
                   {% endfor %}
                 </div>
               </div>
-            {% endif %}
-          </div>
-        </div>
-        <div class="votes">
-          <h5>Votes from others</h5>
-          <div class="tally">
-            <div class="cast-yes">
-              <p><i data-feather="check"></i> Yes</p>
-              <div class="badges">
-                {% for vote in movie['votes']['liked'] %}
-                    <div class="badge">
-                      <img alt="{{ vote['user_nickname'] }}" title="{{ vote['user_nickname'] }}"
-                           src="/static/img/profile-img/{{vote['user_profile_pic']}}">
-                    </div>
-                {% endfor %}
+              <div class="cast-no">
+                <p><i data-feather="x"></i> No</p>
+                <div class="badges">
+                  {% for vote in movie['votes']['blocked'] %}
+                      <div class="badge">
+                        <img alt="{{ vote['user_nickname'] }}" title="{{ vote['user_nickname'] }}"
+                            src="/static/img/profile-img/{{vote['user_profile_pic']}}">
+                      </div>
+                  {% endfor %}
+                </div>
               </div>
             </div>
-            <div class="cast-no">
-              <p><i data-feather="x"></i> No</p>
-              <div class="badges">
-                {% for vote in movie['votes']['blocked'] %}
-                    <div class="badge">
-                      <img alt="{{ vote['user_nickname'] }}" title="{{ vote['user_nickname'] }}"
-                           src="/static/img/profile-img/{{vote['user_profile_pic']}}">
-                    </div>
-                {% endfor %}
-              </div>
+            <div id="my_vote{{ movie['movie_id'] }}" class="your-vote">
+              <h5>Your vote</h5>
+              {% if movie['votes']['primary_vote'] == 'liked' %}
+                <div class="yes">
+                  <button class="button-selected">I'm in!</button>
+                </div>
+              {% else %}
+                <div class="yes">
+                  <button hx-get="/api/vote/{{ movie['movie_id'] }}/like" hx-trigger="click"
+                          hx-target="#my_vote{{ movie['movie_id'] }}" hx-indicator="#indicator{{ movie['movie_id'] }}"
+                          class="button-active">I'm in!
+                  </button>
+                </div>
+              {% endif %}
+              {% if movie['votes']['primary_vote'] == "blocked" %}
+                <div class="no">
+                  <button class="button-selected">I'm out!</button>
+                </div>
+              {% else %}
+                <div class="no">
+                  <button hx-get="/api/vote/{{ movie['movie_id'] }}/block" hx-trigger="click"
+                          hx-target="#my_vote{{ movie['movie_id'] }}" hx-indicator="#indicator{{ movie['movie_id'] }}"
+                          class="button-active">I'm out!
+                  </button>
+                </div>
+              {% endif %}
+              <img alt="Working..." class="htmx-indicator" id="indicator{{ movie['movie_id'] }}"
+                  src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
             </div>
-          </div>
-          <div id="my_vote{{ movie['movie_id'] }}" class="your-vote">
-            <h5>Your vote</h5>
-            {% if movie['votes']['primary_vote'] == 'liked' %}
-              <div class="yes">
-                <button class="button-selected">I'm in!</button>
-              </div>
-            {% else %}
-              <div class="yes">
-                <button hx-get="/api/vote/{{ movie['movie_id'] }}/like" hx-trigger="click"
-                        hx-target="#my_vote{{ movie['movie_id'] }}" hx-indicator="#indicator{{ movie['movie_id'] }}"
-                        class="button-active">I'm in!
-                </button>
-              </div>
-            {% endif %}
-            {% if movie['votes']['primary_vote'] == "blocked" %}
-              <div class="no">
-                <button class="button-selected">I'm out!</button>
-              </div>
-            {% else %}
-              <div class="no">
-                <button hx-get="/api/vote/{{ movie['movie_id'] }}/block" hx-trigger="click"
-                        hx-target="#my_vote{{ movie['movie_id'] }}" hx-indicator="#indicator{{ movie['movie_id'] }}"
-                        class="button-active">I'm out!
-                </button>
-              </div>
-            {% endif %}
-            <img alt="Working..." class="htmx-indicator" id="indicator{{ movie['movie_id'] }}"
-                 src="{{ url_for('static', filename='img/three-dots.svg') }}" height="15">
           </div>
         </div>
       </div>
-    </div>
-  {% endfor %}
-  <div class="row row-cols-lg mt-5">
-    <div class="col-lg-3">
-    </div>
-    <div class="col-lg-6 card bg-light">
+    {% endfor %}
+  {% endif %}
+  <div class="filter-row row-cols-fluid">
+  <div class="filter-container">
     <form action="/api/set-watchlist-filter" method="post">
-        <div class="p-3">
-          <label class="form-label p-3">Found {{ movies|length }} movie(s).</label>
-          <div>
-            <label class="form-label p-3">Interest</label>
-            <input type="radio" class="btn-check" id="btn-interest-all" autocomplete="off" name="interest_filter" value="all" checked>
-            <label class="btn btn-outline-primary" for="btn-interest-all">All Movies</label>
-            <input type="radio" class="btn-check" id="btn-interest-full" autocomplete="off" name="interest_filter" value="full">
-            <label class="btn btn-outline-primary" for="btn-interest-full">Whole Group</label>
-            <input type="radio" class="btn-check" id="btn-interest-partial" autocomplete="off" name="interest_filter" value="partial">
-            <label class="btn btn-outline-primary" for="btn-interest-partial">With Somene</label>
-            <input type="radio" class="btn-check" id="btn-interest-solo" autocomplete="off" name="interest_filter" value="solo">
-            <label class="btn btn-outline-primary" for="btn-interest-solo">Only me</label>
+      <div class="row align-items-start p-3">
+        <div class="col-3">
+          <label class="form-label p-3 pb-0">Interest</label>
+          <div class="container">
+            <div class="row">
+              <div class="watchlist-filter col-6 p-0">
+                <input type="radio" id="btn-interest-all" autocomplete="off" name="interest_filter" value="all">
+                <label class="filter-badge" for="btn-interest-all">
+                  <img class="rounded m-1 img-fluid" alt="All Movies icon" src="/static/img/m2w-icon.svg" title="All Movies" for="btn-interest-all" >
+                </label>
+              </div>
+              <div class="watchlist-filter col-6 p-0">
+                <input type="radio" id="btn-interest-full" autocomplete="off" name="interest_filter" value="full">
+                <label class="filter-badge" for="btn-interest-full">
+                  <img class="rounded m-1 img-fluid" alt="Whole Group icon" src="/static/img/m2w-icon.svg" title="Whole Group" for="btn-interest-full" >
+                </label>
+              </div>
+              <div class="watchlist-filter col-6 p-0">
+                <input type="radio" id="btn-interest-partial" autocomplete="off" name="interest_filter" value="partial">
+                <label class="filter-badge" for="btn-interest-partial">
+                  <img class="rounded m-1 img-fluid" alt="With Somene icon" src="/static/img/m2w-icon.svg" title="With Somene" for="btn-interest-partial" >
+                </label>
+              </div>
+              <div class="watchlist-filter col-6 p-0">
+                <input type="radio" id="btn-interest-solo" autocomplete="off" name="interest_filter" value="solo">
+                <label class="filter-badge" for="btn-interest-solo">
+                  <img class="rounded m-1 img-fluid" alt="Only me icon" src="/static/img/m2w-icon.svg" title="Only me" for="btn-interest-solo" >
+                </label>
+              </div>
+            </div>
           </div>
-          <div>
-            <label class="form-label p-3">Provider</label>
-            <input type="radio" class="btn-check" id="btn-provider-all" autocomplete="off" name="provider_filter" value="all" checked>
-            <label class="btn btn-outline-primary" for="btn-provider-all">All Movies</label>
-            <input type="radio" class="btn-check" id="btn-provider-any" autocomplete="off" name="provider_filter" value="any">
-            <label class="btn btn-outline-primary" for="btn-provider-any">Available</label>
-            <input type="radio" class="btn-check" id="btn-provider-stream" autocomplete="off" name="provider_filter" value="stream">
-            <label class="btn btn-outline-primary" for="btn-provider-stream">Stream</label>
-            <input type="radio" class="btn-check" id="btn-provider-buy_or_rent" autocomplete="off" name="provider_filter" value="buy_or_rent">
-            <label class="btn btn-outline-primary" for="btn-provider-buy_or_rent">Buy or Rent</label>
-            {% for provider in providers %}
-            <input type="radio" class="btn-check" id="btn-provider-{{ provider['provider_id'] }}" autocomplete="off" name="provider_filter" value="{{ provider['name'] }}">
-            <label class="btn btn-outline-primary" for="btn-provider-{{ provider['provider_id'] }}">{{ provider['name'] }}</label>
-            {% endfor %}
-          </div>
-          <input class="btn btn-primary btn-lg w-100" type="submit" value="Filter">
-          <a class="btn btn-primary btn-lg w-100" href="/api/reset-watchlist-filter">Reset Filters</a>
         </div>
-      </form>
-    </div>
-    <div class="col-lg-3">
-    </div>
+        <div class="col-9">
+          <label class="form-label p-3 pb-0">Availability</label>
+          <div class="container">
+            <div class="row">
+              <div class="watchlist-filter col-1 p-0">
+                <input type="radio" id="btn-provider-any" autocomplete="off" name="provider_filter" value="any">
+                <label class="filter-badge" for="btn-provider-any">
+                  <img class="rounded m-1 img-fluid" alt="Any Provider icon" src="/static/img/m2w-icon.svg" title="Any Provider" for="btn-provider-any" >
+                </label>
+              </div>
+              <div class="watchlist-filter col-1 p-0">
+                <input type="radio" id="btn-provider-stream" autocomplete="off" name="provider_filter" value="stream">
+                <label class="filter-badge" for="btn-provider-stream">
+                  <img class="rounded m-1 img-fluid" alt="Stream icon" src="/static/img/m2w-icon.svg" title="Stream" for="btn-provider-stream" >
+                </label>
+              </div>
+              <div class="watchlist-filter col-1 p-0">
+                <input type="radio" id="btn-provider-buy_or_rent" autocomplete="off" name="provider_filter" value="buy_or_rent">
+                <label class="filter-badge" for="btn-provider-buy_or_rent">
+                  <img class="rounded m-1 img-fluid" alt="Buy or Rent icon" src="/static/img/m2w-icon.svg" title="Buy or Rent" for="btn-provider-buy_or_rent" >
+                </label>
+              </div>
+              <div class="watchlist-filter col-1 p-0">
+                <input type="radio" id="btn-provider-no" autocomplete="off" name="provider_filter" value="no">
+                <label class="filter-badge" for="btn-provider-no">
+                  <img class="rounded m-1 img-fluid" alt="No provider icon" src="/static/img/m2w-icon.svg" title="Unavailable" for="btn-provider-no" >
+                </label>
+              </div>
+              {% for provider in providers %}
+              <div class="watchlist-filter col-1 p-0">
+                <input type="radio" id="btn-provider-{{ provider['provider_id'] }}" autocomplete="off" name="provider_filter" value="{{ provider['name'] }}">
+                <label class="filter-badge m-1" for="btn-provider-{{ provider['provider_id'] }}">
+                  <img class="rounded img-fluid" alt="All Movies icon" src="{{ provider['logo_path'] }}" title="{{ provider['name'] }}" for="btn-provider-{{ provider['provider_id'] }}" >
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-2">
+          
+        </div>
+      </div>
+      <div class="row align-items-start p-3">
+          <div class="row">
+            <div class="col-6">
+              <input class="btn btn-primary btn-lg w-90 m-1" type="submit" value="Filter">
+            </div>
+            <div class="col-6">
+              <a class="btn btn-secondary btn-lg w-90 m-1" href="/api/reset-watchlist-filter">Reset Filters</a>
+            </div>
+          </div>
+      </div>
+    </form>
   </div>
+  <h2 class="mt-5">List of {{ movies|length }} found movie(s).</h2>
   {% for movie in movies %}
     <div id="movie-{{ movie['movie_id'] }}" class="movie-container">
       <div class="movie-card">
