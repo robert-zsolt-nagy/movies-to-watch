@@ -157,28 +157,28 @@
           <label class="form-label p-3 pb-0">Interest</label>
           <div class="container">
             <div class="row">
-              <div class="watchlist-filter col-6 p-0">
+              <div class="watchlist-filter col-6 col-md-4 p-0">
                 <input type="radio" id="btn-interest-all" autocomplete="off" name="interest_filter" value="all">
-                <label class="filter-badge" for="btn-interest-all">
-                  <img class="rounded m-1 img-fluid" alt="All Movies icon" src="/static/img/m2w-icon.svg" title="All Movies" for="btn-interest-all" >
+                <label class="filter-badge m-1" for="btn-interest-all">
+                  <img class="rounded img-fluid" alt="All Movies icon" src="/static/img/buy_or_rent.png" title="All Movies" for="btn-interest-all" >
                 </label>
               </div>
-              <div class="watchlist-filter col-6 p-0">
+              <div class="watchlist-filter col-6 col-md-4 p-0">
                 <input type="radio" id="btn-interest-full" autocomplete="off" name="interest_filter" value="full">
-                <label class="filter-badge" for="btn-interest-full">
-                  <img class="rounded m-1 img-fluid" alt="Whole Group icon" src="/static/img/m2w-icon.svg" title="Whole Group" for="btn-interest-full" >
+                <label class="filter-badge m-1" for="btn-interest-full">
+                  <img class="rounded img-fluid" alt="Whole Group icon" src="/static/img/buy_or_rent.png" title="Whole Group" for="btn-interest-full" >
                 </label>
               </div>
-              <div class="watchlist-filter col-6 p-0">
+              <div class="watchlist-filter col-6 col-md-4 p-0">
                 <input type="radio" id="btn-interest-partial" autocomplete="off" name="interest_filter" value="partial">
-                <label class="filter-badge" for="btn-interest-partial">
-                  <img class="rounded m-1 img-fluid" alt="With Somene icon" src="/static/img/m2w-icon.svg" title="With Somene" for="btn-interest-partial" >
+                <label class="filter-badge m-1" for="btn-interest-partial">
+                  <img class="rounded img-fluid" alt="With Somene icon" src="/static/img/buy_or_rent.png" title="With Somene" for="btn-interest-partial" >
                 </label>
               </div>
-              <div class="watchlist-filter col-6 p-0">
+              <div class="watchlist-filter col-6 col-md-4 p-0">
                 <input type="radio" id="btn-interest-solo" autocomplete="off" name="interest_filter" value="solo">
-                <label class="filter-badge" for="btn-interest-solo">
-                  <img class="rounded m-1 img-fluid" alt="Only me icon" src="/static/img/m2w-icon.svg" title="Only me" for="btn-interest-solo" >
+                <label class="filter-badge m-1" for="btn-interest-solo">
+                  <img class="rounded img-fluid" alt="Only me icon" src="/static/img/buy_or_rent.png" title="Only me" for="btn-interest-solo" >
                 </label>
               </div>
             </div>
@@ -188,32 +188,32 @@
           <label class="form-label p-3 pb-0">Availability</label>
           <div class="container">
             <div class="row">
-              <div class="watchlist-filter col-1 p-0">
+              <div class="watchlist-filter col-2 col-lg-1 p-0">
                 <input type="radio" id="btn-provider-any" autocomplete="off" name="provider_filter" value="any">
-                <label class="filter-badge" for="btn-provider-any">
-                  <img class="rounded m-1 img-fluid" alt="Any Provider icon" src="/static/img/m2w-icon.svg" title="Any Provider" for="btn-provider-any" >
+                <label class="filter-badge m-1" for="btn-provider-any">
+                  <img class="rounded img-fluid" alt="Any Provider icon" src="/static/img/buy_or_rent.png" title="Any Provider" for="btn-provider-any" >
                 </label>
               </div>
-              <div class="watchlist-filter col-1 p-0">
+              <div class="watchlist-filter col-2 col-lg-1 p-0">
                 <input type="radio" id="btn-provider-stream" autocomplete="off" name="provider_filter" value="stream">
-                <label class="filter-badge" for="btn-provider-stream">
-                  <img class="rounded m-1 img-fluid" alt="Stream icon" src="/static/img/m2w-icon.svg" title="Stream" for="btn-provider-stream" >
+                <label class="filter-badge m-1" for="btn-provider-stream">
+                  <img class="rounded img-fluid" alt="Stream icon" src="/static/img/buy_or_rent.png" title="Stream" for="btn-provider-stream" >
                 </label>
               </div>
-              <div class="watchlist-filter col-1 p-0">
+              <div class="watchlist-filter col-2 col-lg-1 p-0">
                 <input type="radio" id="btn-provider-buy_or_rent" autocomplete="off" name="provider_filter" value="buy_or_rent">
-                <label class="filter-badge" for="btn-provider-buy_or_rent">
-                  <img class="rounded m-1 img-fluid" alt="Buy or Rent icon" src="/static/img/m2w-icon.svg" title="Buy or Rent" for="btn-provider-buy_or_rent" >
+                <label class="filter-badge m-1" for="btn-provider-buy_or_rent">
+                  <img class="rounded img-fluid" alt="Buy or Rent icon" src="/static/img/buy_or_rent.png" title="Buy or Rent" for="btn-provider-buy_or_rent" >
                 </label>
               </div>
-              <div class="watchlist-filter col-1 p-0">
+              <div class="watchlist-filter col-2 col-lg-1 p-0">
                 <input type="radio" id="btn-provider-no" autocomplete="off" name="provider_filter" value="no">
-                <label class="filter-badge" for="btn-provider-no">
-                  <img class="rounded m-1 img-fluid" alt="No provider icon" src="/static/img/m2w-icon.svg" title="Unavailable" for="btn-provider-no" >
+                <label class="filter-badge m-1" for="btn-provider-no">
+                  <img class="rounded img-fluid" alt="No provider icon" src="/static/img/buy_or_rent.png" title="Unavailable" for="btn-provider-no" >
                 </label>
               </div>
               {% for provider in providers %}
-              <div class="watchlist-filter col-1 p-0">
+              <div class="watchlist-filter col-2 col-lg-1 p-0">
                 <input type="radio" id="btn-provider-{{ provider['provider_id'] }}" autocomplete="off" name="provider_filter" value="{{ provider['name'] }}">
                 <label class="filter-badge m-1" for="btn-provider-{{ provider['provider_id'] }}">
                   <img class="rounded img-fluid" alt="All Movies icon" src="{{ provider['logo_path'] }}" title="{{ provider['name'] }}" for="btn-provider-{{ provider['provider_id'] }}" >
@@ -227,14 +227,12 @@
           
         </div>
       </div>
-      <div class="row align-items-start p-3">
-          <div class="row">
-            <div class="col-6">
-              <input class="btn btn-primary btn-lg w-90 m-1" type="submit" value="Filter">
-            </div>
-            <div class="col-6">
-              <a class="btn btn-secondary btn-lg w-90 m-1" href="/api/reset-watchlist-filter">Reset Filters</a>
-            </div>
+      <div class="row p-3">
+          <div class="col-6">
+            <input class="btn btn-primary w-100" type="submit" value="Filter">
+          </div>
+          <div class="col">
+            <a class="btn btn-secondary w-100" href="/api/reset-watchlist-filter">Reset Filters</a>
           </div>
       </div>
     </form>

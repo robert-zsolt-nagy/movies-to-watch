@@ -692,8 +692,8 @@ def set_watchlist_filter():
             "provider": provider
         }
         session['watchlist_filter'] = filters
-        logging.info(f"{interest=}, {provider=}, {released=}")
-        flash(f"Filtered: {interest=}, {provider=}, {released=}")
+        logging.info(f"Apply filters: {interest=}, {provider=}, {released=}")
+        flash(f"Filtering Movies.")
         return redirect("/watchlist")
     else:
         report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
@@ -710,7 +710,7 @@ def reset_watchlist_filter():
             "provider": "all"
         }
         session['watchlist_filter'] = filters
-        flash(f"Filters removed")
+        flash(f"Removing filters.")
         return redirect("/watchlist")
     else:
         report_call(start=start, method=request.method, endpoint=request.endpoint, outcome="redirect_to_login")
