@@ -11,7 +11,9 @@ from src.dao.m2w_graph_db_repository_votes_and_watch_status import vote_for_movi
     get_all_votes_of_watchlist, get_all_watch_history_of_watchlist
 from src.dao.m2w_graph_db_repository_watchlists import get_watchlist_details, get_primary_watchlist_id
 from src.dao.secret_manager import SecretManager
-from src.services.m2w_dtos import VoteValueDto, MovieDto, ProviderDto, WatchListDto, InterestWatchlistFilter, ProviderWatchlistFilter, ReleasedWatchlistFilter, PrimaryVoteWatchlistFilter
+from src.services.m2w_dtos import VoteValueDto, MovieDto, ProviderDto, WatchListDto, \
+    InterestWatchlistFilter, ProviderWatchlistFilter, ReleasedWatchlistFilter, PrimaryVoteWatchlistFilter, \
+    VoteDto
 from src.services.user_service import UserManagerService
 
 
@@ -534,6 +536,27 @@ class GroupManagerService:
             for buy_or_rent in movie.providers['buy_or_rent']:
                 providers[buy_or_rent.provider.provider_id] = buy_or_rent.provider
         result = sorted(list(providers.values()), key=lambda p: p.name)
+        return result
+    
+    @staticmethod
+    def get_likers_from_watchlist(watchlist: list[MovieDto]) -> list[VoteDto]:
+        """Get a list of voters who liked any movie from a watchlist.
+        
+        Parameters
+        ----------
+        watchlist: 
+            A list of MovieDto objects that hold the provider data.
+
+        Returns
+        -------
+        list[VoteDto]:
+            The list of the unique voters who liked any movie.
+        """
+        voters = {}
+        for movie in watchlist:
+            for vote in movie.votes['liked']:
+                voters[vote.user_id] = vote
+        result = sorted(list(voters.values()), key=lambda v: v.user_nickname)
         return result
 
     def _convert_provider_logo_path(self, provider: ProviderDto) -> ProviderDto:

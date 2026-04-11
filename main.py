@@ -3,7 +3,7 @@ import logging
 import os
 import time
 import uuid
-from typing import Optional
+from typing import Optional, Union
 
 import psutil
 import pyrebase
@@ -27,7 +27,10 @@ from src.dao.secret_manager import SecretManager
 from src.dao.tmdb_http_client import TmdbHttpClient
 from src.dao.tmdb_user_repository import TmdbUserRepository, TmdbRequestToken
 from src.services.group_service import GroupManagerService
-from src.services.m2w_dtos import VoteValueDto, PrimaryVoteWatchlistFilter
+from src.services.m2w_dtos import VoteValueDto, PrimaryVoteWatchlistFilter, \
+    InterestWatchlistFilter, ProviderWatchlistFilter, \
+    ReleasedWatchlistFilter, WatchlistInterestCardDto, \
+    WatchlistProviderCardDto
 from src.services.movie_caching import MovieCachingService
 from src.services.user_service import UserManagerService, WeakPasswordError, EmailMismatchError, PasswordMismatchError
 
@@ -237,6 +240,22 @@ def report_call(start: float, method: str, endpoint: str, outcome: str):
         "status": outcome
     })
 
+################################
+# setting up utility functions #
+################################
+
+def store_watchlist_filter_to_session(
+        released: ReleasedWatchlistFilter = ReleasedWatchlistFilter.ALL,
+        interest: Union[InterestWatchlistFilter, str] = InterestWatchlistFilter.ALL,
+        provider: Union[ProviderWatchlistFilter, str] = ProviderWatchlistFilter.ANY
+    ) -> None:
+    filters = {
+        "released": released,
+        "interest": interest,
+        "provider": provider
+    }
+    session['watchlist_filter'] = filters
+
 
 #####################################
 # setting up requests and endpoints #
@@ -253,18 +272,9 @@ def root():
     start = time.time()
     if 'user' in session:
         try:
-            # f_released = request.args.get("released", "all", type=str)
-            # f_interest = request.args.get("interest", "all", type=str)
-            # f_provider = request.args.get("provider", "all", type=str)
-            
             if 'watchlist_filter' not in session:
                 logging.debug('Initialize watchlist filter in session.')
-                filters = {
-                    "released": "all",
-                    "interest": "all",
-                    "provider": "all"
-                }
-                session['watchlist_filter'] = filters
+                store_watchlist_filter_to_session()
             logged_on = session['user']
             user_service = get_user_service()
             group_service = get_group_service(user_service=user_service)
@@ -562,19 +572,78 @@ def group_content(group):
             logged_on = session['user']
             user_service = get_user_service()
             group_service = get_group_service(user_service=user_service)
+            
             logging.debug(f"Reading filters from the session")
             filters = session['watchlist_filter']
+            
             logging.debug(f"Gathering data for /api/group/{group}")
             movie_datasheets = group_service.get_group_content(
                 group_id=uuid.UUID(hex=group),
                 current_user_id=logged_on,
-                # filters=filters
             )
             to_vote_datasheets = group_service.filter_watchlist(
                 watchlist=movie_datasheets,
                 primary=PrimaryVoteWatchlistFilter.TO_VOTE
             )
-            providers = group_service.get_providers_from_watchlist(watchlist=movie_datasheets)
+
+            # gather providers from watchlist
+            providers_tmp = group_service.get_providers_from_watchlist(watchlist=movie_datasheets)
+            providers_tmp = [WatchlistProviderCardDto.from_ProviderDto(
+                p, ref=filters['provider']
+            ) for p in providers_tmp]
+            providers = [
+                WatchlistProviderCardDto(
+                    provider_id="any",
+                    name="Any Provider",
+                    logo_path="all_movies.png",
+                    ref=filters['provider']
+                ),
+                WatchlistProviderCardDto(
+                    provider_id="stream",
+                    name="Stream",
+                    logo_path="stream.png",
+                    ref=filters['provider']
+                ),
+                WatchlistProviderCardDto(
+                    provider_id="buy_or_rent",
+                    name="Buy or Rent",
+                    logo_path="buy_or_rent.png",
+                    ref=filters['provider']
+                ),
+                WatchlistProviderCardDto(
+                    provider_id="no",
+                    name="Unavailable",
+                    logo_path="unavailable.png",
+                    ref=filters['provider']
+                )
+            ]
+            providers.extend(providers_tmp)
+
+            # gather likers from watchlist
+            likers_temp = group_service.get_likers_from_watchlist(watchlist=movie_datasheets)
+            likers_temp = [WatchlistInterestCardDto.from_VoteDto(
+                v, ref=filters['interest']) for v in likers_temp]
+            likers = [
+                WatchlistInterestCardDto(
+                    value="all",
+                    title="All Movies",
+                    img_src="any_interest.png",
+                    ref=filters['interest']
+                ),
+                WatchlistInterestCardDto(
+                    value="full",
+                    title="Whole Group",
+                    img_src="group.png",
+                    ref=filters['interest']
+                ),
+                WatchlistInterestCardDto(
+                    value="solo",
+                    title="Only Me",
+                    img_src="solo.png",
+                    ref=filters['interest']
+                )
+            ]
+            likers.extend(likers_temp)
             movie_datasheets = group_service.filter_watchlist(
                 watchlist=movie_datasheets,
                 primary=PrimaryVoteWatchlistFilter.VOTED,
@@ -593,7 +662,8 @@ def group_content(group):
                 movies=movie_datasheets, 
                 group=group, 
                 tovote=to_vote_datasheets,
-                providers=providers
+                providers=providers,
+                likers=likers
                 )
         finally:
             logging.debug(f"Group content for /api/group/{group} ready.")
@@ -683,15 +753,10 @@ def watched_movie(movie, group_id):
 def set_watchlist_filter():
     start = time.time()
     if ('user' in session) and (session['emailVerified'] == True):
-        interest = request.form.get('interest_filter', 'all')
-        provider = request.form.get('provider_filter', 'all')
-        released = request.form.get('released_filter', 'all')
-        filters = {
-            "released": released,
-            "interest": interest,
-            "provider": provider
-        }
-        session['watchlist_filter'] = filters
+        interest = request.form.get('interest_filter', InterestWatchlistFilter.ALL)
+        provider = request.form.get('provider_filter', ProviderWatchlistFilter.ANY)
+        released = request.form.get('released_filter', ReleasedWatchlistFilter.ALL)
+        store_watchlist_filter_to_session(released=released, interest=interest, provider=provider)
         logging.info(f"Apply filters: {interest=}, {provider=}, {released=}")
         flash(f"Filtering Movies.")
         return redirect("/watchlist")
@@ -704,12 +769,7 @@ def reset_watchlist_filter():
     start = time.time()
     if ('user' in session) and (session['emailVerified'] == True):
         logging.debug('Initialize watchlist filter in session.')
-        filters = {
-            "released": "all",
-            "interest": "all",
-            "provider": "all"
-        }
-        session['watchlist_filter'] = filters
+        store_watchlist_filter_to_session()
         flash(f"Removing filters.")
         return redirect("/watchlist")
     else:

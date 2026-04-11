@@ -469,3 +469,60 @@ class WatchlistFilterDto(dict):
             provider=provider
         )
 
+class WatchlistInterestCardDto:
+    """Contains the data necessary to display interest filter cards."""
+
+    def __init__(
+            self,
+            value: str, 
+            title: str, 
+            img_src: str,
+            static: bool = True,
+            ref: str = ""
+            ):
+        self.value = value
+        self.title = title
+        self.img_src = img_src
+        self.static = static
+        self.checked = (ref == value)
+
+    @classmethod
+    def from_VoteDto(cls, vote: object, ref: str = ""):
+        return WatchlistInterestCardDto(
+            value=vote.user_id,
+            title=vote.user_nickname,
+            img_src=vote.user_profile_pic,
+            static=False,
+            ref=ref
+        )
+
+class WatchlistProviderCardDto:
+    """Contains the data necessary to display provider filter cards."""
+
+    def __init__(
+            self,
+            provider_id: str, 
+            name: str, 
+            logo_path: str,
+            static: bool = True,
+            ref: str = ""
+            ):
+        self.provider_id = provider_id
+        self.name = name
+        self.logo_path = logo_path
+        self.static = static
+        if static:
+            self.checked = (ref == provider_id)
+        else:
+            self.checked = (ref == name)
+
+    @classmethod
+    def from_ProviderDto(
+        cls, provider: ProviderDto, ref: str = ""):
+        return WatchlistProviderCardDto(
+            provider_id=provider.provider_id,
+            name=provider.name,
+            logo_path=provider.logo_path,
+            static=False,
+            ref=ref
+        )
