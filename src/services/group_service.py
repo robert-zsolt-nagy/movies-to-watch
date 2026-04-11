@@ -521,7 +521,7 @@ class GroupManagerService:
         def not_voted_filter(movie):
             vote = movie.votes.get('primary_vote')
             if vote is None:
-                return True
+                return (not movie.watched)
             else:
                 return False
             
