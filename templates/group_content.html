@@ -15,7 +15,7 @@
     </div>
 {% else %}
   {% if tovote %}
-  <h2>Movies without your vote</h2>
+  <h2>Movies to vote for</h2>
     {% for movie in tovote %}
       <div id="movie-{{ movie['movie_id'] }}" class="movie-container">
         <div class="movie-card">
@@ -193,13 +193,13 @@
         {% for prov in providers %}
           {% if prov['static']==True %}
             {% if prov['checked']==True %}
-              <div class="watchlist-filter col-2 col-lg-1 p-0 border-start border-1">
+              <div class="watchlist-filter col-2 col-lg-1 p-0">
                 <input type="radio" id="btn-provider-{{ prov['provider_id'] }}" autocomplete="off" name="provider_filter" value="{{ prov['provider_id'] }}" checked="checked"><label class="filter-badge m-1" for="btn-provider-{{ prov['provider_id'] }}">
                   <img class="rounded img-fluid img-thumbnail" alt="{{ prov['name'] }} icon" src="/static/img/filter-img/{{ prov['logo_path'] }}" title="{{ prov['name'] }}" for="btn-provider-{{ prov['provider_id'] }}" >
                 </label>
               </div>
             {% else %}
-              <div class="watchlist-filter col-2 col-lg-1 p-0 border-start border-1">
+              <div class="watchlist-filter col-2 col-lg-1 p-0">
                 <input type="radio" id="btn-provider-{{ prov['provider_id'] }}" autocomplete="off" name="provider_filter" value="{{ prov['provider_id'] }}"><label class="filter-badge m-1" for="btn-provider-{{ prov['provider_id'] }}">
                   <img class="rounded img-fluid img-thumbnail" alt="{{ prov['name'] }} icon" src="/static/img/filter-img/{{ prov['logo_path'] }}" title="{{ prov['name'] }}" for="btn-provider-{{ prov['provider_id'] }}" >
                 </label>
@@ -232,7 +232,8 @@
       </div>
     </form>
   </div>
-  <h2 class="mt-5">List of {{ movies|length }} found movie(s).</h2>
+  <h2 class="mt-5">Movie Shortlist</h2>
+  <h6>{{ movies|length }} movie(s) found.</h6>
   {% for movie in movies %}
     <div id="movie-{{ movie['movie_id'] }}" class="movie-container">
       <div class="movie-card">

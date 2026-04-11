@@ -420,6 +420,21 @@ class GroupManagerService:
             
         if interest == InterestWatchlistFilter.PARTIAL:
             watchlist = list(filter(partial_interest_filter, watchlist))
+
+        # filter for specific partial interest
+        def with_user_interest_filter(movie):
+
+            if movie.votes.get("primary_vote") == "liked":
+                likes = movie.votes.get("liked", [])
+                if len(likes) != 1:
+                    return False
+                for vote in likes:
+                    if vote.user_id == interest:
+                        return True
+            return False
+            
+        if interest not in InterestWatchlistFilter:
+            watchlist = list(filter(with_user_interest_filter, watchlist))
             
         # filter for full group interest
         def full_interest_filter(movie):
